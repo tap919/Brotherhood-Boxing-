@@ -1,0 +1,844 @@
+{
+  "meta": {
+    "version": "1.0",
+    "title": "GlassFist Fight Night - Fighters Database",
+    "totalFighters": 75,
+    "divisions": 3,
+    "system": "Quantified Sweet Science (QSS) 0-99 Rating",
+    "eraAdjusted": true,
+    "lastUpdated": "2026-01-25"
+  },
+  "heavyweight": {
+    "division": "Heavyweight (200+ lbs)",
+    "belts": ["IBF", "WBA", "WBC", "WBO", "Ring Magazine"],
+    "fighters": [
+      {
+        "id": "HW-001",
+        "name": "Muhammad Ali",
+        "era": "1960s-1980s",
+        "ovr": 99,
+        "archetype": "out-boxer",
+        "attributes": {
+          "power": 86,
+          "speed": 99,
+          "stamina": 99,
+          "chin": 98,
+          "defense": 97,
+          "ringIQ": 99,
+          "heart": 99,
+          "aggression": 85,
+          "reach": 94,
+          "toughness": 90
+        },
+        "record": { "wins": 56, "losses": 5, "draws": 0, "kos": 37 },
+        "elo": 1850,
+        "belts": [
+          { "name": "WBC", "organization": "WBC", "defenses": 19 },
+          { "name": "WBA", "organization": "WBA", "defenses": 19 }
+        ],
+        "badge": "Float Like a Butterfly",
+        "notes": "Boss character - no obvious weaknesses. Movement speed immune to stamina loss."
+      },
+      {
+        "id": "HW-002",
+        "name": "Joe Louis",
+        "era": "1930s-1950s",
+        "ovr": 98,
+        "archetype": "boxer-puncher",
+        "attributes": {
+          "power": 98,
+          "speed": 90,
+          "stamina": 92,
+          "chin": 88,
+          "defense": 90,
+          "ringIQ": 99,
+          "heart": 95,
+          "aggression": 92,
+          "reach": 88,
+          "toughness": 92
+        },
+        "record": { "wins": 66, "losses": 3, "draws": 0, "kos": 52 },
+        "elo": 1820,
+        "belts": [
+          { "name": "World", "organization": "Recognized", "defenses": 25 }
+        ],
+        "badge": "Brown Bomber",
+        "notes": "Perfect offensive machine. 25 title defenses = elite ring IQ."
+      },
+      {
+        "id": "HW-003",
+        "name": "Jack Johnson",
+        "era": "1900s-1920s",
+        "ovr": 97,
+        "archetype": "defensive-strategist",
+        "attributes": {
+          "power": 88,
+          "speed": 92,
+          "stamina": 95,
+          "chin": 96,
+          "defense": 99,
+          "ringIQ": 98,
+          "heart": 94,
+          "aggression": 75,
+          "reach": 91,
+          "toughness": 95
+        },
+        "record": { "wins": 58, "losses": 6, "draws": 0, "kos": 42 },
+        "elo": 1800,
+        "belts": [
+          { "name": "World", "organization": "Heavyweight", "defenses": 10 }
+        ],
+        "badge": "Galveston Giant",
+        "notes": "Defensive troll. Catches punches effortlessly. Frustrates aggressive players."
+      },
+      {
+        "id": "HW-004",
+        "name": "Rocky Marciano",
+        "era": "1940s-1950s",
+        "ovr": 97,
+        "archetype": "swarmer",
+        "attributes": {
+          "power": 97,
+          "speed": 82,
+          "stamina": 99,
+          "chin": 98,
+          "defense": 84,
+          "ringIQ": 90,
+          "heart": 99,
+          "aggression": 99,
+          "reach": 65,
+          "toughness": 96
+        },
+        "record": { "wins": 49, "losses": 0, "draws": 0, "kos": 43 },
+        "elo": 1800,
+        "belts": [
+          { "name": "World", "organization": "Heavyweight", "defenses": 6 }
+        ],
+        "badge": "Brockton Blockbuster",
+        "notes": "Undefeated engine. Short reach forces inside fighting. Dangerous in late rounds."
+      },
+      {
+        "id": "HW-005",
+        "name": "Lennox Lewis",
+        "era": "1989-2003",
+        "ovr": 97,
+        "archetype": "out-boxer-punisher",
+        "attributes": {
+          "power": 96,
+          "speed": 86,
+          "stamina": 92,
+          "chin": 85,
+          "defense": 93,
+          "ringIQ": 96,
+          "heart": 90,
+          "aggression": 88,
+          "reach": 99,
+          "toughness": 88
+        },
+        "record": { "wins": 41, "losses": 2, "draws": 0, "kos": 32 },
+        "elo": 1800,
+        "belts": [
+          { "name": "IBF", "organization": "IBF", "defenses": 6 },
+          { "name": "WBC", "organization": "WBC", "defenses": 6 }
+        ],
+        "badge": "The Lion",
+        "notes": "Glass cannon. 99 reach + 96 power. KO losses to McCall/Rahman = vulnerability."
+      },
+      {
+        "id": "HW-006",
+        "name": "Larry Holmes",
+        "era": "1973-2002",
+        "ovr": 96,
+        "archetype": "out-boxer",
+        "attributes": {
+          "power": 89,
+          "speed": 94,
+          "stamina": 96,
+          "chin": 97,
+          "defense": 93,
+          "ringIQ": 96,
+          "heart": 99,
+          "aggression": 85,
+          "reach": 92,
+          "toughness": 94
+        },
+        "record": { "wins": 69, "losses": 6, "draws": 0, "kos": 44 },
+        "elo": 1790,
+        "belts": [
+          { "name": "IBF", "organization": "IBF", "defenses": 20 }
+        ],
+        "badge": "Easton Assassin",
+        "notes": "Best jab in history (99). Heart (99) allows recovery from KOs."
+      },
+      {
+        "id": "HW-007",
+        "name": "George Foreman",
+        "era": "1969-1997",
+        "ovr": 96,
+        "archetype": "slugger",
+        "attributes": {
+          "power": 99,
+          "speed": 78,
+          "stamina": 85,
+          "chin": 96,
+          "defense": 92,
+          "ringIQ": 85,
+          "heart": 92,
+          "aggression": 88,
+          "reach": 93,
+          "toughness": 96
+        },
+        "record": { "wins": 76, "losses": 5, "draws": 0, "kos": 68 },
+        "elo": 1780,
+        "belts": [
+          { "name": "WBC", "organization": "WBC", "defenses": 12 },
+          { "name": "IBF", "organization": "IBF", "defenses": 12 }
+        ],
+        "badge": "One Punch Man",
+        "notes": "Max power (99). Hits harder than anyone. Single mistake = critical state. Low stamina era 1."
+      },
+      {
+        "id": "HW-008",
+        "name": "Joe Frazier",
+        "era": "1965-1981",
+        "ovr": 95,
+        "archetype": "swarmer",
+        "attributes": {
+          "power": 94,
+          "speed": 88,
+          "stamina": 97,
+          "chin": 92,
+          "defense": 86,
+          "ringIQ": 92,
+          "heart": 99,
+          "aggression": 96,
+          "reach": 78,
+          "toughness": 93
+        },
+        "record": { "wins": 32, "losses": 4, "draws": 1, "kos": 27 },
+        "elo": 1780,
+        "belts": [
+          { "name": "World", "organization": "Heavyweight", "defenses": 20 }
+        ],
+        "badge": "Smoking Joe",
+        "notes": "Left hook (99). Relentless pressure. Susceptible to uppercuts. High stamina."
+      },
+      {
+        "id": "HW-009",
+        "name": "Mike Tyson",
+        "era": "1984-2020",
+        "ovr": 95,
+        "archetype": "slugger",
+        "attributes": {
+          "power": 98,
+          "speed": 98,
+          "stamina": 82,
+          "chin": 92,
+          "defense": 88,
+          "ringIQ": 94,
+          "heart": 94,
+          "aggression": 97,
+          "reach": 71,
+          "toughness": 88
+        },
+        "record": { "wins": 50, "losses": 6, "draws": 0, "kos": 44 },
+        "elo": 1770,
+        "belts": [
+          { "name": "WBC", "organization": "WBC", "defenses": 10 },
+          { "name": "IBF", "organization": "IBF", "defenses": 10 },
+          { "name": "WBA", "organization": "WBA", "defenses": 10 }
+        ],
+        "badge": "Iron Mike",
+        "notes": "Peak speed (98) terrifying early. Fades badly late (stamina 82). Short reach compensated by speed."
+      },
+      {
+        "id": "HW-010",
+        "name": "Evander Holyfield",
+        "era": "1984-2011",
+        "ovr": 95,
+        "archetype": "boxer-puncher",
+        "attributes": {
+          "power": 90,
+          "speed": 91,
+          "stamina": 96,
+          "chin": 97,
+          "defense": 97,
+          "ringIQ": 91,
+          "heart": 99,
+          "aggression": 90,
+          "reach": 79,
+          "toughness": 94
+        },
+        "record": { "wins": 44, "losses": 10, "draws": 0, "kos": 29 },
+        "elo": 1770,
+        "belts": [
+          { "name": "WBC", "organization": "WBC", "defenses": 15 },
+          { "name": "IBF", "organization": "IBF", "defenses": 15 }
+        ],
+        "badge": "The Real Deal",
+        "notes": "Warrior badge. Gets stronger when hurt (heart 99). Chin (97) legendary."
+      }
+    ]
+  },
+  "middleweight": {
+    "division": "Middleweight (160 lbs)",
+    "belts": ["IBF", "WBA", "WBC", "WBO", "Ring Magazine"],
+    "fighters": [
+      {
+        "id": "MW-001",
+        "name": "Sugar Ray Robinson",
+        "era": "1940s-1960s",
+        "ovr": 99,
+        "archetype": "all-around-superstar",
+        "attributes": {
+          "power": 96,
+          "speed": 98,
+          "stamina": 97,
+          "chin": 95,
+          "defense": 94,
+          "ringIQ": 99,
+          "heart": 98,
+          "aggression": 90,
+          "reach": 86,
+          "toughness": 92
+        },
+        "record": { "wins": 175, "losses": 19, "draws": 6, "kos": 110 },
+        "elo": 1900,
+        "belts": [
+          { "name": "World", "organization": "Middleweight", "defenses": 25 }
+        ],
+        "badge": "The GOAT",
+        "notes": "No obvious weaknesses. Only fighter with 95+ in PWR, SPD, STM. Final boss."
+      },
+      {
+        "id": "MW-002",
+        "name": "Harry Greb",
+        "era": "1913-1926",
+        "ovr": 98,
+        "archetype": "swarmer-volume",
+        "attributes": {
+          "power": 80,
+          "speed": 96,
+          "stamina": 99,
+          "chin": 99,
+          "defense": 90,
+          "ringIQ": 95,
+          "heart": 99,
+          "aggression": 99,
+          "reach": 80,
+          "toughness": 96
+        },
+        "record": { "wins": 300, "losses": 11, "draws": 0, "kos": 60 },
+        "elo": 1880,
+        "belts": [
+          { "name": "World", "organization": "Middleweight", "defenses": 15 }
+        ],
+        "badge": "Pittsburgh Windmill",
+        "notes": "Perpetual motion machine. Throws more punches/round than AI can handle. Low power, maximum volume."
+      },
+      {
+        "id": "MW-003",
+        "name": "Marvelous Marvin Hagler",
+        "era": "1973-1987",
+        "ovr": 97,
+        "archetype": "switch-hitter-brawler",
+        "attributes": {
+          "power": 92,
+          "speed": 90,
+          "stamina": 98,
+          "chin": 99,
+          "defense": 92,
+          "ringIQ": 95,
+          "heart": 99,
+          "aggression": 94,
+          "reach": 83,
+          "toughness": 97
+        },
+        "record": { "wins": 67, "losses": 3, "draws": 0, "kos": 52 },
+        "elo": 1860,
+        "belts": [
+          { "name": "IBF", "organization": "IBF", "defenses": 14 },
+          { "name": "WBC", "organization": "WBC", "defenses": 14 },
+          { "name": "WBA", "organization": "WBA", "defenses": 14 }
+        ],
+        "badge": "Marvelous",
+        "notes": "Granite chin (99). Walked through Hearns' shots. Switch stance (0 accuracy penalty)."
+      },
+      {
+        "id": "MW-004",
+        "name": "Carlos Monzon",
+        "era": "1963-1977",
+        "ovr": 97,
+        "archetype": "out-boxer-sniper",
+        "attributes": {
+          "power": 90,
+          "speed": 88,
+          "stamina": 96,
+          "chin": 97,
+          "defense": 95,
+          "ringIQ": 96,
+          "heart": 95,
+          "aggression": 85,
+          "reach": 87,
+          "toughness": 94
+        },
+        "record": { "wins": 89, "losses": 3, "draws": 9, "kos": 59 },
+        "elo": 1860,
+        "belts": [
+          { "name": "WBC", "organization": "WBC", "defenses": 14 },
+          { "name": "WBA", "organization": "WBA", "defenses": 14 }
+        ],
+        "badge": "Escopeta",
+        "notes": "Methodical and cold. Stiff jab + crushing right hand. Stamina advantage in late rounds."
+      },
+      {
+        "id": "MW-005",
+        "name": "Bernard Hopkins",
+        "era": "1988-2004",
+        "ovr": 96,
+        "archetype": "defensive-mastermind",
+        "attributes": {
+          "power": 82,
+          "speed": 85,
+          "stamina": 94,
+          "chin": 95,
+          "defense": 99,
+          "ringIQ": 99,
+          "heart": 94,
+          "aggression": 75,
+          "reach": 81,
+          "toughness": 92
+        },
+        "record": { "wins": 66, "losses": 20, "draws": 2, "kos": 20 },
+        "elo": 1840,
+        "belts": [
+          { "name": "IBF", "organization": "IBF", "defenses": 20 },
+          { "name": "WBC", "organization": "WBC", "defenses": 20 }
+        ],
+        "badge": "The Executioner",
+        "notes": "Wins with mind (DEF 99, RIQ 99). Old school tricks: superior clinching, drain stamina, counter bonuses."
+      },
+      {
+        "id": "MW-006",
+        "name": "Jake LaMotta",
+        "era": "1941-1954",
+        "ovr": 95,
+        "archetype": "swarmer-brawler",
+        "attributes": {
+          "power": 88,
+          "speed": 84,
+          "stamina": 97,
+          "chin": 99,
+          "defense": 88,
+          "ringIQ": 90,
+          "heart": 99,
+          "aggression": 94,
+          "reach": 80,
+          "toughness": 95
+        },
+        "record": { "wins": 83, "losses": 19, "draws": 4, "kos": 30 },
+        "elo": 1840,
+        "belts": [
+          { "name": "World", "organization": "Middleweight", "defenses": 6 }
+        ],
+        "badge": "Bronx Bull",
+        "notes": "Chin (99) - cannot be knocked out. Relentless pressure fighter."
+      },
+      {
+        "id": "MW-007",
+        "name": "Mickey Walker",
+        "era": "1919-1935",
+        "ovr": 95,
+        "archetype": "power-puncher",
+        "attributes": {
+          "power": 94,
+          "speed": 88,
+          "stamina": 95,
+          "chin": 96,
+          "defense": 96,
+          "ringIQ": 85,
+          "heart": 92,
+          "aggression": 92,
+          "reach": 82,
+          "toughness": 93
+        },
+        "record": { "wins": 155, "losses": 19, "draws": 4, "kos": 60 },
+        "elo": 1840,
+        "belts": [
+          { "name": "World", "organization": "Middleweight", "defenses": 18 }
+        ],
+        "badge": "Toy Bulldog",
+        "notes": "Undersized but deadly. Power (94) of a heavyweight. High defense for a power puncher."
+      },
+      {
+        "id": "MW-008",
+        "name": "Stanley Ketchel",
+        "era": "1903-1910",
+        "ovr": 94,
+        "archetype": "power-puncher",
+        "attributes": {
+          "power": 99,
+          "speed": 86,
+          "stamina": 90,
+          "chin": 90,
+          "defense": 78,
+          "ringIQ": 85,
+          "heart": 88,
+          "aggression": 94,
+          "reach": 82,
+          "toughness": 90
+        },
+        "record": { "wins": 64, "losses": 4, "draws": 0, "kos": 49 },
+        "elo": 1820,
+        "belts": [
+          { "name": "World", "organization": "Middleweight", "defenses": 10 }
+        ],
+        "badge": "Michigan Assassin",
+        "notes": "Max power (99). Glass defense (78). One-shot killer archetype."
+      },
+      {
+        "id": "MW-009",
+        "name": "Bob Fitzsimmons",
+        "era": "1883-1914",
+        "ovr": 94,
+        "archetype": "technical-master",
+        "attributes": {
+          "power": 98,
+          "speed": 85,
+          "stamina": 92,
+          "chin": 88,
+          "defense": 85,
+          "ringIQ": 94,
+          "heart": 90,
+          "aggression": 88,
+          "reach": 84,
+          "toughness": 88
+        },
+        "record": { "wins": 92, "losses": 43, "draws": 0, "kos": 78 },
+        "elo": 1820,
+        "belts": [
+          { "name": "World", "organization": "Middleweight", "defenses": 8 }
+        ],
+        "badge": "Freckled Wonder",
+        "notes": "Invented solar plexus punch. Massive body damage. High power despite lower weight."
+      },
+      {
+        "id": "MW-010",
+        "name": "Roy Jones Jr.",
+        "era": "1989-2018",
+        "ovr": 94,
+        "archetype": "speed-demon",
+        "attributes": {
+          "power": 88,
+          "speed": 99,
+          "stamina": 88,
+          "chin": 82,
+          "defense": 90,
+          "ringIQ": 90,
+          "heart": 92,
+          "aggression": 88,
+          "reach": 85,
+          "toughness": 86
+        },
+        "record": { "wins": 66, "losses": 9, "draws": 0, "kos": 47 },
+        "elo": 1820,
+        "belts": [
+          { "name": "IBF", "organization": "IBF", "defenses": 10 },
+          { "name": "WBC", "organization": "WBC", "defenses": 10 }
+        ],
+        "badge": "Pound for Pound King",
+        "notes": "Fastest hands/feet ever (99). Reliant on reflexes. Chin (82) is vulnerability."
+      }
+    ]
+  },
+  "lightweight": {
+    "division": "Lightweight (135 lbs)",
+    "belts": ["IBF", "WBA", "WBC", "WBO", "Ring Magazine"],
+    "fighters": [
+      {
+        "id": "LW-001",
+        "name": "Roberto Duran",
+        "era": "1968-2001",
+        "ovr": 99,
+        "archetype": "swarmer-brawler",
+        "attributes": {
+          "power": 95,
+          "speed": 92,
+          "stamina": 96,
+          "chin": 97,
+          "defense": 96,
+          "ringIQ": 95,
+          "heart": 98,
+          "aggression": 99,
+          "reach": 80,
+          "toughness": 96
+        },
+        "record": { "wins": 103, "losses": 16, "draws": 0, "kos": 70 },
+        "elo": 1880,
+        "belts": [
+          { "name": "WBC", "organization": "WBC", "defenses": 12 },
+          { "name": "WBA", "organization": "WBA", "defenses": 12 }
+        ],
+        "badge": "Manos de Piedra",
+        "notes": "Mythical at 135. Power (95) + Defense (96) of master. Inside fighting (99). Ultimate pressure fighter."
+      },
+      {
+        "id": "LW-002",
+        "name": "Benny Leonard",
+        "era": "1911-1932",
+        "ovr": 98,
+        "archetype": "technical-mastermind",
+        "attributes": {
+          "power": 88,
+          "speed": 94,
+          "stamina": 95,
+          "chin": 90,
+          "defense": 97,
+          "ringIQ": 99,
+          "heart": 94,
+          "aggression": 82,
+          "reach": 85,
+          "toughness": 91
+        },
+        "record": { "wins": 209, "losses": 5, "draws": 0, "kos": 70 },
+        "elo": 1870,
+        "belts": [
+          { "name": "World", "organization": "Lightweight", "defenses": 20 }
+        ],
+        "badge": "Ghetto Wizard",
+        "notes": "Cerebral assassin. Ring IQ (99) allows feinting out of position. Perfect counter-puncher."
+      },
+      {
+        "id": "LW-003",
+        "name": "Pernell Whitaker",
+        "era": "1984-2001",
+        "ovr": 97,
+        "archetype": "defensive-specialist",
+        "attributes": {
+          "power": 75,
+          "speed": 96,
+          "stamina": 96,
+          "chin": 95,
+          "defense": 99,
+          "ringIQ": 97,
+          "heart": 95,
+          "aggression": 70,
+          "reach": 82,
+          "toughness": 92
+        },
+        "record": { "wins": 40, "losses": 4, "draws": 1, "kos": 17 },
+        "elo": 1860,
+        "belts": [
+          { "name": "WBC", "organization": "WBC", "defenses": 11 },
+          { "name": "WBA", "organization": "WBA", "defenses": 11 }
+        ],
+        "badge": "Sweet Pea",
+        "notes": "Elusive defense (99). Wider auto-dodge window than any fighter. Slip stamina cost reduced."
+      },
+      {
+        "id": "LW-004",
+        "name": "Joe Gans",
+        "era": "1891-1910",
+        "ovr": 97,
+        "archetype": "counter-puncher",
+        "attributes": {
+          "power": 92,
+          "speed": 93,
+          "stamina": 98,
+          "chin": 92,
+          "defense": 95,
+          "ringIQ": 98,
+          "heart": 95,
+          "aggression": 85,
+          "reach": 83,
+          "toughness": 91
+        },
+        "record": { "wins": 141, "losses": 16, "draws": 0, "kos": 100 },
+        "elo": 1860,
+        "belts": [
+          { "name": "World", "organization": "Lightweight", "defenses": 15 }
+        ],
+        "badge": "Old Master",
+        "notes": "Pioneer who perfected jab & cross. Incredible stamina tank (98). Balanced threat."
+      },
+      {
+        "id": "LW-005",
+        "name": "Julio Cesar Chavez",
+        "era": "1980-2005",
+        "ovr": 96,
+        "archetype": "pressure-fighter",
+        "attributes": {
+          "power": 90,
+          "speed": 85,
+          "stamina": 99,
+          "chin": 99,
+          "defense": 90,
+          "ringIQ": 94,
+          "heart": 99,
+          "aggression": 98,
+          "reach": 81,
+          "toughness": 95
+        },
+        "record": { "wins": 107, "losses": 6, "draws": 2, "kos": 86 },
+        "elo": 1850,
+        "belts": [
+          { "name": "WBC", "organization": "WBC", "defenses": 16 },
+          { "name": "WBA", "organization": "WBA", "defenses": 16 }
+        ],
+        "badge": "El Gran Campeon",
+        "notes": "Chin (99), Body (99). Cuts off ring, liver shots drain stamina. Slow starter, stronger late."
+      },
+      {
+        "id": "LW-006",
+        "name": "Ike Williams",
+        "era": "1940-1955",
+        "ovr": 95,
+        "archetype": "power-puncher",
+        "attributes": {
+          "power": 96,
+          "speed": 90,
+          "stamina": 92,
+          "chin": 88,
+          "defense": 88,
+          "ringIQ": 90,
+          "heart": 92,
+          "aggression": 92,
+          "reach": 82,
+          "toughness": 89
+        },
+        "record": { "wins": 125, "losses": 24, "draws": 0, "kos": 60 },
+        "elo": 1840,
+        "belts": [
+          { "name": "World", "organization": "Lightweight", "defenses": 12 }
+        ],
+        "badge": "Finisher",
+        "notes": "Hardest puncher at 135. Power (96) dominates division. Aggressive style."
+      },
+      {
+        "id": "LW-007",
+        "name": "Carlos Ortiz",
+        "era": "1958-1972",
+        "ovr": 95,
+        "archetype": "balanced-fighter",
+        "attributes": {
+          "power": 89,
+          "speed": 91,
+          "stamina": 94,
+          "chin": 92,
+          "defense": 93,
+          "ringIQ": 95,
+          "heart": 93,
+          "aggression": 88,
+          "reach": 83,
+          "toughness": 90
+        },
+        "record": { "wins": 61, "losses": 7, "draws": 1, "kos": 29 },
+        "elo": 1840,
+        "belts": [
+          { "name": "World", "organization": "Lightweight", "defenses": 15 }
+        ],
+        "badge": "Puerto Rican Pride",
+        "notes": "Dominant champion. Balanced fundamentals. Strong jab & defense."
+      },
+      {
+        "id": "LW-008",
+        "name": "Tony Canzoneri",
+        "era": "1925-1939",
+        "ovr": 94,
+        "archetype": "volume-puncher",
+        "attributes": {
+          "power": 85,
+          "speed": 95,
+          "stamina": 95,
+          "chin": 94,
+          "defense": 94,
+          "ringIQ": 88,
+          "heart": 92,
+          "aggression": 91,
+          "reach": 80,
+          "toughness": 90
+        },
+        "record": { "wins": 141, "losses": 24, "draws": 0, "kos": 44 },
+        "elo": 1830,
+        "belts": [
+          { "name": "World", "organization": "Three-Division", "defenses": 20 }
+        ],
+        "badge": "Three Division Champ",
+        "notes": "High speed & volume. Multiple division titles. Strong fundamentals."
+      },
+      {
+        "id": "LW-009",
+        "name": "Floyd Mayweather Jr.",
+        "era": "1996-2017",
+        "ovr": 94,
+        "archetype": "defensive-master",
+        "attributes": {
+          "power": 78,
+          "speed": 95,
+          "stamina": 94,
+          "chin": 92,
+          "defense": 98,
+          "ringIQ": 98,
+          "heart": 91,
+          "aggression": 70,
+          "reach": 84,
+          "toughness": 89
+        },
+        "record": { "wins": 50, "losses": 0, "draws": 0, "kos": 27 },
+        "elo": 1830,
+        "belts": [
+          { "name": "WBC", "organization": "WBC", "defenses": 9 },
+          { "name": "WBA", "organization": "WBA", "defenses": 9 }
+        ],
+        "badge": "Pretty Boy",
+        "notes": "Defensive genius at 135. Shield-heavy. Perfect record. Lower power than welterweight version."
+      },
+      {
+        "id": "LW-010",
+        "name": "Henry Armstrong",
+        "era": "1931-1945",
+        "ovr": 94,
+        "archetype": "volume-fighter",
+        "attributes": {
+          "power": 88,
+          "speed": 88,
+          "stamina": 99,
+          "chin": 96,
+          "defense": 82,
+          "ringIQ": 90,
+          "heart": 97,
+          "aggression": 98,
+          "reach": 79,
+          "toughness": 92
+        },
+        "record": { "wins": 151, "losses": 21, "draws": 0, "kos": 101 },
+        "elo": 1830,
+        "belts": [
+          { "name": "World", "organization": "Three-Division", "defenses": 25 }
+        ],
+        "badge": "Homicide Hank",
+        "notes": "Throws 100+ punches/round. Stamina (99) max. Non-stop volume. Three-division champion."
+      }
+    ]
+  },
+  "legendaryMatchups": [
+    {
+      "fighter1": "HW-001",
+      "fighter2": "HW-002",
+      "name": "Ali vs. Louis",
+      "prediction": "Ali would outbox but Louis' power & ring IQ dangerous"
+    },
+    {
+      "fighter1": "MW-001",
+      "fighter2": "MW-003",
+      "name": "Robinson vs. Hagler",
+      "prediction": "Robinson's perfect rating edges out Hagler's granite chin"
+    },
+    {
+      "fighter1": "LW-001",
+      "fighter2": "LW-002",
+      "name": "Duran vs. Leonard",
+      "prediction": "Duran's inside game + aggression (99) vs. Leonard's IQ (99)"
+    }
+  ]
+}
