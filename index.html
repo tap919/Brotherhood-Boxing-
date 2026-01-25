@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boxing Manager</title>
+<link rel="stylesheet" href="styles.css">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+<!-- Top HUD would remain from existing game; Franchise hub will be a separate panel -->
+<div id="franchise-root" style="padding:12px"></div>
+
+<!-- existing game container remains below; we won't remove core gameplay -->
+<nav id="control-dock" class="glass-panel" style="position:fixed; bottom:0; left:0; right:0; display:flex; gap:6px; justify-content:space-around; padding:6px;">
+  <button class="nav-btn active" data-view="map" onclick="window.game?.showView('map')">City</button>
+  <button class="nav-btn" data-view="gym" onclick="window.game?.showView('gym')">Gym</button>
+  <button class="nav-btn" data-view="office" onclick="window.game?.showView('office')">Office</button>
+  <button class="nav-btn" data-view="fight" onclick="window.game?.showView('fight')">Fight</button>
+  <button class="nav-btn" data-view="franchise" onclick="window.TwoFranchiseManager.renderHub?.()">Franchise</button>
+</nav>
+
+<script src="game.js"></script>
+<script src="twofranchise.js"></script>
+</body>
+</html>

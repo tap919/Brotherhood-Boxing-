@@ -1,0 +1,2261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GlassFist Manager - Enhanced</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Oxanium:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Oxanium', monospace;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(255, 0, 255, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(0, 219, 222, 0.1) 0%, transparent 20%);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px) saturate(180%);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.7s ease;
+        }
+
+        .glass-panel:hover::before {
+            left: 100%;
+        }
+
+        .glass-panel:hover {
+            transform: translateY(-5px);
+            box-shadow: 
+                0 12px 40px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.8rem;
+            font-weight: 900;
+            background: linear-gradient(90deg, #00dbde, #fc00ff, #00dbde);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 30px rgba(0, 219, 222, 0.5);
+            margin-bottom: 10px;
+            position: relative;
+            display: inline-block;
+            letter-spacing: 2px;
+            animation: titleGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            0% { text-shadow: 0 0 20px rgba(0, 219, 222, 0.5); }
+            100% { text-shadow: 0 0 30px rgba(252, 0, 255, 0.7); }
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.8;
+            margin-bottom: 20px;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        .title-badge {
+            display: inline-block;
+            background: linear-gradient(90deg, #ff416c, #ff4b2b);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-left: 10px;
+            vertical-align: middle;
+            transform: rotate(5deg);
+            animation: badgePulse 2s infinite;
+        }
+
+        @keyframes badgePulse {
+            0%, 100% { transform: rotate(5deg) scale(1); }
+            50% { transform: rotate(5deg) scale(1.05); }
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            flex-wrap: wrap;
+            gap: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .status-item {
+            text-align: center;
+            position: relative;
+            padding: 0 15px;
+        }
+
+        .status-item::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 20%;
+            height: 60%;
+            width: 1px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .status-item:last-child::after {
+            display: none;
+        }
+
+        .status-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.9rem;
+            color: #00dbde;
+            text-shadow: 0 0 10px rgba(0, 219, 222, 0.5);
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .status-icon {
+            font-size: 1.4rem;
+        }
+
+        .status-label {
+            font-size: 0.85rem;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Tabs */
+        .tab-nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 12px 24px;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tab-btn i {
+            font-size: 1.1rem;
+        }
+
+        .tab-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .tab-btn:hover::before {
+            left: 100%;
+        }
+
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(0, 219, 222, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(90deg, #00dbde, #fc00ff);
+            border-color: #00dbde;
+            box-shadow: 0 5px 15px rgba(0, 219, 222, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .widget-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #00dbde;
+            border-bottom: 2px solid rgba(0, 219, 222, 0.3);
+            padding-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .widget-title i {
+            font-size: 1.3rem;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .widget {
+            min-height: 220px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-bar {
+            background: rgba(0, 0, 0, 0.3);
+            height: 22px;
+            border-radius: 11px;
+            overflow: hidden;
+            margin: 5px 0;
+            position: relative;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .stat-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00dbde, #fc00ff);
+            transition: width 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shine 2s infinite;
+        }
+
+        @keyframes shine {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 0 5px;
+        }
+
+        .stat-label span:first-child {
+            color: #fc00ff;
+            font-weight: 600;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        button {
+            background: linear-gradient(90deg, #00dbde, #fc00ff);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            padding: 16px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 219, 222, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.7s ease;
+        }
+
+        button:hover::before {
+            left: 100%;
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 219, 222, 0.4);
+        }
+
+        button:active {
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        button.danger {
+            background: linear-gradient(90deg, #ff416c, #ff4b2b);
+            box-shadow: 0 4px 15px rgba(255, 65, 108, 0.2);
+        }
+
+        button.success {
+            background: linear-gradient(90deg, #56ab2f, #a8e063);
+            box-shadow: 0 4px 15px rgba(86, 171, 47, 0.2);
+        }
+
+        button.secondary {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        /* Gym Map */
+        .gym-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .gym-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+            border-left: 5px solid #00dbde;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .gym-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: #fc00ff;
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .gym-card:hover::before {
+            transform: scaleY(1);
+        }
+
+        .gym-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.03);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .gym-card.owned {
+            border-left-color: #56ab2f;
+            background: rgba(86, 171, 47, 0.1);
+        }
+
+        .gym-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            color: #fc00ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .gym-icon {
+            font-size: 1.5rem;
+        }
+
+        .gym-info {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .gym-info p {
+            margin: 5px 0;
+        }
+
+        .gym-cost {
+            color: #fc00ff;
+            font-weight: bold;
+            margin-top: 10px;
+            font-size: 1.1rem;
+            padding: 8px;
+            background: rgba(252, 0, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        /* Fighter Cards */
+        .fighter-roster {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .fighter-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+            border-left: 5px solid #00dbde;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .fighter-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .fighter-card.starter {
+            border-left-color: #fc00ff;
+            background: linear-gradient(135deg, rgba(252, 0, 255, 0.1), rgba(0, 219, 222, 0.05));
+        }
+
+        .fighter-card.selected {
+            border-left-color: #56ab2f;
+            box-shadow: 0 0 0 2px #56ab2f;
+        }
+
+        .fighter-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.4rem;
+            color: #fc00ff;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .fighter-stats {
+            font-size: 0.95rem;
+            margin-bottom: 15px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 5px 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+        }
+
+        .stat-row span:first-child {
+            color: #00dbde;
+        }
+
+        .fighter-badge {
+            display: inline-block;
+            background: linear-gradient(90deg, #ff416c, #ff4b2b);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+
+        /* Scout Report */
+        .scout-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 20px 0;
+            padding-right: 10px;
+        }
+
+        .scout-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .scout-list::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        .scout-list::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #00dbde, #fc00ff);
+            border-radius: 4px;
+        }
+
+        .scout-entry {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 12px;
+            border-left: 4px solid #00dbde;
+            transition: all 0.3s ease;
+        }
+
+        .scout-entry:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        .scout-name {
+            color: #fc00ff;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .scout-stats {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .scout-stat {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 3px 10px;
+            border-radius: 10px;
+        }
+
+        /* Fight Arena */
+        .fight-arena {
+            position: relative;
+            margin: 20px 0;
+        }
+
+        #fightCanvas {
+            background: #000;
+            border-radius: 15px;
+            border: 3px solid #00dbde;
+            box-shadow: 
+                0 0 40px rgba(0, 219, 222, 0.5),
+                inset 0 0 30px rgba(0, 0, 0, 0.8);
+            margin: 20px auto;
+            display: block;
+            image-rendering: pixelated;
+        }
+
+        .canvas-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .arena-lights {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            height: 10px;
+            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, transparent 70%);
+            filter: blur(5px);
+            animation: arenaLights 4s infinite alternate;
+        }
+
+        @keyframes arenaLights {
+            0% { opacity: 0.3; }
+            100% { opacity: 0.7; }
+        }
+
+        .cutscene-container {
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid rgba(0, 219, 222, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cutscene-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, #00dbde, #fc00ff);
+        }
+
+        .cutscene-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            color: #fc00ff;
+            text-align: center;
+            margin: 10px 0;
+            text-shadow: 0 0 15px rgba(252, 0, 255, 0.7);
+            animation: textGlow 2s infinite alternate;
+        }
+
+        @keyframes textGlow {
+            0% { text-shadow: 0 0 10px rgba(252, 0, 255, 0.7); }
+            100% { text-shadow: 0 0 20px rgba(0, 219, 222, 0.8); }
+        }
+
+        .pixel-art {
+            font-size: 5rem;
+            margin: 10px 0;
+            line-height: 1;
+            filter: drop-shadow(0 0 10px rgba(252, 0, 255, 0.7));
+            animation: pixelBob 3s infinite ease-in-out;
+        }
+
+        @keyframes pixelBob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .fight-log {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .log-entry {
+            padding: 10px 15px;
+            margin: 8px 0;
+            border-left: 4px solid;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 0 8px 8px 0;
+            animation: logEntry 0.5s ease;
+        }
+
+        @keyframes logEntry {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .log-round {
+            border-color: #00dbde;
+            background: rgba(0, 219, 222, 0.1);
+        }
+
+        .log-knockdown {
+            border-color: #ff416c;
+            background: rgba(255, 65, 108, 0.1);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .promotion-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 15px 0;
+            border-left: 5px solid #fc00ff;
+            transition: all 0.3s ease;
+        }
+
+        .promotion-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .promo-title {
+            font-family: 'Orbitron', sans-serif;
+            color: #fc00ff;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .promo-desc {
+            font-size: 0.95rem;
+            opacity: 0.9;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .promo-cost {
+            color: #fc00ff;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-top: 10px;
+        }
+
+        /* Glowing effects */
+        .glow {
+            position: relative;
+        }
+
+        .glow::after {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            right: -5px;
+            bottom: -5px;
+            background: inherit;
+            border-radius: inherit;
+            filter: blur(10px);
+            opacity: 0.5;
+            z-index: -1;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            h1 {
+                font-size: 3rem;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .dashboard-grid, .fighter-roster, .gym-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                grid-template-columns: 1fr;
+            }
+            
+            #fightCanvas {
+                width: 100%;
+                height: auto;
+            }
+
+            .status-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .status-item {
+                padding: 10px 0;
+            }
+
+            .status-item::after {
+                display: none;
+            }
+
+            .tab-nav {
+                justify-content: center;
+            }
+
+            .tab-btn {
+                padding: 10px 15px;
+                font-size: 0.8rem;
+            }
+
+            .pixel-art {
+                font-size: 4rem;
+            }
+
+            .cutscene-text {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Fighter stats visualization */
+        .fighter-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00dbde, #fc00ff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-size: 2.5rem;
+            box-shadow: 0 0 20px rgba(0, 219, 222, 0.5);
+        }
+
+        .fighter-tag {
+            display: inline-block;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin: 0 5px 5px 0;
+        }
+
+        /* Modern UI elements */
+        .progress-ring {
+            width: 60px;
+            height: 60px;
+        }
+
+        .progress-ring circle {
+            fill: none;
+            stroke-width: 5;
+            stroke-linecap: round;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        .progress-ring-bg {
+            stroke: rgba(255, 255, 255, 0.1);
+        }
+
+        .progress-ring-fill {
+            stroke: url(#gradient);
+            transition: stroke-dashoffset 0.5s ease;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: rgba(0, 0, 0, 0.9);
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 100;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.85rem;
+            border: 1px solid rgba(0, 219, 222, 0.3);
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Loading animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #00dbde;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Confetti effect */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #fc00ff;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>GLASSFIST MANAGER <span class="title-badge">PRO EDITION</span></h1>
+            <div class="subtitle">Build Your Boxing Empire • Recruit • Train • Dominate</div>
+            <div class="status-bar">
+                <div class="status-item">
+                    <div class="status-label">BALANCE</div>
+                    <div class="status-value"><i class="fas fa-coins status-icon"></i> <span id="money">$150,000</span></div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">REPUTATION</div>
+                    <div class="status-value"><i class="fas fa-star status-icon"></i> <span id="reputation">50</span></div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">BRAND VALUE</div>
+                    <div class="status-value"><i class="fas fa-chart-line status-icon"></i> <span id="brandValue">$0</span></div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">WEEK</div>
+                    <div class="status-value"><i class="fas fa-calendar-alt status-icon"></i> <span id="week">1</span></div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">FIGHTERS</div>
+                    <div class="status-value"><i class="fas fa-users status-icon"></i> <span id="fighterCount">1</span></div>
+                </div>
+            </div>
+        </header>
+
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab('dashboard', this)"><i class="fas fa-home"></i> DASHBOARD</button>
+            <button class="tab-btn" onclick="switchTab('gym', this)"><i class="fas fa-dumbbell"></i> GYM NETWORK</button>
+            <button class="tab-btn" onclick="switchTab('roster', this)"><i class="fas fa-user-friends"></i> FIGHTER ROSTER</button>
+            <button class="tab-btn" onclick="switchTab('scout', this)"><i class="fas fa-search"></i> SCOUT TALENT</button>
+            <button class="tab-btn" onclick="switchTab('promotion', this)"><i class="fas fa-bullhorn"></i> PROMOTION</button>
+            <button class="tab-btn" onclick="switchTab('fight', this)"><i class="fas fa-fist-raised"></i> FIGHT NIGHT</button>
+        </div>
+
+        <!-- DASHBOARD TAB -->
+        <div id="dashboard" class="tab-content active">
+            <div class="glass-panel">
+                <div class="widget-title"><i class="fas fa-flag"></i> PROMOTION HEADQUARTERS</div>
+                <p id="promotionStatus">Ready to make moves in the boxing world...</p>
+                <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <p style="font-size: 0.95rem; opacity: 0.8;">Week <span id="dashWeek">1</span> • Facilities: <span id="facilitiesStatus">1 Gym</span></p>
+                    </div>
+                    <div>
+                        <button onclick="advanceWeek()" class="success"><i class="fas fa-forward"></i> ADVANCE WEEK</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="glass-panel widget">
+                    <div class="widget-title"><i class="fas fa-user"></i> ACTIVE FIGHTER</div>
+                    <div id="activeFighter">
+                        <div class="fighter-avatar">
+                            <i class="fas fa-user-ninja"></i>
+                        </div>
+                        <h3 id="activeName" style="text-align: center; margin-bottom: 15px;">Kid Dynamite</h3>
+                        <p style="text-align: center; margin-bottom: 10px;">Record: <span id="activeRecord">0-0-0</span></p>
+                        <p style="margin-bottom: 5px;">Morale: <span id="activeMorale">75</span>/100</p>
+                        <div class="stat-bar">
+                            <div class="stat-fill" id="moraleBar" style="width: 75%;"></div>
+                        </div>
+                        <div style="margin-top: 15px; display: flex; flex-wrap: wrap; gap: 5px; justify-content: center;">
+                            <span class="fighter-tag" style="background: rgba(0, 219, 222, 0.3);">Starter</span>
+                            <span class="fighter-tag" style="background: rgba(252, 0, 255, 0.3);">Potential</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel widget">
+                    <div class="widget-title"><i class="fas fa-money-bill-wave"></i> REVENUE STREAMS</div>
+                    <div id="revenueInfo">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span>Ticket Sales:</span>
+                            <span>$0</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span>Sponsorships:</span>
+                            <span id="sponsorRevenue">$0</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span>PPV Bonuses:</span>
+                            <span id="ppvRevenue">$0</span>
+                        </div>
+                        <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(0,219,222,0.3);">
+                            <div style="display: flex; justify-content: space-between; font-weight: bold;">
+                                <span>Next Fight Purse:</span>
+                                <span id="nextPurse">TBD</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel widget">
+                    <div class="widget-title"><i class="fas fa-chart-pie"></i> BRAND METRICS</div>
+                    <div style="margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span>Social Media:</span>
+                            <span id="dashSocialMedia">30</span>/100
+                        </div>
+                        <div class="stat-bar">
+                            <div class="stat-fill" id="socialBar" style="width: 30%;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span>Sponsorship Pull:</span>
+                            <span id="dashSponsorship">40</span>/100
+                        </div>
+                        <div class="stat-bar">
+                            <div class="stat-fill" id="sponsorBar" style="width: 40%;"></div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px; padding: 10px; background: rgba(0, 0, 0, 0.3); border-radius: 8px;">
+                        <p style="font-size: 0.9rem; opacity: 0.8; text-align: center;">Higher metrics = Better deals</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GYM NETWORK TAB -->
+        <div id="gym" class="tab-content">
+            <div class="glass-panel">
+                <div class="widget-title"><i class="fas fa-dumbbell"></i> BUILD YOUR BOXING EMPIRE</div>
+                <p style="margin-bottom: 20px; font-size: 0.95rem;">Acquire gyms to increase training capacity and unlock facilities. Travel to scout fresh talent.</p>
+                <div class="gym-grid" id="gymGrid">
+                    <!-- Gyms populate here -->
+                </div>
+            </div>
+
+            <div class="glass-panel">
+                <div class="widget-title"><i class="fas fa-building"></i> OWNED FACILITIES</div>
+                <div id="ownedGyms">
+                    <p>You own: Downtown Boxing Club (Starter Gym)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROSTER TAB -->
+        <div id="roster" class="tab-content">
+            <div class="glass-panel">
+                <div class="widget-title"><i class="fas fa-user-friends"></i> YOUR FIGHTERS</div>
+                <div class="fighter-roster" id="rosterDisplay">
+                    <!-- Fighters populate here -->
+                </div>
+            </div>
+
+            <div class="glass-panel">
+                <div class="widget-title"><i class="fas fa-running"></i> TRAINING OPTIONS</div>
+                <p style="margin-bottom: 15px; font-size: 0.95rem;">Select a fighter, then choose training to improve their attributes.</p>
+                <div class="controls">
+                    <button onclick="trainFighter('power')" id="trainPowerBtn"><i class="fas fa-fist-raised"></i> POWER CAMP ($1,500)</button>
+                    <button onclick="trainFighter('speed')" id="trainSpeedBtn"><i class="fas fa-bolt"></i> SPEED DRILLS ($1,200)</button>
+                    <button onclick="trainFighter('defense')" id="trainDefenseBtn"><i class="fas fa-shield-alt"></i> DEFENSE CLINIC ($1,500)</button>
+                    <button onclick="trainFighter('stamina')" id="trainStaminaBtn"><i class="fas fa-heartbeat"></i> CONDITIONING ($1,000)</button>
+                    <button onclick="trainFighter('chin')" id="trainChinBtn"><i class="fas fa-hard-hat"></i> CHIN STRENGTHENING ($1,800)</button>
+                    <button onclick="trainFighter('rest')" class="success" id="trainRestBtn"><i class="fas fa-bed"></i> REST & RECOVERY ($500)</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCOUT TAB -->
+        <div id="scout" class="tab-content">
+            <div class="glass-panel">
+                <div class="widget-title"><i class="fas fa-search"></i> SCOUTING NETWORK</div>
+                <p style="margin-bottom: 15px;">Travel between gyms to discover fresh talent. Higher reputation = better prospects.</p>
+                <button onclick="runScouting()" class="success" style="width: 100%; margin-bottom: 20px; padding: 18px;"><i class="fas fa-binoculars"></i> SCOUT NEW TALENT ($5,000)</button>
+                <div class="scout-list" id="scoutList">
+                    <div class="scout-entry" style="color: #94a3b8; text-align: center; padding: 30px;">
+                        <i class="fas fa-search" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5;"></i>
+                        <p>Available prospects will appear here after scouting</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PROMOTION TAB -->
+        <div id="promotion" class="tab-content">
+            <div class="glass-panel">
+                <div class="widget-title"><i class="fas fa-bullhorn"></i> BRAND DEVELOPMENT</div>
+                <p style="margin-bottom: 20px;">Invest in your fighters' marketability. Higher brand value = bigger sponsors and PPV cuts.</p>
+                
+                <div class="promotion-card">
+                    <div class="promo-title"><i class="fab fa-instagram"></i> SOCIAL MEDIA BLITZ</div>
+                    <div class="promo-desc">Pump up your fighter's Instagram presence. +15 social media, +5k brand value.</div>
+                    <button onclick="doPromotion('social')" class="secondary" style="width: 100%;"><i class="fas fa-rocket"></i> PROMOTE ($3,000)</button>
+                </div>
+
+                <div class="promotion-card">
+                    <div class="promo-title"><i class="fas fa-handshake"></i> SPONSOR NEGOTIATIONS</div>
+                    <div class="promo-desc">Land major endorsement deals. +10 sponsorship, +8k brand value.</div>
+                    <button onclick="doPromotion('sponsor')" class="secondary" style="width: 100%;"><i class="fas fa-file-contract"></i> NEGOTIATE ($5,000)</button>
+                </div>
+
+                <div class="promotion-card">
+                    <div class="promo-title"><i class="fas fa-film"></i> DOCUMENTARY SERIES</div>
+                    <div class="promo-desc">Film your fighter's journey. +20 social media, +10k brand value, -1 morale.</div>
+                    <button onclick="doPromotion('documentary')" class="secondary" style="width: 100%;"><i class="fas fa-video"></i> PRODUCE ($8,000)</button>
+                </div>
+
+                <div class="promotion-card">
+                    <div class="promo-title"><i class="fas fa-tv"></i> PPV SPECIAL EVENT</div>
+                    <div class="promo-desc">Build hype for the next fight. Multiplies fight purse by 1.5x if you win.</div>
+                    <button onclick="doPromotion('ppv')" class="secondary" style="width: 100%;"><i class="fas fa-satellite-dish"></i> BOOK EVENT ($6,000)</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- FIGHT TAB -->
+        <div id="fight" class="tab-content">
+            <div class="glass-panel">
+                <div class="widget-title"><i class="fas fa-fist-raised"></i> FIGHT SIMULATION</div>
+                <div id="upcomingFightInfo" style="background: rgba(0, 0, 0, 0.3); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                    <h3 style="color: #fc00ff; margin-bottom: 10px;" id="opponentName">Waiting for opponent...</h3>
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                        <div><strong>Record:</strong> <span id="opponentRecord">--</span></div>
+                        <div><strong>Style:</strong> <span id="opponentStyle">--</span></div>
+                        <div><strong>Status:</strong> <span id="opponentStatus" style="color: #56ab2f;">Ready</span></div>
+                    </div>
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1rem;">
+                            <span>Purse:</span>
+                            <span>$<span id="fightPurse">15000</span> + Bonuses</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fight-arena">
+                    <canvas id="fightCanvas" width="800" height="400"></canvas>
+                    <div class="canvas-overlay">
+                        <div class="arena-lights"></div>
+                    </div>
+                </div>
+
+                <div class="cutscene-container" id="cutscene">
+                    <div class="pixel-art">🥊</div>
+                    <div class="cutscene-text" id="cutsceneText">PREPARE FOR BATTLE</div>
+                    <p style="text-align: center; opacity: 0.7; margin-top: 10px;">WATCH • MANAGE • WIN</p>
+                </div>
+
+                <div class="controls" id="fightControls">
+                    <button onclick="startFight()" id="startBtn" class="success"><i class="fas fa-play"></i> START FIGHT</button>
+                    <button onclick="healFighter()" id="healBtn" disabled><i class="fas fa-plus-square"></i> HEAL CORNER (+20 HP)</button>
+                    <button onclick="giveTip('aggressive')" id="aggressiveBtn" disabled class="danger"><i class="fas fa-fire"></i> GO AGGRESSIVE</button>
+                    <button onclick="giveTip('defensive')" id="defensiveBtn" disabled><i class="fas fa-shield-alt"></i> GO DEFENSIVE</button>
+                    <button onclick="giveTip('counter')" id="counterBtn" disabled><i class="fas fa-crosshairs"></i> COUNTER PUNCH</button>
+                </div>
+
+                <div class="fight-log" id="fightLog">
+                    <div class="log-entry log-round">Fight Log - Round by Round Updates Appear Here</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced Game State with Gym Network & Scouting
+        const gameState = {
+            week: 1,
+            manager: {
+                name: "You",
+                money: 150000,
+                reputation: 50,
+                brandValue: 0,
+                ownedGyms: ['downtown'],
+                promoMultiplier: 1.0,
+                revenue: {
+                    tickets: 0,
+                    sponsorships: 0,
+                    ppv: 0
+                }
+            },
+            gyms: {
+                downtown: {
+                    id: 'downtown',
+                    name: 'Downtown Boxing Club',
+                    location: 'City Center',
+                    owned: true,
+                    baseTalent: 60,
+                    facilities: 1,
+                    description: 'Your starter gym. Classic setup with basic equipment and decent local talent.',
+                    icon: 'fas fa-boxing-glove'
+                },
+                eastside: {
+                    id: 'eastside',
+                    name: 'Eastside Sluggers',
+                    location: 'Industrial District',
+                    owned: false,
+                    baseTalent: 75,
+                    facilities: 2,
+                    cost: 80000,
+                    description: 'Better location, higher-level fighters available. Known for producing power punchers.',
+                    icon: 'fas fa-industry'
+                },
+                waterfront: {
+                    id: 'waterfront',
+                    name: 'Waterfront Elite',
+                    location: 'Upscale Waterfront',
+                    owned: false,
+                    baseTalent: 85,
+                    facilities: 3,
+                    cost: 150000,
+                    description: 'Premium facility with state-of-the-art equipment. Top talent pools and sponsorship opportunities.',
+                    icon: 'fas fa-water'
+                },
+                oldtown: {
+                    id: 'oldtown',
+                    name: 'OldTown Legends',
+                    location: 'Historic District',
+                    owned: false,
+                    baseTalent: 70,
+                    facilities: 1,
+                    cost: 60000,
+                    description: 'Legendary boxing heritage. Good scouting base for technical fighters.',
+                    icon: 'fas fa-landmark'
+                }
+            },
+            fighters: [
+                {
+                    id: 1,
+                    name: 'Kid Dynamite',
+                    age: 22,
+                    record: '0-0-0',
+                    health: 100,
+                    morale: 75,
+                    fatigue: 0,
+                    type: 'starter',
+                    avatar: 'fas fa-user-ninja',
+                    attributes: {
+                        power: 65,
+                        speed: 70,
+                        chin: 60,
+                        stamina: 65,
+                        defense: 55,
+                        marketability: 50
+                    },
+                    modern_traits: {
+                        social_media_presence: 30,
+                        sponsorship_potential: 40
+                    }
+                }
+            ],
+            scoutPool: [],
+            fight: {
+                active: false,
+                round: 1,
+                maxRounds: 12,
+                opponent: {
+                    name: 'TBD',
+                    record: 'TBD',
+                    health: 100,
+                    attributes: {
+                        power: 65,
+                        speed: 65,
+                        chin: 60,
+                        stamina: 65,
+                        defense: 55
+                    },
+                    style: 'balanced'
+                },
+                tips: [],
+                healUsed: false,
+                ppvActive: false
+            },
+            trainingModules: [
+                { id: 'power', name: 'Power Training', stat: 'power', effect: 5, cost: 1500, fatigue: 12, icon: 'fas fa-fist-raised' },
+                { id: 'speed', name: 'Speed Drills', stat: 'speed', effect: 4, cost: 1200, fatigue: 10, icon: 'fas fa-bolt' },
+                { id: 'defense', name: 'Defense Clinic', stat: 'defense', effect: 5, cost: 1500, fatigue: 8, icon: 'fas fa-shield-alt' },
+                { id: 'stamina', name: 'Conditioning', stat: 'stamina', effect: 4, cost: 1000, fatigue: 9, icon: 'fas fa-heartbeat' },
+                { id: 'chin', name: 'Chin Strengthening', stat: 'chin', effect: 3, cost: 1800, fatigue: 15, icon: 'fas fa-hard-hat' },
+                { id: 'rest', name: 'Rest & Recovery', stat: 'fatigue', effect: -30, cost: 500, fatigue: -30, icon: 'fas fa-bed' }
+            ]
+        };
+
+        let selectedFighter = 1;
+        let fightAnimationId = null;
+        const canvas = document.getElementById('fightCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Initialize
+        function init() {
+            updateUI();
+            generateOpponent();
+            renderGymNetwork();
+            showCutscene("GLASSFIST MANAGER READY", "🥊");
+            createFightCanvas();
+            
+            // Initial fight canvas render
+            drawPreFightCanvas();
+            
+            // Animation loop for fight canvas
+            function animate() {
+                if (gameState.fight.active) {
+                    drawFight();
+                }
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        // Tab Switching
+        function switchTab(tabName, element) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            element.classList.add('active');
+        }
+
+        // Create fight canvas with gradients
+        function createFightCanvas() {
+            // Create gradient for health bars
+            const gradient = ctx.createLinearGradient(0, 0, 200, 0);
+            gradient.addColorStop(0, '#00dbde');
+            gradient.addColorStop(1, '#fc00ff');
+            gameState.canvasGradient = gradient;
+        }
+
+        // Update All UI
+        function updateUI() {
+            const f = gameState.fighters[selectedFighter - 1] || gameState.fighters[0];
+            document.getElementById('money').textContent = `$${gameState.manager.money.toLocaleString()}`;
+            document.getElementById('reputation').textContent = gameState.manager.reputation;
+            document.getElementById('brandValue').textContent = `$${(gameState.manager.brandValue * 1000).toLocaleString()}`;
+            document.getElementById('week').textContent = gameState.week;
+            document.getElementById('fighterCount').textContent = gameState.fighters.length;
+            document.getElementById('dashWeek').textContent = gameState.week;
+            document.getElementById('facilitiesStatus').textContent = `${gameState.manager.ownedGyms.length} Gym${gameState.manager.ownedGyms.length !== 1 ? 's' : ''}`;
+            
+            // Update active fighter info
+            document.getElementById('activeName').textContent = f.name;
+            document.getElementById('activeRecord').textContent = f.record;
+            document.getElementById('activeMorale').textContent = f.morale;
+            document.getElementById('moraleBar').style.width = `${f.morale}%`;
+            
+            // Update brand metrics
+            document.getElementById('dashSocialMedia').textContent = f.modern_traits.social_media_presence;
+            document.getElementById('socialBar').style.width = `${f.modern_traits.social_media_presence}%`;
+            document.getElementById('dashSponsorship').textContent = f.modern_traits.sponsorship_potential;
+            document.getElementById('sponsorBar').style.width = `${f.modern_traits.sponsorship_potential}%`;
+            
+            // Update revenue
+            document.getElementById('sponsorRevenue').textContent = `$${gameState.manager.revenue.sponsorships.toLocaleString()}`;
+            document.getElementById('ppvRevenue').textContent = `$${gameState.manager.revenue.ppv.toLocaleString()}`;
+            document.getElementById('nextPurse').textContent = `$${Math.round(15000 * gameState.manager.promoMultiplier).toLocaleString()}`;
+
+            // Render roster
+            const rosterHTML = gameState.fighters.map(fighter => `
+                <div class="fighter-card ${fighter.type === 'starter' ? 'starter' : ''} ${fighter.id === selectedFighter ? 'selected' : ''}" onclick="selectFighter(${fighter.id})">
+                    <div class="fighter-name">
+                        <i class="${fighter.avatar || 'fas fa-user'}"></i>
+                        ${fighter.name}
+                        ${fighter.type === 'starter' ? '<span class="fighter-badge">Starter</span>' : ''}
+                    </div>
+                    <div class="fighter-stats">
+                        <div class="stat-row"><span>Record:</span> <span>${fighter.record}</span></div>
+                        <div class="stat-row"><span>Age:</span> <span>${fighter.age}</span></div>
+                        <div class="stat-row"><span>Health:</span> <span>${fighter.health}%</span></div>
+                        <div class="stat-row"><span>Morale:</span> <span>${fighter.morale}/100</span></div>
+                    </div>
+                    <div style="margin-top: 15px; display: flex; flex-wrap: wrap; gap: 5px;">
+                        <span class="fighter-tag">POW: ${fighter.attributes.power}</span>
+                        <span class="fighter-tag">SPD: ${fighter.attributes.speed}</span>
+                        <span class="fighter-tag">CHN: ${fighter.attributes.chin}</span>
+                        <span class="fighter-tag">DEF: ${fighter.attributes.defense}</span>
+                    </div>
+                    ${fighter.id === selectedFighter ? '<div style="text-align: center; margin-top: 10px; color: #56ab2f;"><i class="fas fa-check-circle"></i> SELECTED</div>' : ''}
+                </div>
+            `).join('');
+            document.getElementById('rosterDisplay').innerHTML = rosterHTML;
+
+            // Update opponent display
+            const opponent = gameState.fight.opponent;
+            document.getElementById('opponentName').textContent = `vs. ${opponent.name}`;
+            document.getElementById('opponentRecord').textContent = opponent.record;
+            document.getElementById('opponentStyle').textContent = opponent.style.toUpperCase();
+            document.getElementById('fightPurse').textContent = Math.round(15000 * gameState.manager.promoMultiplier);
+            document.getElementById('opponentStatus').textContent = gameState.fight.active ? 'Fighting' : 'Ready';
+            document.getElementById('opponentStatus').style.color = gameState.fight.active ? '#ff416c' : '#56ab2f';
+            
+            // Update training buttons
+            updateTrainingButtons();
+        }
+
+        // Update training button states
+        function updateTrainingButtons() {
+            const f = gameState.fighters[selectedFighter - 1] || gameState.fighters[0];
+            const buttons = ['power', 'speed', 'defense', 'stamina', 'chin', 'rest'];
+            
+            buttons.forEach(btn => {
+                const button = document.getElementById(`train${btn.charAt(0).toUpperCase() + btn.slice(1)}Btn`);
+                const module = gameState.trainingModules.find(m => m.id === btn);
+                
+                if (button) {
+                    if (gameState.manager.money < module.cost) {
+                        button.disabled = true;
+                        button.style.opacity = '0.5';
+                    } else if (btn !== 'rest' && f.health < 70) {
+                        button.disabled = true;
+                        button.style.opacity = '0.5';
+                    } else {
+                        button.disabled = false;
+                        button.style.opacity = '1';
+                    }
+                }
+            });
+        }
+
+        // Render Gym Network
+        function renderGymNetwork() {
+            const gymHTML = Object.values(gameState.gyms).map(gym => `
+                <div class="gym-card ${gym.owned ? 'owned' : ''}" onclick="${gym.owned ? '' : `purchaseGym('${gym.id}')`}">
+                    <div class="gym-name">
+                        <i class="${gym.icon} gym-icon"></i>
+                        ${gym.name}
+                    </div>
+                    <div class="gym-info">
+                        <p><strong>${gym.location}</strong></p>
+                        <p>${gym.description}</p>
+                        <p><strong>Talent Pool:</strong> ${gym.baseTalent}/100</p>
+                        <p><strong>Facilities:</strong> ${gym.facilities}</p>
+                    </div>
+                    ${gym.owned ? 
+                        '<div style="color: #56ab2f; font-weight: bold; padding: 10px; background: rgba(86, 171, 47, 0.2); border-radius: 8px;"><i class="fas fa-check-circle"></i> OWNED</div>' : 
+                        `<div class="gym-cost">$${gym.cost?.toLocaleString() || 'N/A'}</div>`
+                    }
+                </div>
+            `).join('');
+            document.getElementById('gymGrid').innerHTML = gymHTML;
+
+            const ownedList = gameState.manager.ownedGyms.map(id => gameState.gyms[id].name).join(', ');
+            document.getElementById('ownedGyms').innerHTML = `<p>You own: ${ownedList}</p>`;
+        }
+
+        // Fighter Selection
+        function selectFighter(id) {
+            selectedFighter = id;
+            updateUI();
+            showCutscene(`${gameState.fighters[id-1].name} SELECTED`, "👊");
+        }
+
+        // Gym Purchase
+        function purchaseGym(gymId) {
+            const gym = gameState.gyms[gymId];
+            if (gym.owned) {
+                alert('Already own this gym!');
+                return;
+            }
+            if (gameState.manager.money < gym.cost) {
+                alert('Insufficient funds!');
+                return;
+            }
+            
+            if (confirm(`Purchase ${gym.name} for $${gym.cost.toLocaleString()}?`)) {
+                gameState.manager.money -= gym.cost;
+                gameState.manager.ownedGyms.push(gymId);
+                gameState.gyms[gymId].owned = true;
+                gameState.manager.reputation += 15;
+                addToLog(`Purchased ${gym.name}!`);
+                renderGymNetwork();
+                updateUI();
+                showCutscene(`NEW GYM ACQUIRED!`, "🏢");
+            }
+        }
+
+        // Scouting System
+        function runScouting() {
+            if (gameState.manager.money < 5000) {
+                alert('Need $5,000 to scout');
+                return;
+            }
+            
+            gameState.manager.money -= 5000;
+            addToLog('Scouting for new talent...');
+
+            // Generate random prospects
+            const names = ['Diego "The Destroyer" Rivera', 'Marcus "Stonewall" Stone', 'Billy "The Blade" Andrews', 
+                          'Chen "Dragon" Wei', 'Antonio "Thunder" Morales', 'Jaxon "Quick" Price', 'Oscar "Nightmare" Luna',
+                          'Rico "The Ripper" Santos', 'Kenji "Samurai" Tanaka', 'Ivan "Siberian" Petrov'];
+            const styles = ['Power Puncher', 'Speed Demon', 'Technical Boxer', 'Balanced', 'Aggressive Brawler'];
+            const avatars = ['fas fa-user', 'fas fa-user-ninja', 'fas fa-user-secret', 'fas fa-user-tie', 'fas fa-user-astronaut'];
+            
+            gameState.scoutPool = [];
+            for (let i = 0; i < 4; i++) {
+                const baseTalent = Math.floor(Math.random() * 40 + 55 + gameState.manager.reputation * 0.2);
+                const style = styles[Math.floor(Math.random() * styles.length)];
+                const name = names[Math.floor(Math.random() * names.length)];
+                
+                gameState.scoutPool.push({
+                    name: name,
+                    age: Math.floor(Math.random() * 10 + 20),
+                    style: style,
+                    baseTalent: baseTalent,
+                    cost: Math.round(baseTalent * 1000 * (0.8 + Math.random() * 0.4)),
+                    avatar: avatars[Math.floor(Math.random() * avatars.length)],
+                    potential: Math.round(baseTalent + Math.random() * 20)
+                });
+            }
+
+            renderScoutList();
+            updateUI();
+            showCutscene("SCOUTING REPORT READY", "🔍");
+        }
+
+        function renderScoutList() {
+            if (gameState.scoutPool.length === 0) {
+                document.getElementById('scoutList').innerHTML = `
+                    <div class="scout-entry" style="color: #94a3b8; text-align: center; padding: 30px;">
+                        <i class="fas fa-search" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5;"></i>
+                        <p>No prospects available. Run scouting to discover new talent.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const scoutHTML = gameState.scoutPool.map((fighter, idx) => `
+                <div class="scout-entry">
+                    <div class="scout-name">
+                        <i class="${fighter.avatar}"></i>
+                        ${fighter.name}, ${fighter.age}
+                    </div>
+                    <div class="scout-stats">
+                        <span class="scout-stat" style="background: rgba(0, 219, 222, 0.3);">Talent: ${fighter.baseTalent}</span>
+                        <span class="scout-stat" style="background: rgba(252, 0, 255, 0.3);">Style: ${fighter.style}</span>
+                        <span class="scout-stat" style="background: rgba(86, 171, 47, 0.3);">Potential: ${fighter.potential}</span>
+                    </div>
+                    <button onclick="recruitFighter(${idx})" class="success" style="width: 100%; padding: 12px; margin-top: 10px;">
+                        <i class="fas fa-user-plus"></i> RECRUIT ($${fighter.cost.toLocaleString()})
+                    </button>
+                </div>
+            `).join('');
+            document.getElementById('scoutList').innerHTML = scoutHTML;
+        }
+
+        function recruitFighter(idx) {
+            const prospect = gameState.scoutPool[idx];
+            if (gameState.manager.money < prospect.cost) {
+                alert('Insufficient funds!');
+                return;
+            }
+            
+            gameState.manager.money -= prospect.cost;
+            
+            const newFighter = {
+                id: gameState.fighters.length + 1,
+                name: prospect.name,
+                age: prospect.age,
+                record: '0-0-0',
+                health: 100,
+                morale: 70,
+                fatigue: 0,
+                type: 'recruited',
+                avatar: prospect.avatar,
+                attributes: {
+                    power: Math.round(prospect.baseTalent * 0.8 + Math.random() * 15),
+                    speed: Math.round(prospect.baseTalent * 0.75 + Math.random() * 15),
+                    chin: Math.round(prospect.baseTalent * 0.7 + Math.random() * 12),
+                    stamina: Math.round(prospect.baseTalent * 0.8 + Math.random() * 10),
+                    defense: Math.round(prospect.baseTalent * 0.65 + Math.random() * 15),
+                    marketability: 30
+                },
+                modern_traits: {
+                    social_media_presence: 20,
+                    sponsorship_potential: 30
+                }
+            };
+            gameState.fighters.push(newFighter);
+            gameState.scoutPool.splice(idx, 1);
+            gameState.manager.reputation += 5;
+            
+            renderScoutList();
+            updateUI();
+            showCutscene(`${prospect.name} SIGNED!`, "✍️");
+            addToLog(`Recruited ${prospect.name} to your roster!`);
+        }
+
+        // Training
+        function trainFighter(moduleId) {
+            const f = gameState.fighters[selectedFighter - 1] || gameState.fighters[0];
+            const module = gameState.trainingModules.find(m => m.id === moduleId);
+            
+            if (gameState.manager.money < module.cost) {
+                alert('Not enough money!');
+                return;
+            }
+            if (moduleId !== 'rest' && f.health < 70) {
+                alert('Fighter needs rest! Health too low.');
+                return;
+            }
+
+            gameState.manager.money -= module.cost;
+            f.fatigue += module.fatigue;
+
+            if (module.stat === 'fatigue') {
+                f.fatigue = Math.max(0, f.fatigue + module.effect);
+                f.health = Math.min(100, f.health + 15);
+                f.morale = Math.min(100, f.morale + 5);
+            } else {
+                f.attributes[module.stat] = Math.min(100, f.attributes[module.stat] + module.effect);
+            }
+
+            // Morale impact
+            if (f.fatigue > 60) {
+                f.morale = Math.max(20, f.morale - 8);
+            } else if (f.fatigue < 20) {
+                f.morale = Math.min(100, f.morale + 3);
+            }
+
+            updateUI();
+            addToLog(`${f.name} completed ${module.name}!`);
+            showCutscene(`TRAINING COMPLETE!`, "💪");
+        }
+
+        // Promotion
+        function doPromotion(type) {
+            const f = gameState.fighters[selectedFighter - 1] || gameState.fighters[0];
+            let cost, success = false;
+            
+            switch(type) {
+                case 'social':
+                    cost = 3000;
+                    if (gameState.manager.money < cost) return alert('Need $3,000');
+                    gameState.manager.money -= cost;
+                    f.modern_traits.social_media_presence = Math.min(100, f.modern_traits.social_media_presence + 15);
+                    gameState.manager.brandValue += 5;
+                    gameState.manager.revenue.sponsorships += 2000;
+                    success = true;
+                    break;
+                case 'sponsor':
+                    cost = 5000;
+                    if (gameState.manager.money < cost) return alert('Need $5,000');
+                    gameState.manager.money -= cost;
+                    f.modern_traits.sponsorship_potential = Math.min(100, f.modern_traits.sponsorship_potential + 10);
+                    gameState.manager.brandValue += 8;
+                    gameState.manager.revenue.sponsorships += 5000;
+                    success = true;
+                    break;
+                case 'documentary':
+                    cost = 8000;
+                    if (gameState.manager.money < cost) return alert('Need $8,000');
+                    gameState.manager.money -= cost;
+                    f.modern_traits.social_media_presence = Math.min(100, f.modern_traits.social_media_presence + 20);
+                    gameState.manager.brandValue += 10;
+                    f.morale = Math.max(20, f.morale - 1);
+                    gameState.manager.revenue.sponsorships += 3000;
+                    success = true;
+                    break;
+                case 'ppv':
+                    cost = 6000;
+                    if (gameState.manager.money < cost) return alert('Need $6,000');
+                    gameState.manager.money -= cost;
+                    gameState.manager.promoMultiplier = 1.5;
+                    gameState.fight.ppvActive = true;
+                    success = true;
+                    break;
+            }
+            
+            if (success) {
+                updateUI();
+                addToLog(`Promotion campaign launched!`);
+                showCutscene(`PROMOTION SUCCESS!`, "📈");
+            }
+        }
+
+        // Advance Week
+        function advanceWeek() {
+            gameState.week++;
+            
+            // Apply weekly effects
+            gameState.fighters.forEach(f => {
+                f.morale = Math.max(30, f.morale - 5);
+                if (f.fatigue > 40) f.health = Math.max(50, f.health - 8);
+                f.fatigue = Math.max(0, f.fatigue - 15);
+            });
+            
+            // Generate small revenue
+            gameState.manager.revenue.sponsorships += Math.floor(gameState.manager.brandValue * 100);
+            
+            updateUI();
+            showCutscene(`WEEK ${gameState.week} BEGINS`, "📅");
+            addToLog(`Advanced to week ${gameState.week}`);
+        }
+
+        // Generate Opponent
+        function generateOpponent() {
+            const styles = ['Power Puncher', 'Speed Demon', 'Technical Boxer', 'Balanced', 'Aggressive Brawler'];
+            const names = ['Iron Mike', 'Silver Jaw Johnson', 'The Hammer', 'Electric Thunder', 'Champ Contender', 
+                          'Steel Fist', 'Rapid Fire', 'Concrete Chin', 'Knockout King', 'The Mauler'];
+            const wins = Math.floor(gameState.manager.reputation * 0.3 + Math.random() * 10);
+            const losses = Math.floor(Math.random() * 3);
+            const style = styles[Math.floor(Math.random() * styles.length)];
+            
+            // Base attributes based on reputation and style
+            let power = 50 + gameState.manager.reputation * 0.4 + Math.random() * 20;
+            let speed = 50 + gameState.manager.reputation * 0.3 + Math.random() * 20;
+            let chin = 50 + gameState.manager.reputation * 0.2 + Math.random() * 15;
+            let stamina = 55 + gameState.manager.reputation * 0.3 + Math.random() * 20;
+            let defense = 45 + gameState.manager.reputation * 0.25 + Math.random() * 20;
+            
+            // Style modifiers
+            if (style === 'Power Puncher') power += 15;
+            if (style === 'Speed Demon') speed += 15;
+            if (style === 'Technical Boxer') defense += 15;
+            if (style === 'Aggressive Brawler') { power += 10; chin += 10; defense -= 5; }
+            
+            gameState.fight.opponent = {
+                name: names[Math.floor(Math.random() * names.length)],
+                record: `${wins}-${losses}-0`,
+                health: 100,
+                style: style,
+                attributes: {
+                    power: Math.round(power),
+                    speed: Math.round(speed),
+                    chin: Math.round(chin),
+                    stamina: Math.round(stamina),
+                    defense: Math.round(defense)
+                }
+            };
+            updateUI();
+        }
+
+        // Fight System
+        function startFight() {
+            const f = gameState.fighters[selectedFighter - 1] || gameState.fighters[0];
+            if (f.health < 80) {
+                alert('Fighter needs to be at 80% health to fight!');
+                return;
+            }
+
+            gameState.fight.active = true;
+            gameState.fight.round = 1;
+            gameState.fight.opponent.health = 100;
+            gameState.fight.tips = [];
+            gameState.fight.healUsed = false;
+
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('healBtn').disabled = false;
+            document.getElementById('aggressiveBtn').disabled = false;
+            document.getElementById('defensiveBtn').disabled = false;
+            document.getElementById('counterBtn').disabled = false;
+
+            clearLog();
+            addToLog(`Fight starts! ${f.name} vs ${gameState.fight.opponent.name}`, 'round');
+            showCutscene('FIGHT NIGHT!', '🔥');
+            simulateRound();
+        }
+
+        function simulateRound() {
+            if (!gameState.fight.active || gameState.fight.round > gameState.fight.maxRounds) {
+                endFight();
+                return;
+            }
+
+            const f = gameState.fighters[selectedFighter - 1] || gameState.fighters[0];
+            
+            // Calculate fighter score with attributes and health
+            let fighterScore = (f.attributes.power * 0.3 + f.attributes.speed * 0.25 + 
+                              f.attributes.defense * 0.15 + f.attributes.stamina * 0.3) * (f.health / 100);
+            
+            // Calculate opponent score
+            let opponentScore = (gameState.fight.opponent.attributes.power * 0.3 + 
+                               gameState.fight.opponent.attributes.speed * 0.25 + 
+                               gameState.fight.opponent.attributes.defense * 0.15 + 
+                               gameState.fight.opponent.attributes.stamina * 0.3) * (gameState.fight.opponent.health / 100);
+
+            // Apply tips
+            gameState.fight.tips.forEach(tip => {
+                if (tip === 'aggressive') {
+                    fighterScore *= 1.15;
+                    opponentScore *= 0.95;
+                } else if (tip === 'defensive') {
+                    fighterScore *= 0.85;
+                    opponentScore *= 1.1;
+                } else if (tip === 'counter') {
+                    fighterScore *= 1.08;
+                }
+            });
+
+            // Calculate damage
+            const damageToOpp = Math.floor((fighterScore / 100) * 18);
+            const damageToFighter = Math.floor((opponentScore / 100) * 15);
+
+            gameState.fight.opponent.health = Math.max(0, gameState.fight.opponent.health - damageToOpp);
+            f.health = Math.max(0, f.health - damageToFighter);
+
+            // Random events
+            let event = '';
+            if (Math.random() < 0.08) {
+                event = 'KNOCKDOWN!';
+                f.health = Math.max(0, f.health - 15);
+                addToLog(`Round ${gameState.fight.round}: ${event}`, 'knockdown');
+                showCutscene('KNOCKDOWN!', '💥');
+            } else if (Math.random() < 0.05) {
+                event = 'CUT OPEN!';
+                f.health = Math.max(0, f.health - 10);
+                addToLog(`Round ${gameState.fight.round}: ${event} Medical attention needed!`, 'knockdown');
+            } else {
+                addToLog(`Round ${gameState.fight.round}: Damage dealt: ${damageToOpp} | Taken: ${damageToFighter}`, 'round');
+            }
+
+            // Check for fight end
+            if (f.health <= 0 || gameState.fight.opponent.health <= 0 || gameState.fight.round >= gameState.fight.maxRounds) {
+                endFight();
+            } else {
+                gameState.fight.round++;
+                gameState.fight.tips = [];
+                
+                // Reset tip buttons for next round
+                document.getElementById('aggressiveBtn').disabled = false;
+                document.getElementById('defensiveBtn').disabled = false;
+                document.getElementById('counterBtn').disabled = false;
+                
+                setTimeout(() => {
+                    showCutscene(`ROUND ${gameState.fight.round}`, '🔔');
+                    addToLog(`Round ${gameState.fight.round} begins!`, 'round');
+                }, 2000);
+                
+                setTimeout(simulateRound, 3000);
+            }
+            
+            updateUI();
+        }
+
+        function healFighter() {
+            const f = gameState.fighters[selectedFighter - 1] || gameState.fighters[0];
+            if (gameState.fight.healUsed) return;
+            
+            f.health = Math.min(100, f.health + 20);
+            f.morale = Math.min(100, f.morale + 5);
+            gameState.fight.healUsed = true;
+            document.getElementById('healBtn').disabled = true;
+            addToLog('Corner healing administered! +20 HP');
+            showCutscene('HEALING APPLIED', '💊');
+        }
+
+        function giveTip(type) {
+            gameState.fight.tips.push(type);
+            let txt = '';
+            let emoji = '';
+            
+            switch(type) {
+                case 'aggressive': 
+                    txt = '→ AGGRESSIVE! GO FOR THE KO!';
+                    emoji = '🔥';
+                    document.getElementById('aggressiveBtn').disabled = true;
+                    break;
+                case 'defensive': 
+                    txt = '→ DEFENSIVE! PROTECT YOURSELF!';
+                    emoji = '🛡️';
+                    document.getElementById('defensiveBtn').disabled = true;
+                    break;
+                case 'counter': 
+                    txt = '→ COUNTER! LOOK FOR OPENINGS!';
+                    emoji = '🎯';
+                    document.getElementById('counterBtn').disabled = true;
+                    break;
+            }
+            
+            addToLog(txt);
+            if (emoji) showCutscene(txt, emoji);
+        }
+
+        function endFight() {
+            gameState.fight.active = false;
+            const f = gameState.fighters[selectedFighter - 1] || gameState.fighters[0];
+            let result = '', earnings = 15000;
+            let reputationChange = 0;
+
+            // Determine result
+            if (f.health <= 0) {
+                result = 'LOSS - KO';
+                earnings = 5000;
+                reputationChange = -10;
+                showCutscene('DEFEATED!', '😭');
+            } else if (gameState.fight.opponent.health <= 0) {
+                result = 'WIN - KO';
+                earnings = 25000;
+                reputationChange = 20;
+                showCutscene('VICTORY!', '🏆');
+            } else {
+                // Decision based on overall performance
+                const fScore = f.health + f.attributes.power + f.attributes.speed + f.attributes.defense;
+                const oScore = gameState.fight.opponent.health + gameState.fight.opponent.attributes.power + 
+                              gameState.fight.opponent.attributes.speed + gameState.fight.opponent.attributes.defense;
+                
+                if (fScore > oScore + 20) {
+                    result = 'WIN - UNANIMOUS DECISION';
+                    earnings = 20000;
+                    reputationChange = 15;
+                    showCutscene('WINNER BY DECISION!', '✅');
+                } else if (fScore > oScore) {
+                    result = 'WIN - SPLIT DECISION';
+                    earnings = 18000;
+                    reputationChange = 10;
+                    showCutscene('CLOSE WIN!', '👍');
+                } else if (fScore < oScore - 20) {
+                    result = 'LOSS - UNANIMOUS DECISION';
+                    earnings = 8000;
+                    reputationChange = -8;
+                    showCutscene('LOST ON SCORECARDS!', '😔');
+                } else {
+                    result = 'LOSS - SPLIT DECISION';
+                    earnings = 10000;
+                    reputationChange = -5;
+                    showCutscene('TOUGH LOSS!', '👎');
+                }
+            }
+
+            // Apply PPV bonus
+            if (gameState.fight.ppvActive && result.includes('WIN')) {
+                earnings = Math.round(earnings * 1.5);
+                addToLog('+$' + Math.round(earnings * 0.5) + ' PPV Bonus!');
+                gameState.manager.revenue.ppv += Math.round(earnings * 0.3);
+                gameState.fight.ppvActive = false;
+                gameState.manager.promoMultiplier = 1.0;
+            }
+
+            // Sponsorship bonus
+            if (f.modern_traits.sponsorship_potential > 50) {
+                const sponsorBonus = Math.round(earnings * 0.2);
+                earnings += sponsorBonus;
+                gameState.manager.revenue.sponsorships += sponsorBonus;
+                addToLog(`+$${sponsorBonus.toLocaleString()} Sponsorship Bonus!`);
+            }
+
+            // Social media bonus
+            if (f.modern_traits.social_media_presence > 60) {
+                earnings += 3000;
+                addToLog('+$3,000 Social Media Bonus!');
+            }
+
+            // Update record and earnings
+            updateRecord(f, result.includes('WIN'));
+            gameState.manager.money += earnings;
+            gameState.manager.reputation = Math.max(0, gameState.manager.reputation + reputationChange);
+            
+            // Fighter recovery
+            f.fatigue += 25;
+            f.morale += result.includes('WIN') ? 10 : -15;
+            f.morale = Math.max(20, Math.min(100, f.morale));
+
+            addToLog(`Result: ${result}`);
+            addToLog(`Earnings: $${earnings.toLocaleString()}`);
+            addToLog(`Reputation: ${reputationChange > 0 ? '+' : ''}${reputationChange}`);
+
+            // Reset fight buttons
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('healBtn').disabled = true;
+            document.getElementById('aggressiveBtn').disabled = true;
+            document.getElementById('defensiveBtn').disabled = true;
+            document.getElementById('counterBtn').disabled = true;
+
+            // Generate new opponent
+            setTimeout(() => {
+                generateOpponent();
+                updateUI();
+                drawPreFightCanvas();
+            }, 3000);
+        }
+
+        function updateRecord(fighter, isWin) {
+            const parts = fighter.record.split('-');
+            if (isWin) {
+                parts[0] = parseInt(parts[0]) + 1;
+            } else {
+                parts[1] = parseInt(parts[1]) + 1;
+            }
+            fighter.record = parts.join('-') + '-0';
+        }
+
+        // Canvas Drawing
+        function drawFight() {
+            const f = gameState.fighters[selectedFighter - 1] || gameState.fighters[0];
+            
+            // Clear canvas
+            ctx.fillStyle = '#0a0a1a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw ring
+            ctx.strokeStyle = '#00dbde';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(50, 50, canvas.width - 100, canvas.height - 100);
+            
+            // Draw ring ropes
+            ctx.strokeStyle = '#fc00ff';
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 3; i++) {
+                const y = 70 + i * 30;
+                ctx.strokeRect(70, y, canvas.width - 140, canvas.height - 140 - i * 60);
+            }
+            
+            // Draw center logo
+            ctx.fillStyle = 'rgba(0, 219, 222, 0.1)';
+            ctx.beginPath();
+            ctx.arc(canvas.width / 2, canvas.height / 2, 40, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#fc00ff';
+            ctx.font = 'bold 24px Orbitron';
+            ctx.textAlign = 'center';
+            ctx.fillText('GF', canvas.width / 2, canvas.height / 2 + 8);
+            
+            // Calculate fighter positions based on health
+            const fighterX = 200 + ((100 - f.health) / 100) * 50;
+            const opponentX = 600 - ((100 - gameState.fight.opponent.health) / 100) * 50;
+            const fighterY = 200 + Math.sin(Date.now() / 200) * 5;
+            const opponentY = 200 + Math.sin(Date.now() / 200 + Math.PI) * 5;
+            
+            // Draw your fighter
+            ctx.fillStyle = '#fc00ff';
+            ctx.fillRect(fighterX, fighterY, 40, 80);
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(fighterX + 10, fighterY + 10, 20, 20); // head
+            ctx.fillRect(fighterX, fighterY + 40, 10, 30); // left arm
+            ctx.fillRect(fighterX + 30, fighterY + 40, 10, 30); // right arm
+            
+            // Draw opponent
+            ctx.fillStyle = '#00dbde';
+            ctx.fillRect(opponentX, opponentY, 40, 80);
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(opponentX + 10, opponentY + 10, 20, 20); // head
+            ctx.fillRect(opponentX, opponentY + 40, 10, 30); // left arm
+            ctx.fillRect(opponentX + 30, opponentY + 40, 10, 30); // right arm
+            
+            // Draw health bars with animation
+            drawHealthBar(100, 20, f.health, '#fc00ff', f.name);
+            drawHealthBar(canvas.width - 300, 20, gameState.fight.opponent.health, '#00dbde', gameState.fight.opponent.name);
+            
+            // Draw round counter
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 28px Orbitron';
+            ctx.textAlign = 'center';
+            ctx.fillText(`ROUND ${gameState.fight.round}/${gameState.fight.maxRounds}`, canvas.width / 2, 40);
+            
+            // Draw fight tips if any
+            if (gameState.fight.tips.length > 0) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.font = '16px Orbitron';
+                ctx.textAlign = 'left';
+                const tip = gameState.fight.tips[0];
+                let tipText = '';
+                if (tip === 'aggressive') tipText = 'AGGRESSIVE';
+                if (tip === 'defensive') tipText = 'DEFENSIVE';
+                if (tip === 'counter') tipText = 'COUNTER';
+                ctx.fillText(`TACTIC: ${tipText}`, 50, canvas.height - 30);
+            }
+            
+            // Draw punch effects
+            const time = Date.now();
+            if (Math.sin(time / 100) > 0.9) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                ctx.beginPath();
+                ctx.arc(fighterX + 40, fighterY + 30, 15, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            if (Math.sin(time / 120 + 1) > 0.9) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                ctx.beginPath();
+                ctx.arc(opponentX, opponentY + 30, 15, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function drawPreFightCanvas() {
+            // Clear canvas
+            ctx.fillStyle = '#0a0a1a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw ring
+            ctx.strokeStyle = '#00dbde';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(50, 50, canvas.width - 100, canvas.height - 100);
+            
+            // Draw title
+            ctx.fillStyle = '#fc00ff';
+            ctx.font = 'bold 36px Orbitron';
+            ctx.textAlign = 'center';
+            ctx.fillText('FIGHT NIGHT', canvas.width / 2, canvas.height / 2 - 40);
+            
+            const f = gameState.fighters[selectedFighter - 1] || gameState.fighters[0];
+            ctx.fillStyle = '#00dbde';
+            ctx.font = '28px Orbitron';
+            ctx.fillText(`${f.name} vs ${gameState.fight.opponent.name}`, canvas.width / 2, canvas.height / 2);
+            
+            ctx.fillStyle = '#fff';
+            ctx.font = '20px Orbitron';
+            ctx.fillText('READY FOR BATTLE', canvas.width / 2, canvas.height / 2 + 40);
+            
+            // Draw animated fighters
+            const time = Date.now();
+            const fighterX = canvas.width / 2 - 100 + Math.sin(time / 500) * 20;
+            const opponentX = canvas.width / 2 + 100 + Math.sin(time / 500 + Math.PI) * 20;
+            const y = canvas.height / 2 + 100;
+            
+            // Draw your fighter
+            ctx.fillStyle = '#fc00ff';
+            ctx.fillRect(fighterX, y, 40, 80);
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(fighterX + 10, y + 10, 20, 20);
+            
+            // Draw opponent
+            ctx.fillStyle = '#00dbde';
+            ctx.fillRect(opponentX, y, 40, 80);
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(opponentX + 10, y + 10, 20, 20);
+        }
+
+        function drawHealthBar(x, y, health, color, name) {
+            // Background
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(x, y, 200, 25);
+            
+            // Health fill with gradient
+            const healthWidth = (health / 100) * 200;
+            const gradient = ctx.createLinearGradient(x, y, x + healthWidth, y);
+            gradient.addColorStop(0, color);
+            gradient.addColorStop(1, color === '#fc00ff' ? '#00dbde' : '#fc00ff');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(x, y, healthWidth, 25);
+            
+            // Border
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x, y, 200, 25);
+            
+            // Name and percentage
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 16px Orbitron';
+            ctx.textAlign = 'left';
+            ctx.fillText(name, x, y - 5);
+            
+            ctx.textAlign = 'center';
+            ctx.fillText(`${Math.max(0, Math.round(health))}%`, x + 100, y + 18);
+        }
+
+        // Utility functions
+        function showCutscene(text, emoji = "🥊") {
+            const cutscene = document.getElementById('cutscene');
+            const textEl = document.getElementById('cutsceneText');
+            const pixelArt = cutscene.querySelector('.pixel-art');
+            
+            textEl.textContent = text;
+            pixelArt.textContent = emoji;
+            
+            // Add animation class
+            cutscene.style.display = 'flex';
+            cutscene.style.animation = 'none';
+            setTimeout(() => {
+                cutscene.style.animation = 'fadeIn 0.5s ease';
+            }, 10);
+            
+            // Auto hide after 3 seconds if not fight related
+            if (!gameState.fight.active && !text.includes('FIGHT') && !text.includes('ROUND')) {
+                setTimeout(() => {
+                    if (!gameState.fight.active) {
+                        cutscene.style.display = 'none';
+                    }
+                }, 3000);
+            }
+        }
+
+        function addToLog(text, type = 'normal') {
+            const log = document.getElementById('fightLog');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = text;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('fightLog').innerHTML = '<div class="log-entry log-round">Fight Log - Round by Round Updates</div>';
+        }
+
+        // Start game
+        window.onload = init;
+    </script>
+</body>
+</html>
