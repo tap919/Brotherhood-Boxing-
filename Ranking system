@@ -1,0 +1,463 @@
+/**
+ * GlassFist 2K Ranking System
+ * Integrates "Quantified Sweet Science" 0-99 rating engine with career ladder progression
+ * ELO-based rankings, title belt management, franchise integration
+ * Author: Overlay365 Development
+ */
+
+class RankingSystem2K {
+  constructor(gameState) {
+    this.gameState = gameState;
+    this.eloBase = 1000;
+    this.pointsPerWin = { KO: 50, TKO: 40, Decision: 25 };
+    this.pointsPerLoss = { KO: -30, Decision: -15 };
+    this.titleDefenseMultiplier = 1.5;
+  }
+
+  /**
+   * Core QSS Attributes (0-99 scale)
+   * Power, Speed, Stamina, Chin, Defense, Ring IQ, Heart, Aggression, Reach, Toughness
+   */
+  getAttributeDefinitions() {
+    return {
+      power: { label: "PWR", description: "Raw damage on clean strike", max: 99 },
+      speed: { label: "SPD", description: "Hand speed & frame data", max: 99 },
+      stamina: { label: "STM", description: "Energy & recovery rate", max: 99 },
+      chin: { label: "CHN", description: "Knockdown resistance", max: 99 },
+      defense: { label: "DEF", description: "Blocking & evasion", max: 99 },
+      ringIQ: { label: "RIQ", description: "Adaptation & decisions", max: 99 },
+      heart: { label: "HRT", description: "Recovery & determination", max: 99 },
+      aggression: { label: "AGG", description: "Forward pressure", max: 99 },
+      reach: { label: "RCH", description: "Physical distance (inches)", max: 99 },
+      toughness: { label: "TGH", description: "Cut resistance", max: 99 }
+    };
+  }
+
+  /**
+   * Calculate Overall Rating (OVR) from attributes
+   * Weighted algorithm: 2K-style formula
+   */
+  calculateOVR(fighter) {
+    const attrs = fighter.attributes;
+    const weights = {
+      power: 0.12,
+      speed: 0.14,
+      stamina: 0.13,
+      chin: 0.11,
+      defense: 0.12,
+      ringIQ: 0.13,
+      heart: 0.10,
+      aggression: 0.08,
+      reach: 0.04,
+      toughness: 0.03
+    };
+
+    let ovr = 0;
+    Object.keys(weights).forEach((attr) => {
+      ovr += attrs[attr] * weights[attr];
+    });
+
+    return Math.round(ovr);
+  }
+
+  /**
+   * Fighter Archetypes with badge bonuses
+   */
+  getArchetypeBadges(archetype) {
+    const badges = {
+      slugger: {
+        name: "One Punch Man",
+        effect: () => ({ flashKOChance: 0.2, powerMultiplier: 1.2 })
+      },
+      outboxer: {
+        name: "Ring Dancer",
+        effect: () => ({ staminaPenalty: 0, movementSpeed: 1.2 })
+      },
+      swarmer: {
+        name: "Pressure Cooker",
+        effect: () => ({ opponentStaminaDrain: 2.0, clinchDominance: 1.3 })
+      },
+      counterPuncher: {
+        name: "Sniper",
+        effect: () => ({ counterDamage: 1.15, counterAccuracy: 1.15 })
+      },
+      boxerPuncher: {
+        name: "Versatile",
+        effect: () => ({ allStatsBonus: 1.05 })
+      }
+    };
+
+    return badges[archetype] || badges.boxerPuncher;
+  }
+
+  /**
+   * RATING TIERS (Gaussian distribution)
+   */
+  getRatingTier(ovr) {
+    const tiers = {
+      "95-99": { name: "The Pantheon", level: "GOAT", color: "#FFD700" },
+      "90-94": { name: "Hall of Fame", level: "Elite", color: "#C0C0C0" },
+      "80-89": { name: "Contender", level: "Dangerous", color: "#FF6B35" },
+      "70-79": { name: "Gatekeeper", level: "Professional", color: "#4ECDC4" },
+      "60-69": { name: "Prospect/Jobber", level: "Rising", color: "#95E1D3" }
+    };
+
+    if (ovr >= 95) return tiers["95-99"];
+    if (ovr >= 90) return tiers["90-94"];
+    if (ovr >= 80) return tiers["80-89"];
+    if (ovr >= 70) return tiers["70-79"];
+    return tiers["60-69"];
+  }
+
+  /**
+   * CAREER MODE PROGRESSION
+   * Start at 60, climb to 99 through wins/training
+   */
+  initCareerFighter(name, weightClass, archetype) {
+    return {
+      id: `fighter-${Date.now()}`,
+      name,
+      weightClass,
+      archetype,
+      attributes: {
+        power: 60,
+        speed: 60,
+        stamina: 62,
+        chin: 60,
+        defense: 61,
+        ringIQ: 60,
+        heart: 62,
+        aggression: 60,
+        reach: 75, // Based on player choice
+        toughness: 60
+      },
+      ovr: 60,
+      record: { wins: 0, losses: 0, draws: 0, kos: 0 },
+      elo: 1000,
+      careerRank: null,
+      division: null,
+      belts: [],
+      xp: 0,
+      age: 20,
+      stamina: 100,
+      condition: "Fresh",
+      injuries: []
+    };
+  }
+
+  /**
+   * RANKING LADDER - Weight Class Specific
+   */
+  getWeightClassLadder(weightClass) {
+    const ladders = {
+      heavyweight: {
+        name: "Heavyweight (200+ lbs)",
+        belts: ["IBF", "WBA", "WBC", "WBO", "Ring Magazine"],
+        regionalTitles: ["NABF", "USBA", "WBC International"],
+        tiers: [
+          { tier: "Amateur/Prospect", minWins: 0, minOVR: 60 },
+          { tier: "Regional Contender", minWins: 5, minOVR: 70 },
+          { tier: "National Contender", minWins: 10, minOVR: 75 },
+          { tier: "Mandatory Challenger", minWins: 15, minOVR: 80 },
+          { tier: "Interim Champion", minWins: 18, minOVR: 83 },
+          { tier: "World Champion", minWins: 20, minOVR: 85 }
+        ]
+      },
+      middleweight: {
+        name: "Middleweight (160 lbs)",
+        belts: ["IBF", "WBA", "WBC", "WBO", "Ring Magazine"],
+        regionalTitles: ["NABF", "USBA", "WBC International"],
+        tiers: [
+          { tier: "Amateur/Prospect", minWins: 0, minOVR: 60 },
+          { tier: "Regional Contender", minWins: 5, minOVR: 70 },
+          { tier: "National Contender", minWins: 10, minOVR: 75 },
+          { tier: "Mandatory Challenger", minWins: 15, minOVR: 80 },
+          { tier: "Interim Champion", minWins: 18, minOVR: 83 },
+          { tier: "World Champion", minWins: 20, minOVR: 85 }
+        ]
+      },
+      lightweight: {
+        name: "Lightweight (135 lbs)",
+        belts: ["IBF", "WBA", "WBC", "WBO", "Ring Magazine"],
+        regionalTitles: ["NABF", "USBA", "WBC International"],
+        tiers: [
+          { tier: "Amateur/Prospect", minWins: 0, minOVR: 60 },
+          { tier: "Regional Contender", minWins: 5, minOVR: 70 },
+          { tier: "National Contender", minWins: 10, minOVR: 75 },
+          { tier: "Mandatory Challenger", minWins: 15, minOVR: 80 },
+          { tier: "Interim Champion", minWins: 18, minOVR: 83 },
+          { tier: "World Champion", minWins: 20, minOVR: 85 }
+        ]
+      }
+    };
+
+    return ladders[weightClass.toLowerCase()] || ladders.heavyweight;
+  }
+
+  /**
+   * GET CURRENT CAREER RANK
+   */
+  getCurrentRank(fighter) {
+    const ladder = this.getWeightClassLadder(fighter.weightClass);
+    const qualifyingTier = ladder.tiers.reverse().find((t) => {
+      return (
+        fighter.record.wins >= t.minWins && fighter.ovr >= t.minOVR
+      );
+    });
+
+    return qualifyingTier ? qualifyingTier.tier : "Prospect";
+  }
+
+  /**
+   * UPDATE ELO AFTER FIGHT
+   * Standard ELO + bonuses for title bouts
+   */
+  updateEloAndRating(fighter, opponent, result, fightType = "regular") {
+    const kFactor = 32; // Standard chess K-factor
+    const expectedScore = (opponentElo) => {
+      return 1 / (1 + Math.pow(10, (opponentElo - fighter.elo) / 400));
+    };
+
+    const expected = expectedScore(opponent.elo);
+    let eloGain = 0;
+
+    if (result === "win") {
+      eloGain = kFactor * (1 - expected);
+      if (fightType === "title") eloGain *= this.titleDefenseMultiplier;
+    } else if (result === "loss") {
+      eloGain = kFactor * (0 - expected);
+    }
+
+    fighter.elo = Math.round(fighter.elo + eloGain);
+
+    // ELO → OVR scaling (simplified)
+    // ELO 1000 = 60 OVR | ELO 2000 = 95 OVR
+    const baseOVR = 60 + (fighter.elo - 1000) / 1000 * 35;
+    fighter.ovr = Math.min(99, Math.max(60, Math.round(baseOVR)));
+
+    return eloGain;
+  }
+
+  /**
+   * OPPONENT SELECTION - Dynamic ranking-based matching
+   */
+  selectOpponent(fighter, availableOpponents, difficulty = "balanced") {
+    const ladder = this.getWeightClassLadder(fighter.weightClass);
+    const currentRank = ladder.tiers.find((t) => t.tier === this.getCurrentRank(fighter));
+
+    // Filter by weight class
+    let candidates = availableOpponents.filter(
+      (opp) => opp.weightClass === fighter.weightClass && opp.id !== fighter.id
+    );
+
+    // Difficulty-based ELO matching
+    const difficultyMultiplier = { easy: 0.7, balanced: 1.0, hard: 1.3 };
+    const targetElo = fighter.elo * difficultyMultiplier[difficulty];
+
+    candidates = candidates.sort((a, b) => {
+      const diffA = Math.abs(a.elo - targetElo);
+      const diffB = Math.abs(b.elo - targetElo);
+      return diffA - diffB;
+    });
+
+    return candidates[0] || candidates[Math.floor(Math.random() * candidates.length)];
+  }
+
+  /**
+   * TITLE BOUT SCHEDULING
+   * Mandatory challengers, title defenses, unifications
+   */
+  scheduleTitleBout(currentChampion, challengers) {
+    const boutTypes = {
+      mandatory: {
+        name: "Mandatory Challenge",
+        purseMultiplier: 1.0,
+        requiredRank: "Mandatory Challenger"
+      },
+      unification: {
+        name: "Unification Bout",
+        purseMultiplier: 2.5,
+        beltsAtStake: 2
+      },
+      undisputed: {
+        name: "Undisputed Championship",
+        purseMultiplier: 4.0,
+        beltsAtStake: 4
+      },
+      defense: {
+        name: "Title Defense",
+        purseMultiplier: 1.5,
+        requiredRank: "Top 10"
+      }
+    };
+
+    // Find mandatory challenger
+    const mandatory = challengers.find(
+      (c) => this.getCurrentRank(c) === "Mandatory Challenger"
+    );
+
+    if (mandatory) {
+      return {
+        champion: currentChampion,
+        challenger: mandatory,
+        type: "mandatory",
+        basePurse: 100000,
+        totalPurse: 100000 * boutTypes.mandatory.purseMultiplier
+      };
+    }
+
+    // Otherwise find top-ranked challenger
+    const challenger = challengers.sort((a, b) => b.ovr - a.ovr)[0];
+    return {
+      champion: currentChampion,
+      challenger,
+      type: "defense",
+      basePurse: 100000,
+      totalPurse: 100000 * boutTypes.defense.purseMultiplier
+    };
+  }
+
+  /**
+   * BELT MANAGEMENT
+   */
+  awardBelt(fighter, beltName, organization) {
+    fighter.belts.push({
+      name: beltName,
+      organization,
+      defenses: 0,
+      acquiredDate: new Date(),
+      nextMandatory: null
+    });
+
+    // Update OVR for holding belt
+    fighter.ovr = Math.min(99, fighter.ovr + 3);
+  }
+
+  loseBelt(fighter, beltIndex) {
+    const lost = fighter.belts.splice(beltIndex, 1);
+    fighter.ovr = Math.max(60, fighter.ovr - 2);
+    return lost[0];
+  }
+
+  defenseBelt(fighter, beltIndex) {
+    if (fighter.belts[beltIndex]) {
+      fighter.belts[beltIndex].defenses++;
+      // Bonus for successful defense
+      const defenseBonus = fighter.belts[beltIndex].defenses * 0.1;
+      fighter.ovr = Math.min(99, fighter.ovr + defenseBonus);
+    }
+  }
+
+  /**
+   * TRAINING & ATTRIBUTE DEVELOPMENT
+   * XP cost increases exponentially
+   */
+  trainAttribute(fighter, attributeName, hours = 10) {
+    const currentAttr = fighter.attributes[attributeName];
+    const xpCost = 100 * Math.pow(1.08, currentAttr - 60);
+    const xpGain = hours * 50;
+
+    if (xpGain >= xpCost) {
+      fighter.xp += xpGain - xpCost;
+      fighter.attributes[attributeName]++;
+      fighter.ovr = this.calculateOVR(fighter);
+      return { success: true, newAttr: fighter.attributes[attributeName] };
+    } else {
+      fighter.xp += xpGain;
+      return { success: false, xpNeeded: xpCost - xpGain };
+    }
+  }
+
+  /**
+   * AGE-BASED DEGRADATION
+   * Fighters peak at 28-34, decline after
+   */
+  applyAgingDegradation(fighter) {
+    const peak = 30;
+    const ageOver = fighter.age - peak;
+
+    if (ageOver > 0) {
+      // Annual stat loss after 30
+      const decayRate = 1 - ageOver * 0.02;
+      fighter.attributes.speed = Math.round(fighter.attributes.speed * decayRate);
+      fighter.attributes.stamina = Math.round(fighter.attributes.stamina * decayRate);
+
+      // Mental stats remain stable or improve
+      fighter.attributes.ringIQ = Math.min(99, fighter.attributes.ringIQ + 1);
+      fighter.attributes.defense = Math.min(99, fighter.attributes.defense + 1);
+    }
+
+    fighter.ovr = this.calculateOVR(fighter);
+  }
+
+  /**
+   * CAREER MODE STAT DISPLAY
+   * Generate text-based ranking card
+   */
+  generateFighterCard(fighter) {
+    const tier = this.getRatingTier(fighter.ovr);
+    const rank = this.getCurrentRank(fighter);
+    const attrs = fighter.attributes;
+
+    return `
+╔═══════════════════════════════════════════════════════════╗
+║             FIGHTER PROFILE - ${fighter.name.toUpperCase()}             ║
+╠═══════════════════════════════════════════════════════════╣
+║ OVR: ${fighter.ovr.toString().padStart(2, " ")} | Rank: ${rank.padEnd(25, " ")} | Age: ${fighter.age} ║
+║ Record: ${fighter.record.wins}-${fighter.record.losses}-${fighter.record.draws} (${fighter.record.kos} KOs)${" ".repeat(27)} ║
+║ ELO: ${fighter.elo.toString().padStart(4, " ")} | Tier: ${tier.name.padEnd(15, " ")} ║
+║ XP: ${fighter.xp.toString().padStart(5, " ")} | Stamina: ${fighter.stamina.toString().padStart(3, " ")}% ║
+╠═══════════════════════════════════════════════════════════╣
+║ ATTRIBUTES                                                ║
+║ PWR: ${attrs.power.toString().padStart(2, " ")} | SPD: ${attrs.speed.toString().padStart(2, " ")} | STM: ${attrs.stamina.toString().padStart(2, " ")} | CHN: ${attrs.chin.toString().padStart(2, " ")} | DEF: ${attrs.defense.toString().padStart(2, " ")} ║
+║ RIQ: ${attrs.ringIQ.toString().padStart(2, " ")} | HRT: ${attrs.heart.toString().padStart(2, " ")} | AGG: ${attrs.aggression.toString().padStart(2, " ")} | RCH: ${attrs.reach.toString().padStart(2, " ")} | TGH: ${attrs.toughness.toString().padStart(2, " ")} ║
+╠═══════════════════════════════════════════════════════════╣
+║ BELTS & TITLES: ${fighter.belts.map((b) => b.organization).join(" | ").padEnd(38, " ")} ║
+╚═══════════════════════════════════════════════════════════╝
+    `;
+  }
+
+  /**
+   * TOP 10 RANKING BY WEIGHT CLASS
+   */
+  getWeightClassRankings(fighters, weightClass) {
+    return fighters
+      .filter((f) => f.weightClass === weightClass)
+      .sort((a, b) => {
+        // Belts first, then OVR, then ELO
+        if (b.belts.length !== a.belts.length) {
+          return b.belts.length - a.belts.length;
+        }
+        if (b.ovr !== a.ovr) return b.ovr - a.ovr;
+        return b.elo - a.elo;
+      })
+      .slice(0, 10)
+      .map((f, idx) => ({
+        rank: idx + 1,
+        name: f.name,
+        ovr: f.ovr,
+        record: `${f.record.wins}-${f.record.losses}`,
+        elo: f.elo,
+        belts: f.belts.length,
+        tier: this.getRatingTier(f.ovr).level
+      }));
+  }
+
+  /**
+   * EXPORT FOR FRANCHISE MODE
+   */
+  exportRankingsJSON(fighters) {
+    return {
+      timestamp: new Date().toISOString(),
+      totalFighters: fighters.length,
+      byWeightClass: {
+        heavyweight: this.getWeightClassRankings(fighters, "Heavyweight"),
+        middleweight: this.getWeightClassRankings(fighters, "Middleweight"),
+        lightweight: this.getWeightClassRankings(fighters, "Lightweight")
+      }
+    };
+  }
+}
+
+// Export for GlassFist integration
+window.RankingSystem2K = RankingSystem2K;
