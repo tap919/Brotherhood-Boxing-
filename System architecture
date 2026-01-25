@@ -1,0 +1,261 @@
+/**
+ * GlassFist Fight Night - Complete System Architecture
+ * 2K Ranking System + Corner Handler + Franchise Integration
+ */
+
+/*
+тФМтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФР
+тФВ                      GLASSFIST FIGHT NIGHT - FULL STACK                      тФВ
+тФЬтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФд
+тФВ                                                                               тФВ
+тФВ  тФМтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФР   тФВ
+тФВ  тФВ                    CAREER MODE (Single Player)                        тФВ   тФВ
+тФВ  тФЬтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФд   тФВ
+тФВ  тФВ                                                                       тФВ   тФВ
+тФВ  тФВ  START: "Create Fighter"                                            тФВ   тФВ
+тФВ  тФВ    тЖУ                                                                 тФВ   тФВ
+тФВ  тФВ  RANKING SYSTEM 2K (ranking-system-2k.js)                           тФВ   тФВ
+тФВ  тФВ  тФЬтФА initCareerFighter() тЖТ Fighter at OVR 60                         тФВ   тФВ
+тФВ  тФВ  тФЬтФА QSS Attributes: PWR, SPD, STM, CHN, DEF, RIQ, HRT, AGG, RCH    тФВ   тФВ
+тФВ  тФВ  тФЬтФА Archetype: Slugger, Out-Boxer, Swarmer, Counter, Boxer-PuncherтФВ   тФВ
+тФВ  тФВ  тФФтФА Rating Tier: Prospect (60-69) тЖТ Regional тЖТ National тЖТ Champ    тФВ   тФВ
+тФВ  тФВ                                                                       тФВ   тФВ
+тФВ  тФВ  WEEKLY CALENDAR (CareerCalendar)                                   тФВ   тФВ
+тФВ  тФВ  тФЬтФА MONDAY: Training Camp (trainAttribute)                          тФВ   тФВ
+тФВ  тФВ  тФВ   тФФтФА XP cost: 100 * 1.08^(attr-60)                              тФВ   тФВ
+тФВ  тФВ  тФЬтФА WEDNESDAY: Sparring Session (simulateSparring)                  тФВ   тФВ
+тФВ  тФВ  тФВ   тФФтФА vs. lower-ranked AI, +100 XP                               тФВ   тФВ
+тФВ  тФВ  тФЬтФА FRIDAY: Weigh-In & Negotiations (showFightNegotiations)        тФВ   тФВ
+тФВ  тФВ  тФВ   тФФтФА ELO-based opponent matching                                тФВ   тФВ
+тФВ  тФВ  тФФтФА SATURDAY: FIGHT NIGHT (startFight)                             тФВ   тФВ
+тФВ  тФВ      тФФтФА Goes to Phaser Fight Scene                                 тФВ   тФВ
+тФВ  тФВ                                                                       тФВ   тФВ
+тФВ  тФВ  FIGHT SCENE (game.js - Phaser)                                     тФВ   тФВ
+тФВ  тФВ  тФЬтФА Player vs. Opponent (full boxing simulation)                    тФВ   тФВ
+тФВ  тФВ  тФЬтФА 12 Rounds (Championship) / 10 Rounds (Contender) / etc.        тФВ   тФВ
+тФВ  тФВ  тФЬтФА BETWEEN-ROUND SCREEN (CornerHandler)                           тФВ   тФВ
+тФВ  тФВ  тФВ   тФЬтФА Coach Strategy: Work Body, Aim Head, Pressure, etc.        тФВ   тФВ
+тФВ  тФВ  тФВ   тФФтФА Cutman: Cold Compress, Stitch Cut, Water, Energy Bar      тФВ   тФВ
+тФВ  тФВ  тФФтФА JUDGES' SCORECARD (Win/Loss/Draw Decision or KO/TKO)          тФВ   тФВ
+тФВ  тФВ                                                                       тФВ   тФВ
+тФВ  тФВ  FIGHT RESULT HANDLER (FightResultHandler)                          тФВ   тФВ
+тФВ  тФВ  тФЬтФА updateEloAndRating() тЖТ ELO change based on opponent rating     тФВ   тФВ
+тФВ  тФВ  тФВ   тФФтФА Title bout multiplier: 1.5x (championship rounds)          тФВ   тФВ
+тФВ  тФВ  тФЬтФА Update Fighter Record (W-L-D, KOs)                             тФВ   тФВ
+тФВ  тФВ  тФЬтФА Award/Lose Belts (if title bout)                               тФВ   тФВ
+тФВ  тФВ  тФФтФА Generate Post-Fight Report                                      тФВ   тФВ
+тФВ  тФВ      тФФтФА New Rank: "National Contender" (if qualified)              тФВ   тФВ
+тФВ  тФВ                                                                       тФВ   тФВ
+тФВ  тФВ  CAREER PROGRESSION PATH                                            тФВ   тФВ
+тФВ  тФВ  Week 1:  1-0, OVR 60 тЖТ "Prospect"                                 тФВ   тФВ
+тФВ  тФВ  Week 5:  5-0, OVR 70 тЖТ "Regional Contender"                       тФВ   тФВ
+тФВ  тФВ  Week 10: 10-0, OVR 75 тЖТ "National Contender"                      тФВ   тФВ
+тФВ  тФВ  Week 15: 15-0, OVR 80 тЖТ "Mandatory Challenger"                    тФВ   тФВ
+тФВ  тФВ  Week 20: Wins title! OVR 85 тЖТ "World Champion"                    тФВ   тФВ
+тФВ  тФВ           Award belt, defend 5x, become "Legend"                   тФВ   тФВ
+тФВ  тФВ                                                                       тФВ   тФВ
+тФВ  тФФтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФШ   тФВ
+тФВ                                                                               тФВ
+тФВ  тФМтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФР   тФВ
+тФВ  тФВ              FRANCHISE MODE (Two-Player Manager Game)                 тФВ   тФВ
+тФВ  тФЬтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФд   тФВ
+тФВ  тФВ                                                                       тФВ   тФВ
+тФВ  тФВ  SETUP (setupTwoPlayerCareer)                                        тФВ   тФВ
+тФВ  тФВ  тФЬтФА Player 1: Promoter A (roster, budget $50k, reputation 50)       тФВ   тФВ
+тФВ  тФВ  тФФтФА Player 2: Promoter B (roster, budget $50k, reputation 50)       тФВ   тФВ
+тФВ  тФВ                                                                       тФВ   тФВ
+тФВ  тФВ  WEEKLY SCHEDULE MANAGEMENT                                          тФВ   тФВ
+тФВ  тФВ  тФЬтФА Draft fighters into your roster (from AI pool)                  тФВ   тФВ
+тФВ  тФВ  тФЬтФА Schedule matchups (P1 fighter vs P2 fighter)                    тФВ   тФВ
+тФВ  тФВ  тФВ   тФФтФА Venue, Date, Purse splits                                  тФВ   тФВ
+тФВ  тФВ  тФФтФА Manage finances (purses, trainer salaries, gym fees)            тФВ   тФВ
+тФВ  тФВ                                                                       тФВ   тФВ
+тФВ  тФВ  WEIGHT CLASS RANKINGS UI (RankingsUI)                              тФВ   тФВ
+тФВ  тФВ  тФЬтФА Display Top 10 Heavyweight Ranking                              тФВ   тФВ
+тФВ  тФВ  тФЬтФА Display Top 10 Middleweight Ranking                             тФВ   тФВ
+тФВ  тФВ  тФФтФА Display Top 10 Lightweight Ranking                              тФВ   тФВ
+тФВ  тФВ                                                                       тФВ   тФВ
+тФВ  тФВ  REAL-TIME BRACKET UPDATES                                           тФВ   тФВ
+тФВ  тФВ  тФЬтФА After each fight, update Elo/OVR                                тФВ   тФВ
+тФВ  тФВ  тФЬтФА Recalculate rankings                                             тФВ   тФВ
+тФВ  тФВ  тФЬтФА Trigger title challenges if fighter #1 loses                    тФВ   тФВ
+тФВ  тФВ  тФФтФА Award new belts (IBF, WBA, WBC, WBO)                            тФВ   тФВ
+тФВ  тФВ                                                                       тФВ   тФВ
+тФВ  тФВ  MANDATORY CHALLENGER SYSTEM                                         тФВ   тФВ
+тФВ  тФВ  тФЬтФА Track mandatory challengers per weight class                    тФВ   тФВ
+тФВ  тФВ  тФЬтФА After 2-3 title defenses, schedule mandatory bout               тФВ   тФВ
+тФВ  тФВ  тФФтФА Purse increase for mandatory challenges                         тФВ   тФВ
+тФВ  тФВ                                                                       тФВ   тФВ
+тФВ  тФВ  SEASON FINALE                                                        тФВ   тФВ
+тФВ  тФВ  тФЬтФА End of year: Calculate earnings, reputation                     тФВ   тФВ
+тФВ  тФВ  тФЬтФА Promote fighters or demote underperformers                      тФВ   тФВ
+тФВ  тФВ  тФФтФА Advance to next season with updated rosters                     тФВ   тФВ
+тФВ  тФВ                                                                       тФВ   тФВ
+тФВ  тФФтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФШ   тФВ
+тФВ                                                                               тФВ
+тФВ  тФМтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФР   тФВ
+тФВ  тФВ                  DATA STRUCTURES & EXPORT                             тФВ   тФВ
+тФВ  тФЬтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФд   тФВ
+тФВ  тФВ                                                                       тФВ   тФВ
+тФВ  тФВ  Fighter Object:                                                     тФВ   тФВ
+тФВ  тФВ  {                                                                   тФВ   тФВ
+тФВ  тФВ    id: "LW-001",                                                    тФВ   тФВ
+тФВ  тФВ    name: "Player",                                                  тФВ   тФВ
+тФВ  тФВ    weightClass: "Lightweight",                                       тФВ   тФВ
+тФВ  тФВ    archetype: "boxer-puncher",                                      тФВ   тФВ
+тФВ  тФВ    attributes: {                                                    тФВ   тФВ
+тФВ  тФВ      power: 60, speed: 60, stamina: 62, chin: 60,                 тФВ   тФВ
+тФВ  тФВ      defense: 61, ringIQ: 60, heart: 62, aggression: 60,          тФВ   тФВ
+тФВ  тФВ      reach: 75, toughness: 60                                      тФВ   тФВ
+тФВ  тФВ    },                                                               тФВ   тФВ
+тФВ  тФВ    ovr: 60,  // 0-99 scale (2K-style)                              тФВ   тФВ
+тФВ  тФВ    record: { wins: 5, losses: 0, draws: 0, kos: 3 },              тФВ   тФВ
+тФВ  тФВ    elo: 1100,  // Chess-style rating                               тФВ   тФВ
+тФВ  тФВ    belts: [{ name: "WBA", organization: "WBA", defenses: 1 }],   тФВ   тФВ
+тФВ  тФВ    xp: 450,  // Exponential training cost                          тФВ   тФВ
+тФВ  тФВ    age: 24,  // Auto-degrade after 34                              тФВ   тФВ
+тФВ  тФВ    condition: "Fresh"                                              тФВ   тФВ
+тФВ  тФВ  }                                                                  тФВ   тФВ
+тФВ  тФВ                                                                       тФВ   тФВ
+тФВ  тФВ  Franchise Rankings Export (JSON):                                   тФВ   тФВ
+тФВ  тФВ  {                                                                   тФВ   тФВ
+тФВ  тФВ    timestamp: "2026-01-25T03:40:00Z",                              тФВ   тФВ
+тФВ  тФВ    totalFighters: 75,                                               тФВ   тФВ
+тФВ  тФВ    byWeightClass: {                                                тФВ   тФВ
+тФВ  тФВ      heavyweight: [                                                 тФВ   тФВ
+тФВ  тФВ        { rank: 1, name: "Ali", ovr: 99, record: "56-5",           тФВ   тФВ
+тФВ  тФВ          elo: 1850, belts: 2, tier: "GOAT" },                     тФВ   тФВ
+тФВ  тФВ        ...                                                          тФВ   тФВ
+тФВ  тФВ      ],                                                             тФВ   тФВ
+тФВ  тФВ      middleweight: [...],                                          тФВ   тФВ
+тФВ  тФВ      lightweight: [...]                                            тФВ   тФВ
+тФВ  тФВ    }                                                                тФВ   тФВ
+тФВ  тФВ  }                                                                  тФВ   тФВ
+тФВ  тФВ                                                                       тФВ   тФВ
+тФВ  тФФтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФШ   тФВ
+тФВ                                                                               тФВ
+тФВ  тФМтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФР   тФВ
+тФВ  тФВ                      FILE DEPENDENCIES                                тФВ   тФВ
+тФВ  тФЬтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФд   тФВ
+тФВ  тФВ                                                                       тФВ   тФВ
+тФВ  тФВ  index.html (Main Entry)                                            тФВ   тФВ
+тФВ  тФВ  тФЬтФА GlassFist-Manager-Enhanced.html (UI/Menu)                       тФВ   тФВ
+тФВ  тФВ  тФЬтФА game.js (Phaser Fight Scene - Simulates actual fight)          тФВ   тФВ
+тФВ  тФВ  тФЬтФА corner_handler.js (Between-round corner mechanics)             тФВ   тФВ
+тФВ  тФВ  тФЬтФА ranking-system-2k.js (Career progression + rankings)           тФВ   тФВ
+тФВ  тФВ  тФЬтФА ranking-integration-guide.js (How to wire it all)              тФВ   тФВ
+тФВ  тФВ  тФЬтФА franchise.js (Two-player management)                           тФВ   тФВ
+тФВ  тФВ  тФЬтФА twofranchise.js (Bracket scheduling)                           тФВ   тФВ
+тФВ  тФВ  тФФтФА styles.css (Design system)                                      тФВ   тФВ
+тФВ  тФВ                                                                       тФВ   тФВ
+тФВ  тФВ  Data Files:                                                         тФВ   тФВ
+тФВ  тФВ  тФЬтФА fighters-database.json (75 all-time greats + attributes)       тФВ   тФВ
+тФВ  тФВ  тФЬтФА ranking-system.json (Weight class ladders, belts)              тФВ   тФВ
+тФВ  тФВ  тФФтФА franchise-state.json (Current season standings)                тФВ   тФВ
+тФВ  тФВ                                                                       тФВ   тФВ
+тФВ  тФФтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФШ   тФВ
+тФВ                                                                               тФВ
+тФФтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФАтФШ
+
+KEY MECHANICS:
+
+1. OVR CALCULATION (2K-style):
+   OVR = (PWR├Ч0.12 + SPD├Ч0.14 + STM├Ч0.13 + CHN├Ч0.11 + DEF├Ч0.12 + RIQ├Ч0.13 + 
+          HRT├Ч0.10 + AGG├Ч0.08 + RCH├Ч0.04 + TGH├Ч0.03)
+   Range: 60 (Prospect) to 99 (Pantheon)
+
+2. ELO RATING SYSTEM:
+   Win by Decision: +25 ranking points
+   Win by KO/TKO: +50 ranking points
+   Title bout: ├Ч1.5 multiplier on ELO gain
+   Expected Score = 1 / (1 + 10^((opponent_elo - your_elo)/400))
+   New ELO = Old ELO + K-factor ├Ч (1 - expected)
+
+3. TRAINING XP COSTS (Exponential):
+   Cost to train attribute = 100 ├Ч 1.08^(current_attribute - 60)
+   Example: Train Speed from 60тЖТ61 costs 100 XP
+           Train Speed from 90тЖТ91 costs 5000 XP
+
+4. RANKING LADDER (Per Weight Class):
+   Prospect (0 wins, OVR 60)
+   тЖУ (5 wins + OVR 70)
+   Regional Contender
+   тЖУ (10 wins + OVR 75)
+   National Contender
+   тЖУ (15 wins + OVR 80)
+   Mandatory Challenger
+   тЖУ Win title bout
+   World Champion (IBF, WBA, WBC, WBO)
+   тЖУ 5+ defenses + OVR 90+
+   LEGEND
+
+5. AGING/DEGRADATION (Career Longevity):
+   Peak age: 28-34 years old
+   After 34: Stamina & Speed degrade 2% per year
+   Mental stats (RIQ, DEF) remain stable or improve
+
+6. CORNER SYSTEM (Between Rounds):
+   60-second corner time after each round
+   Coach gives strategy instruction (affects next round)
+   Cutman applies treatments (restores stamina/health)
+   Results in modifier for next 3 minutes of fight
+*/
+
+// Quick-start initialization template:
+
+class QuickStartTemplate {
+  static initializeGame() {
+    // 1. Create ranking system
+    const ranking = new RankingSystem2K(gameState);
+
+    // 2. Create corner handler
+    const corner = new CornerHandler(gameState, cornerConfig);
+
+    // 3. Load fighter database (from JSON file)
+    gameState.fighters = fetch("fighters-database.json").then((r) =>
+      r.json()
+    );
+
+    // 4. Create player fighter (starts at OVR 60)
+    const playerFighter = ranking.initCareerFighter(
+      "Your Fighter",
+      "Lightweight",
+      "boxer-puncher"
+    );
+
+    // 5. Setup career calendar
+    const calendar = new CareerCalendar();
+
+    // 6. Start weekly loop
+    calendar.advanceWeek(playerFighter, ranking);
+
+    return {
+      ranking,
+      corner,
+      calendar,
+      playerFighter,
+      gameState
+    };
+  }
+
+  static runFightCycle() {
+    // After fight ends in Phaser scene:
+    const handler = new FightResultHandler();
+    const result = handler.processFightResult(
+      playerFighter,
+      opponent,
+      "win", // or "loss"
+      "regular" // or "title"
+    );
+
+    // Result contains:
+    // - eloChange: +30 (e.g.)
+    // - newOVR: 62
+    // - newRank: "Prospect" (still)
+    // - nextOpponent: { name: "...", ovr: 65, elo: 1050 }
+
+    return result;
+  }
+}
+
+window.QuickStartTemplate = QuickStartTemplate;
