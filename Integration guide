@@ -1,0 +1,361 @@
+/**
+ * Integration Guide: Ranking System 2K + Corner Handler + Franchise
+ * How to wire everything together in GlassFist Fight Night
+ */
+
+// ============================================================================
+// 1. INITIALIZATION IN YOUR MAIN GAME SCENE
+// ============================================================================
+
+class GlassFistGameScene {
+  init() {
+    // Load both systems
+    this.ranking = new RankingSystem2K(this.gameState);
+    this.corner = new CornerHandler(this.gameState, this.cornerConfig);
+
+    // Load historical/AI fighters from database
+    this.gameState.fighters = this.loadFighterDatabase();
+
+    // Create player fighter
+    const playerFighter = this.ranking.initCareerFighter(
+      "Player",
+      "Lightweight",
+      "boxer-puncher"
+    );
+    this.gameState.playerFighter = playerFighter;
+
+    // Initialize franchise if multi-player
+    if (this.gameState.mode === "franchise") {
+      this.setupFranchiseMode();
+    }
+  }
+
+  loadFighterDatabase() {
+    // Load from your JSON (Muhammad Ali, Joe Louis, etc.)
+    // Pre-rated with QSS attributes from the PDF you provided
+    return [
+      {
+        id: "HW-001",
+        name: "Muhammad Ali",
+        weightClass: "Heavyweight",
+        archetype: "out-boxer",
+        attributes: {
+          power: 86,
+          speed: 99,
+          stamina: 99,
+          chin: 98,
+          defense: 97,
+          ringIQ: 99,
+          heart: 99,
+          aggression: 85,
+          reach: 94,
+          toughness: 90
+        },
+        record: { wins: 56, losses: 5, draws: 0, kos: 37 },
+        elo: 1850,
+        belts: [
+          { name: "WBC", organization: "WBC", defenses: 19 },
+          { name: "WBA", organization: "WBA", defenses: 19 }
+        ],
+        age: 32
+      },
+      // ... add more from the database
+    ];
+  }
+
+  setupFranchiseMode() {
+    this.gameState.franchise = this.corner.setupTwoPlayerCareer(
+      {
+        name: "Player 1",
+        fighters: [this.gameState.playerFighter],
+        budget: 50000,
+        reputation: 50
+      },
+      {
+        name: "Player 2",
+        fighters: [],
+        budget: 50000,
+        reputation: 50
+      }
+    );
+  }
+}
+
+// ============================================================================
+// 2. FIGHT RESULT → CAREER PROGRESSION
+// ============================================================================
+
+class FightResultHandler {
+  processFightResult(playerFighter, opponentFighter, result, fightType) {
+    const ranking = new RankingSystem2K();
+
+    // 1. Update ELO & OVR
+    const eloGain = ranking.updateEloAndRating(
+      playerFighter,
+      opponentFighter,
+      result,
+      fightType
+    );
+
+    // 2. Update record
+    if (result === "win") {
+      playerFighter.record.wins++;
+      if (result.method === "KO" || result.method === "TKO") {
+        playerFighter.record.kos++;
+      }
+    } else {
+      playerFighter.record.losses++;
+    }
+
+    // 3. Award/lose belts if title bout
+    if (fightType === "title") {
+      if (result === "win") {
+        ranking.awardBelt(playerFighter, opponentFighter.belts[0].name, "WBC");
+      } else {
+        // Opponent won, you lose your belt
+        opponentFighter.belts.forEach((belt, idx) => {
+          ranking.loseBelt(playerFighter, idx);
+        });
+      }
+    }
+
+    // 4. Generate post-fight report
+    const report = {
+      eloChange: eloGain,
+      newOVR: playerFighter.ovr,
+      newRank: ranking.getCurrentRank(playerFighter),
+      record: `${playerFighter.record.wins}-${playerFighter.record.losses}`,
+      beltsHeld: playerFighter.belts.length,
+      nextOpponent: ranking.selectOpponent(
+        playerFighter,
+        this.gameState.fighters,
+        "balanced"
+      )
+    };
+
+    return report;
+  }
+}
+
+// ============================================================================
+// 3. CAREER PROGRESSION CALENDAR (Weekly/Monthly)
+// ============================================================================
+
+class CareerCalendar {
+  advanceWeek(playerFighter, ranking) {
+    const day = ["Monday", "Wednesday", "Friday", "Saturday"][this.dayOfWeek];
+
+    const weekActivities = {
+      Monday: {
+        name: "Training Camp",
+        action: () => this.showTrainingMenu(playerFighter, ranking),
+        rewards: "Train 1 attribute"
+      },
+      Wednesday: {
+        name: "Sparring Session",
+        action: () => this.simulateSparring(playerFighter, ranking),
+        rewards: "XP + mini fight"
+      },
+      Friday: {
+        name: "Weigh-In & Negotiations",
+        action: () => this.showFightNegotiations(playerFighter, ranking),
+        rewards: "Choose next opponent"
+      },
+      Saturday: {
+        name: "FIGHT NIGHT",
+        action: () => this.startFight(),
+        rewards: "ELO + Title opportunity"
+      }
+    };
+
+    const activity = weekActivities[day];
+    return activity;
+  }
+
+  showTrainingMenu(playerFighter, ranking) {
+    // Display menu to train a specific attribute
+    const attrs = ranking.getAttributeDefinitions();
+    return {
+      options: Object.keys(attrs).map((attr) => ({
+        label: `Train ${attrs[attr].label} (${attrs[attr].description})`,
+        cost: 100 * Math.pow(1.08, playerFighter.attributes[attr] - 60),
+        callback: () => ranking.trainAttribute(playerFighter, attr, 10)
+      }))
+    };
+  }
+
+  simulateSparring(playerFighter, ranking) {
+    // Create random sparring partner from lower-ranked fighters
+    const candidates = this.gameState.fighters.filter(
+      (f) =>
+        f.weightClass === playerFighter.weightClass &&
+        f.elo < playerFighter.elo &&
+        f.id !== playerFighter.id
+    );
+
+    const sparringPartner = candidates[Math.floor(Math.random() * candidates.length)];
+
+    // Simulate quick 3-round fight (text-based)
+    const rounds = [
+      `Round 1: ${sparringPartner.name} comes out strong. You study his jab.`,
+      `Round 2: You land a clean combination. Sparring partner adjusts.`,
+      `Round 3: Close round. You shake hands.`
+    ];
+
+    playerFighter.xp += 100; // Small XP boost
+    return { partner: sparringPartner.name, rounds, xpGain: 100 };
+  }
+
+  showFightNegotiations(playerFighter, ranking) {
+    // Show available opponents based on current rank
+    const ladder = ranking.getWeightClassLadder(playerFighter.weightClass);
+    const currentTier = ladder.tiers.find(
+      (t) => t.tier === ranking.getCurrentRank(playerFighter)
+    );
+
+    // Suggest next opponent
+    const nextOpponent = ranking.selectOpponent(
+      playerFighter,
+      this.gameState.fighters,
+      "balanced"
+    );
+
+    // Show purse/stakes
+    const purse = currentTier ? 25000 * (currentTier.tier.split(" ").length) : 15000;
+
+    return {
+      opponent: nextOpponent.name,
+      opponentOVR: nextOpponent.ovr,
+      opponentRecord: `${nextOpponent.record.wins}-${nextOpponent.record.losses}`,
+      purse,
+      beltStake: playerFighter.belts.length > 0 ? "Your Title(s) at Risk" : "None",
+      acceptFight: () => this.confirmFight(playerFighter, nextOpponent)
+    };
+  }
+
+  confirmFight(playerFighter, opponent) {
+    // Transition to fight screen
+    return { player: playerFighter, opponent, readyToFight: true };
+  }
+}
+
+// ============================================================================
+// 4. DISPLAYING RANKINGS IN FRANCHISE MODE
+// ============================================================================
+
+class RankingsUI {
+  displayWeightClassRankings(ranking, fighters, weightClass, phaser) {
+    const topTen = ranking.getWeightClassRankings(fighters, weightClass);
+
+    let rankingTable = `
+╔════════════════════════════════════════════════════════════════════════════╗
+║                     ${weightClass.toUpperCase()} RANKINGS                                    ║
+╠══════╦════════════════════════╦═════╦═════════╦═══════╦════════════════════╣
+║ Rank ║ Fighter                ║ OVR ║ Record  ║ Belts ║ Tier               ║
+╠══════╬════════════════════════╬═════╬═════════╬═══════╬════════════════════╣
+    `;
+
+    topTen.forEach((f) => {
+      rankingTable += `
+║ ${f.rank.toString().padStart(2, " ")}   ║ ${f.name.padEnd(22, " ")} ║ ${f.ovr.toString().padStart(3, " ")} ║ ${f.record.padEnd(7, " ")} ║ ${f.belts.toString().padStart(5, " ")} ║ ${f.tier.padEnd(18, " ")} ║
+      `;
+    });
+
+    rankingTable += `
+╚══════╩════════════════════════╩═════╩═════════╩═══════╩════════════════════╝
+    `;
+
+    // Display as text in Phaser
+    const displayText = phaser.add
+      .text(400, 300, rankingTable, {
+        font: "12px monospace",
+        fill: "#00ff00"
+      })
+      .setOrigin(0.5)
+      .setDepth(100);
+
+    return displayText;
+  }
+
+  displayFighterCard(ranking, fighter, phaser) {
+    const card = ranking.generateFighterCard(fighter);
+    return phaser.add
+      .text(200, 200, card, {
+        font: "11px monospace",
+        fill: "#FFD700"
+      })
+      .setOrigin(0, 0)
+      .setDepth(100);
+  }
+}
+
+// ============================================================================
+// 5. EXAMPLE: COMPLETE CAREER FLOW
+// ============================================================================
+
+/*
+WEEK 1:
+  Monday → Training: Train Speed (60 → 61)
+  Wednesday → Sparring: Beat local fighter, +100 XP
+  Friday → Negotiations: Offered fight vs. Rank #45 (OVR 72)
+  Saturday → FIGHT NIGHT:
+    - Beat opponent by Decision (25 pts)
+    - ELO: 1000 → 1020
+    - OVR: 60 → 61
+    - Record: 1-0
+    - Rank: Still "Prospect" (need 5 wins + OVR 70)
+
+WEEK 5:
+  After 5 wins:
+    - Record: 5-0
+    - OVR: 70
+    - New Rank: "Regional Contender"
+    - ELO: ~1150
+
+WEEK 12:
+  After 10 wins:
+    - Record: 10-0
+    - OVR: 75
+    - New Rank: "National Contender"
+    - Offered Mandatory Title Shot
+    - ELO: ~1350
+
+WEEK 20:
+  Title Fight vs. Current Champion:
+    - Win by KO → +50 pts, ELO multiplier 1.5x
+    - OVR: 85+
+    - NEW CHAMPION
+    - Belts: WBC, WBA
+*/
+
+// ============================================================================
+// 6. INTEGRATION WITH YOUR EXISTING FILES
+// ============================================================================
+
+/*
+IN GlassFist-Manager-Enhanced.html:
+  <script src="ranking-system-2k.js"></script>
+  <script src="corner_handler.js"></script>
+
+IN game.js (your Phaser scene):
+  const gameScene = new GlassFistGameScene();
+  gameScene.init();
+  
+  // In update loop:
+  if (fightEnded) {
+    const fightHandler = new FightResultHandler();
+    const result = fightHandler.processFightResult(...);
+    console.log(result); // Display post-fight screen
+    
+    const calendar = new CareerCalendar();
+    const nextWeek = calendar.advanceWeek(gameScene.gameState.playerFighter);
+  }
+
+IN franchise.js (two-player mode):
+  const standings = gameState.ranking.exportRankingsJSON(gameState.fighters);
+  localStorage.setItem('gfm-standings', JSON.stringify(standings));
+*/
+
+window.CareerCalendar = CareerCalendar;
+window.FightResultHandler = FightResultHandler;
+window.RankingsUI = RankingsUI;
