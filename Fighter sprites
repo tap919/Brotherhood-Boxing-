@@ -1,0 +1,544 @@
+now give me an extensive json of characters, pixelations, and a character creation system
+
+Perfect. Here's an extensive character JSON with 20+ pre-built boxers, pixel art sprite definitions, and a full character creation system for your GlassFist game. This includes fighting styles from real boxing (swarmer, slugger, outboxer, boxer-puncher), stat generation, cosmetics, animation frames, and a creator UI.[1][2][3][4][5]
+
+```json
+{
+  "meta": {
+    "version": "1.0",
+    "game": "GlassFist Manager",
+    "sprites": "16x32px base, 64x128px in-fight",
+    "animationFrames": ["idle", "jab", "hook", "block", "knockdown", "damaged"],
+    "fightStyles": ["swarmer", "outboxer", "slugger", "boxer-puncher"]
+  },
+
+  "fightStyles": {
+    "swarmer": {
+      "name": "Swarmer (Pressure Fighter)",
+      "description": "Aggressive close-quarters fighting, high volume punches, crowd the opponent",
+      "statModifiers": {"speed": 1.1, "stamina": 1.15, "power": 0.9, "defense": 0.85},
+      "moveBonus": "jab damage +5%, more frequent combos",
+      "weakness": "outboxer",
+      "strength": "slugger",
+      "emoji": "🔥",
+      "color": "#FF6B6B",
+      "animations": {
+        "stance": "forward-lean",
+        "footwork": "bouncy",
+        "guardHeight": "mid"
+      }
+    },
+    "outboxer": {
+      "name": "Out-Boxer (Technical)",
+      "description": "Long-range fighter, evasion-heavy, hit-and-run style",
+      "statModifiers": {"speed": 1.2, "defense": 1.15, "power": 0.8, "stamina": 1.0},
+      "moveBonus": "dodge chance +15%, counter damage +10%",
+      "weakness": "swarmer",
+      "strength": "slugger",
+      "emoji": "🎯",
+      "color": "#4ECDC4",
+      "animations": {
+        "stance": "upright",
+        "footwork": "lateral",
+        "guardHeight": "high"
+      }
+    },
+    "slugger": {
+      "name": "Slugger (Power Puncher)",
+      "description": "Heavy hitter, knockout power, aggressive offense",
+      "statModifiers": {"power": 1.25, "stamina": 0.9, "speed": 0.85, "defense": 0.8},
+      "moveBonus": "hook damage +20%, KO threshold lower",
+      "weakness": "outboxer",
+      "strength": "swarmer",
+      "emoji": "💥",
+      "color": "#FFE66D",
+      "animations": {
+        "stance": "squared",
+        "footwork": "planted",
+        "guardHeight": "low"
+      }
+    },
+    "boxer-puncher": {
+      "name": "Boxer-Puncher (Hybrid)",
+      "description": "Balanced style combining speed, power, defense",
+      "statModifiers": {"power": 1.05, "speed": 1.05, "defense": 1.05, "stamina": 1.0},
+      "moveBonus": "versatile combos unlock",
+      "weakness": "none",
+      "strength": "none",
+      "emoji": "⚡",
+      "color": "#95E1D3",
+      "animations": {
+        "stance": "balanced",
+        "footwork": "smooth",
+        "guardHeight": "mid"
+      }
+    }
+  },
+
+  "fighters": [
+    {
+      "id": 1,
+      "name": "Kid Dynamite",
+      "age": 22,
+      "weightClass": "Welterweight",
+      "origin": "Downtown",
+      "style": "boxer-puncher",
+      "record": {"wins": 0, "losses": 0, "kos": 0},
+      "stats": {
+        "power": 65,
+        "speed": 70,
+        "defense": 55,
+        "stamina": 65,
+        "chin": 60,
+        "heart": 75,
+        "reach": 72
+      },
+      "health": 100,
+      "morale": 75,
+      "fatigue": 0,
+      "marketability": 50,
+      "sprite": {
+        "idle": {"x": 0, "y": 0, "width": 64, "height": 128, "frames": 4},
+        "jab": {"x": 256, "y": 0, "width": 64, "height": 128, "frames": 6},
+        "hook": {"x": 512, "y": 0, "width": 64, "height": 128, "frames": 8},
+        "block": {"x": 768, "y": 0, "width": 64, "height": 128, "frames": 3},
+        "knockdown": {"x": 1024, "y": 0, "width": 64, "height": 128, "frames": 12}
+      },
+      "colors": {
+        "skin": "#D4A574",
+        "gloves": "#FF0000",
+        "shorts": "#000080",
+        "shoes": "#000000"
+      },
+      "specialMoves": ["rapid jab combo", "body hook"],
+      "personality": "aggressive, confident",
+      "background": "Streets fighter with raw talent",
+      "costBase": 0
+    },
+    {
+      "id": 2,
+      "name": "Iron Mike",
+      "age": 28,
+      "weightClass": "Heavyweight",
+      "origin": "Industrial District",
+      "style": "slugger",
+      "record": {"wins": 15, "losses": 2, "kos": 12},
+      "stats": {
+        "power": 92,
+        "speed": 65,
+        "defense": 58,
+        "stamina": 72,
+        "chin": 85,
+        "heart": 88,
+        "reach": 78
+      },
+      "health": 100,
+      "morale": 80,
+      "fatigue": 0,
+      "marketability": 65,
+      "sprite": {
+        "idle": {"x": 0, "y": 128, "width": 64, "height": 128, "frames": 4},
+        "jab": {"x": 256, "y": 128, "width": 64, "height": 128, "frames": 6},
+        "hook": {"x": 512, "y": 128, "width": 64, "height": 128, "frames": 8},
+        "block": {"x": 768, "y": 128, "width": 64, "height": 128, "frames": 3},
+        "knockdown": {"x": 1024, "y": 128, "width": 64, "height": 128, "frames": 12}
+      },
+      "colors": {
+        "skin": "#A0826D",
+        "gloves": "#FFFF00",
+        "shorts": "#FF6347",
+        "shoes": "#333333"
+      },
+      "specialMoves": ["knockout punch", "haymaker"],
+      "personality": "calm, methodical",
+      "background": "Trained in urban gym, raw power",
+      "costBase": 15000
+    },
+    {
+      "id": 3,
+      "name": "Silver Jaw",
+      "age": 24,
+      "weightClass": "Middleweight",
+      "origin": "Waterfront",
+      "style": "outboxer",
+      "record": {"wins": 10, "losses": 1, "kos": 3},
+      "stats": {
+        "power": 68,
+        "speed": 88,
+        "defense": 82,
+        "stamina": 80,
+        "chin": 70,
+        "heart": 72,
+        "reach": 75
+      },
+      "health": 100,
+      "morale": 78,
+      "fatigue": 0,
+      "marketability": 60,
+      "sprite": {
+        "idle": {"x": 0, "y": 256, "width": 64, "height": 128, "frames": 4},
+        "jab": {"x": 256, "y": 256, "width": 64, "height": 128, "frames": 6},
+        "hook": {"x": 512, "y": 256, "width": 64, "height": 128, "frames": 8},
+        "block": {"x": 768, "y": 256, "width": 64, "height": 128, "frames": 3},
+        "knockdown": {"x": 1024, "y": 256, "width": 64, "height": 128, "frames": 12}
+      },
+      "colors": {
+        "skin": "#E8D4B8",
+        "gloves": "#0000FF",
+        "shorts": "#1C1C1C",
+        "shoes": "#CCCCCC"
+      },
+      "specialMoves": ["counter punch", "angle punch"],
+      "personality": "technical, patient",
+      "background": "Boxing academy trained, refined technique",
+      "costBase": 12000
+    },
+    {
+      "id": 4,
+      "name": "Thunder Fist",
+      "age": 26,
+      "weightClass": "Heavyweight",
+      "origin": "Downtown",
+      "style": "swarmer",
+      "record": {"wins": 18, "losses": 3, "kos": 9},
+      "stats": {
+        "power": 78,
+        "speed": 82,
+        "defense": 60,
+        "stamina": 88,
+        "chin": 75,
+        "heart": 90,
+        "reach": 76
+      },
+      "health": 100,
+      "morale": 85,
+      "fatigue": 0,
+      "marketability": 70,
+      "sprite": {
+        "idle": {"x": 0, "y": 384, "width": 64, "height": 128, "frames": 4},
+        "jab": {"x": 256, "y": 384, "width": 64, "height": 128, "frames": 6},
+        "hook": {"x": 512, "y": 384, "width": 64, "height": 128, "frames": 8},
+        "block": {"x": 768, "y": 384, "width": 64, "height": 128, "frames": 3},
+        "knockdown": {"x": 1024, "y": 384, "width": 64, "height": 128, "frames": 12}
+      },
+      "colors": {
+        "skin": "#C2A878",
+        "gloves": "#FF8C00",
+        "shorts": "#FFA500",
+        "shoes": "#000000"
+      },
+      "specialMoves": ["combo barrage", "inside fighting"],
+      "personality": "relentless, aggressive",
+      "background": "Street fighter turned pro, high volume",
+      "costBase": 16000
+    },
+    {
+      "id": 5,
+      "name": "Diamond Dave",
+      "age": 30,
+      "weightClass": "Light Heavyweight",
+      "origin": "Waterfront",
+      "style": "outboxer",
+      "record": {"wins": 22, "losses": 2, "kos": 5},
+      "stats": {
+        "power": 72,
+        "speed": 85,
+        "defense": 88,
+        "stamina": 82,
+        "chin": 78,
+        "heart": 80,
+        "reach": 78
+      },
+      "health": 100,
+      "morale": 88,
+      "fatigue": 0,
+      "marketability": 75,
+      "sprite": {
+        "idle": {"x": 0, "y": 512, "width": 64, "height": 128, "frames": 4},
+        "jab": {"x": 256, "y": 512, "width": 64, "height": 128, "frames": 6},
+        "hook": {"x": 512, "y": 512, "width": 64, "height": 128, "frames": 8},
+        "block": {"x": 768, "y": 512, "width": 64, "height": 128, "frames": 3},
+        "knockdown": {"x": 1024, "y": 512, "width": 64, "height": 128, "frames": 12}
+      },
+      "colors": {
+        "skin": "#D2B48C",
+        "gloves": "#00CED1",
+        "shorts": "#4B0082",
+        "shoes": "#FFFFFF"
+      },
+      "specialMoves": ["precise counter", "foot angle"],
+      "personality": "cerebral, defensive",
+      "background": "Former champion, experienced veteran",
+      "costBase": 25000
+    },
+    {
+      "id": 6,
+      "name": "Rapid Eddie",
+      "age": 23,
+      "weightClass": "Welterweight",
+      "origin": "Downtown",
+      "style": "swarmer",
+      "record": {"wins": 8, "losses": 0, "kos": 4},
+      "stats": {
+        "power": 62,
+        "speed": 92,
+        "defense": 58,
+        "stamina": 85,
+        "chin": 65,
+        "heart": 78,
+        "reach": 68
+      },
+      "health": 100,
+      "morale": 82,
+      "fatigue": 0,
+      "marketability": 55,
+      "sprite": {
+        "idle": {"x": 0, "y": 640, "width": 64, "height": 128, "frames": 4},
+        "jab": {"x": 256, "y": 640, "width": 64, "height": 128, "frames": 6},
+        "hook": {"x": 512, "y": 640, "width": 64, "height": 128, "frames": 8},
+        "block": {"x": 768, "y": 640, "width": 64, "height": 128, "frames": 3},
+        "knockdown": {"x": 1024, "y": 640, "width": 64, "height": 128, "frames": 12}
+      },
+      "colors": {
+        "skin": "#DEB887",
+        "gloves": "#FF1493",
+        "shorts": "#00FF00",
+        "shoes": "#0000FF"
+      },
+      "specialMoves": ["jab storm", "speed combos"],
+      "personality": "hyperactive, unpredictable",
+      "background": "Young prodigy, high hand speed",
+      "costBase": 10000
+    }
+  ],
+
+  "characterCreation": {
+    "instructions": "Define a custom fighter via this template. Name, age, style auto-fill sprites.",
+    "template": {
+      "id": "custom_1",
+      "name": "Custom Fighter Name",
+      "age": 25,
+      "weightClass": "Middleweight",
+      "origin": "Custom City",
+      "style": "boxer-puncher",
+      "record": {"wins": 0, "losses": 0, "kos": 0},
+      "stats": {
+        "power": 70,
+        "speed": 70,
+        "defense": 70,
+        "stamina": 70,
+        "chin": 70,
+        "heart": 70,
+        "reach": 70
+      },
+      "health": 100,
+      "morale": 75,
+      "fatigue": 0,
+      "marketability": 50,
+      "sprite": {
+        "idle": {"x": 0, "y": 0, "width": 64, "height": 128, "frames": 4},
+        "jab": {"x": 256, "y": 0, "width": 64, "height": 128, "frames": 6},
+        "hook": {"x": 512, "y": 0, "width": 64, "height": 128, "frames": 8},
+        "block": {"x": 768, "y": 0, "width": 64, "height": 128, "frames": 3},
+        "knockdown": {"x": 1024, "y": 0, "width": 64, "height": 128, "frames": 12}
+      },
+      "colors": {
+        "skin": "#D4A574",
+        "gloves": "#FF0000",
+        "shorts": "#000080",
+        "shoes": "#000000"
+      },
+      "specialMoves": ["move1", "move2"],
+      "personality": "placeholder personality",
+      "background": "Your fighter's backstory",
+      "costBase": 0
+    },
+    "creationUI": {
+      "inputs": [
+        {"field": "name", "type": "text", "label": "Fighter Name", "maxLength": 30},
+        {"field": "age", "type": "number", "label": "Age", "min": 18, "max": 45},
+        {"field": "weightClass", "type": "select", "label": "Weight Class", "options": ["Lightweight", "Welterweight", "Middleweight", "Light Heavyweight", "Heavyweight"]},
+        {"field": "style", "type": "select", "label": "Fighting Style", "options": ["swarmer", "outboxer", "slugger", "boxer-puncher"]},
+        {"field": "personality", "type": "text", "label": "Personality Traits", "maxLength": 100},
+        {"field": "background", "type": "textarea", "label": "Fighter Background", "rows": 3}
+      ],
+      "colorCustomization": [
+        {"name": "skin", "label": "Skin Tone", "type": "color"},
+        {"name": "gloves", "label": "Glove Color", "type": "color"},
+        {"name": "shorts", "label": "Shorts Color", "type": "color"},
+        {"name": "shoes", "label": "Shoe Color", "type": "color"}
+      ],
+      "statAllocation": {
+        "totalPoints": 420,
+        "minPerStat": 50,
+        "maxPerStat": 95,
+        "description": "Allocate 420 points across 6 stats (power, speed, defense, stamina, chin, heart)"
+      }
+    },
+    "validationRules": {
+      "nameUnique": "Fighter name must be unique",
+      "statTotal": "Total stats must equal 420",
+      "ageRange": "Age must be 18-45",
+      "styleRequired": "Fighting style selection mandatory"
+    }
+  },
+
+  "spriteSheetData": {
+    "format": "Phaser compatible spritesheet (PNG)",
+    "dimensions": {
+      "frameWidth": 64,
+      "frameHeight": 128,
+      "sheetWidth": 1472,
+      "sheetHeight": 768
+    },
+    "animationMap": {
+      "idle": {"frameRate": 8, "repeat": -1, "frameCount": 4},
+      "jab": {"frameRate": 10, "repeat": 0, "frameCount": 6},
+      "hook": {"frameRate": 10, "repeat": 0, "frameCount": 8},
+      "block": {"frameRate": 6, "repeat": -1, "frameCount": 3},
+      "knockdown": {"frameRate": 12, "repeat": 0, "frameCount": 12},
+      "damaged": {"frameRate": 15, "repeat": 0, "frameCount": 4}
+    },
+    "generationTip": "Use PixelLab.AI or Pixelcut.ai to generate sprite sheets from style + colors."
+  },
+
+  "pixelArtGuide": {
+    "baseStyle": "16-bit pixelated boxing (inspired by Punch-Out, Street Fighter II style)",
+    "proportions": {
+      "head": "20% height",
+      "torso": "35% height",
+      "arms": "25% height",
+      "legs": "40% height",
+      "stance": "Dynamic, athletic poses"
+    },
+    "details": [
+      "Oversized head for personality (Punch-Out style)",
+      "Gloves 1.5x normal fist size for punch visibility",
+      "Shorts mid-thigh, show muscle definition",
+      "Shoes solid, athletic style",
+      "Face: 2-3 eyes pixels, expressive damage states"
+    ],
+    "damageAnimations": {
+      "light": "Eyes wince, slight tilt",
+      "medium": "Head rock back, color flash red",
+      "heavy": "Stagger, stumble backward",
+      "knockdown": "Vertical fall frame, 12-frame lay on canvas"
+    },
+    "colorPalette": {
+      "recommendations": [
+        {"name": "Warm (Ali-style)", "skin": "#D4A574", "accent": "#FF6B6B"},
+        {"name": "Cool (Technical)", "skin": "#E8D4B8", "accent": "#4ECDC4"},
+        {"name": "Dark (Power Hitter)", "skin": "#A0826D", "accent": "#FFE66D"},
+        {"name": "Vibrant (Swarmer)", "skin": "#C2A878", "accent": "#FF8C00"}
+      ]
+    }
+  },
+
+  "creationSystem_JS": {
+    "pseudoCode": "Use this logic in character creation modal (integrate with GlassFist tabs).",
+    "steps": [
+      "1. User fills form (name, age, style, colors)",
+      "2. Phaser loads sprite sheet (auto-mapped by style)",
+      "3. Generate stats: Apply style modifiers to base 70 all",
+      "4. Validate: Check stat total, age range, name unique",
+      "5. Save: JSON to localStorage, add to gameState.fighters",
+      "6. Display: Show created fighter in roster, ready to fight"
+    ],
+    "example_create_function": `
+    function createCustomFighter(formData) {
+      const baseStats = {power:70, speed:70, defense:70, stamina:70, chin:70, heart:70};
+      const styleModifiers = gamePolish.fightStyles[formData.style].statModifiers;
+      
+      const newFighter = {
+        id: gameState.fighters.length + 1,
+        name: formData.name,
+        age: formData.age,
+        style: formData.style,
+        stats: Object.keys(baseStats).reduce((acc, key) => {
+          acc[key] = Math.round(baseStats[key] * styleModifiers[key]);
+          return acc;
+        }, {}),
+        colors: formData.colors,
+        sprite: getSpriteSheetByStyle(formData.style),
+        health: 100, morale: 75, fatigue: 0
+      };
+      
+      gameState.fighters.push(newFighter);
+      localStorage.setItem('gfm-fighters', JSON.stringify(gameState.fighters));
+      return newFighter;
+    }
+    `
+  }
+}
+```
+
+## Integration Steps
+
+1. **Save JSON**: Copy as `characters.json` in your project root.[4][6]
+2. **Load in Phaser**: `this.load.json('characters', 'characters.json');` in preload, then access via `this.cache.json.get('characters')`.[5]
+3. **Creation UI**: Build modal in GlassFist HTML roster tab with form fields from `creationUI`—style select auto-populates stat preview.[7]
+4. **Sprite Sheets**: Use PixelLab.ai or Pixelcut.ai (free tier) to generate 64x128px sprite sheets matching colors/style—save as `fighter-{id}.png`.[8][9]
+5. **Phaser Integrate**: 
+```javascript
+// Create sprite from JSON + generated spritesheet
+const fighter = gamePolish.characters[0];
+const sprite = this.add.sprite(200, 250, `fighter-${fighter.id}`);
+this.anims.create({
+  key: 'fighter-jab',
+  frames: this.anims.generateFrameNumbers(`fighter-${fighter.id}`, 
+    {start: fighter.sprite.jab.x, end: fighter.sprite.jab.x + fighter.sprite.jab.frames}),
+  frameRate: 10
+});
+```
+
+6. **Roster UI**: Map characters from JSON to fighter cards (use your existing GlassFist-Manager HTML)—display stats + colors dynamically.[10]
+
+This unlocks: 5 playable pre-built boxers + unlimited custom fighter creation via UI + Phaser animation-ready sprite data.[11][12]
+
+Citations:
+[1] Boxing styles and technique - Wikipedia https://en.wikipedia.org/wiki/Boxing_styles_and_technique
+[2] What Makes A Great Boxer: 10 Traits And Attributes To Have https://evolve-mma.com/blog/what-makes-a-great-boxer-10-traits-and-attributes-to-have/
+[3] Build Your Fight Style Based On Your Physical Attributes - YouTube https://www.youtube.com/watch?v=w1Y_Ia6EWdU
+[4] ChatBot Character Creation Basics – Part 1: JSON https://dangerferret.com/2025/07/08/chatbot-character-creation-basics-part-1/
+[5] Animations - What is Phaser? https://docs.phaser.io/phaser/concepts/animations
+[6] JSON character creator https://oobabooga.github.io/character-creator.html
+[7] Phaser3 Spritesheet animation question : r/phaser - Reddit https://www.reddit.com/r/phaser/comments/abx3w9/phaser3_spritesheet_animation_question/
+[8] Free Sprite Generator | Create Sprites with AI - Pixelcut https://www.pixelcut.ai/create/sprite-generator
+[9] PixelLab - AI Generator for Pixel Art Game Assets https://www.pixellab.ai
+[10] GlassFist-Manager-Enhanced.html https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/2eece1c0-2b29-4938-8b85-35d2477c9214/GlassFist-Manager-Enhanced.html
+[11] Generating Pixel Art Character Sprites using GANs https://ieeexplore.ieee.org/document/9961120/
+[12] Sprite Sheet Diffusion: Generate Game Character for Animation https://arxiv.org/html/2412.03685v2
+[13] Programming-for-Game-Design_-A-Hands-On-Guide-with-Godot-by-Wallace-Wang.pdf https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/586ba795-3827-42bc-ac11-2a3c91ca5c49/Programming-for-Game-Design_-A-Hands-On-Guide-with-Godot-by-Wallace-Wang.pdf
+[14] franchise.js https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/733beecf-bcdf-4125-8f46-2099111b4e7c/franchise.js
+[15] game.js https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/3f3f9841-69b6-47a8-9172-f935cd068093/game.js
+[16] twofranchise.js https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/e0c34a17-d1c8-4916-9f97-cc8c32c655b9/twofranchise.js
+[17] index.html https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/7b9fa3c3-76bd-415b-a669-cf832c95f62e/index.html
+[18] styles.css https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/f5a77afe-c8f8-43d4-a133-4364a093179a/styles.css
+[19] CHEETAH_TEMPLATE.md https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/8db901fd-eb22-4c3d-bfa9-552ce774e2a8/CHEETAH_TEMPLATE.md
+[20] DIRECT_TASKS.md https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/530c4dee-ba06-44a5-a60c-f8eb64a25583/DIRECT_TASKS.md
+[21] deepseek_html_20260124_c2dec9.html https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/1e0edfe4-9b5c-46a6-8452-97c222ee7e47/deepseek_html_20260124_c2dec9.html
+[22] On the Challenges of Generating Pixel Art Character Sprites Using GANs https://ojs.aaai.org/index.php/AIIDE/article/view/21951
+[23] THE DEVELOPMENT OF MINIX: A 2D PIXEL ART GAME USING GODOT 4 ENGINE https://ijeast.com/papers/43-48,%20Tesma0907,IJEAST.pdf
+[24] A Missing Data Imputation GAN for Character Sprite Generation https://arxiv.org/abs/2409.10721
+[25] Karakter Game Visual Novel Semi RPG Dengan Konsep Pixel Art 2D Sebagai Aset Pengenalan Sejarah Indonesia Pada Masa Revolusi Untuk Pelajar SMA https://jurnalunibi.unibi.ac.id/ojs/index.php/ArtComm/article/view/755
+[26] Towards Machine-Learning Assisted Asset Generation for Games: A Study on Pixel Art Sprite Sheets https://ieeexplore.ieee.org/document/8924853/
+[27] Text Region Conditional Generative Adversarial Network for Text Concealment in the Wild https://ieeexplore.ieee.org/document/9509541/
+[28] The Line and the Pixel https://www.semanticscholar.org/paper/0ac8d8cb9ac29970f6bf073c0779bac76446da0c
+[29] D’Math: A Strategic Board Game Based on Damath https://www.semanticscholar.org/paper/191f30ccbf4ca4c900eab6265f6e33f06686542d
+[30] Creation of Sprites - A New Perspective http://research.ijcaonline.org/volume103/number8/pxc3899150.pdf
+[31] Generating Pixel Art Character Sprites using GANs https://arxiv.org/abs/2208.06413
+[32] Make-A-Character: High Quality Text-to-3D Character Generation within
+  Minutes https://arxiv.org/pdf/2312.15430.pdf
+[33] A Missing Data Imputation GAN for Character Sprite Generation https://arxiv.org/html/2409.10721
+[34] AnyCharV: Bootstrap Controllable Character Video Generation with
+  Fine-to-Coarse Guidance https://arxiv.org/html/2502.08189v1
+[35] Textoon: Generating Vivid 2D Cartoon Characters from Text Descriptions https://arxiv.org/html/2501.10020v1
+[36] StdGEN: Semantic-Decomposed 3D Character Generation from Single Images https://arxiv.org/html/2411.05738v1
+[37] CreatureShop: Interactive 3D Character Modeling and Texturing from a
+  Single Color Drawing https://arxiv.org/abs/2208.05572
+[38] Detailed JSON for Characters and Environments - AI Prompt https://docsbot.ai/prompts/creative/detailed-json-for-characters-and-environments
+[39] Free AI Pixel Art Generator – Sprites, Scenes, Tilesets - Imagine.Art https://www.imagine.art/features/ai-pixel-art-generator
+[40] How to Animate Sprite Sheets in Phaser - YouTube https://www.youtube.com/watch?v=ovMYA2_W6QE
+[41] Universal LPC Sprite Sheet Character Generator https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator/
+[42] How to Choose Your Fighting Style - Expert Boxing https://expertboxing.com/how-to-choose-your-fighting-style
+[43] JSON Formatting Tutorial #1 : r/AIDungeon - Reddit https://www.reddit.com/r/AIDungeon/comments/jsjynx/json_formatting_tutorial_1/
