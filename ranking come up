@@ -1,0 +1,85 @@
+let's now examine the fight night, knockout kings, EA based ranking come up system. even the old Ali sega game had a good boxing rank come up. this game needs a great one considering it's not a super graphic game
+
+Here's an **EA Knockout Kings / Fight Night-inspired ranking come-up system** for GlassFist Fight Night—complete ladder progression, title belts, top-10 boards per weight class, eliminator bouts, mandatory defenses, and franchise integration. Starts in amateur clubs, climbs to world champ with performance-based points (wins, KOs, stats). No graphics needed; uses text/UI tables + unlocks story beats.[1][2][3][4][5]
+
+## Ranking System JSON
+Save as `ranking_system.json`; load in GlassFist (`this.cache.json.get('rankings')`) for dynamic opponent selection/career tracking. Weekly updates via Elo + performance (KO% > points wins).[6]
+
+```json
+{
+  "meta": {
+    "version": "1.0",
+    "system": "Knockout Kings Ladder + Fight Night Legacy",
+    "progression": "Amateur → Regional → Contender → Champion → Legend",
+    "updateCycle": "weekly",
+    "eloBase": 1000,
+    "pointsPerWin": {"KO": 50, "TKO": 40, "Decision": 25},
+    "pointsPerLoss": {"KO": -30, "Decision": -15},
+    "titleDefenseMultiplier": 1.5
+  },
+
+  "weightClasses": [
+    {
+      "id": "lightweight",
+      "name": "Lightweight (135lbs)",
+      "belts": ["IBF", "WBA", "WBC", "WBO", "Ring Magazine"],
+      "top10": [
+        {"rank": 1, "name": "Vasiliy Lomachenko", "elo": 1850, "record": "17-2 (11KO)", "style": "outboxer"},
+        {"rank": 2, "name": "Devin Haney", "elo": 1820, "record": "31-0 (15KO)", "style": "boxer-puncher"},
+        {"rank": 3, "name": "Shakur Stevenson", "elo": 1805, "record": "21-0 (10KO)", "style": "defensive"},
+        {"rank": 4, "name": "William Zepeda", "elo": 1780, "record": "30-0 (26KO)", "style": "swarmer"},
+        {"rank": 5, "name": "Raymond Muratalla", "elo": 1765, "record": "21-0 (17KO)", "style": "slugger"},
+        {"rank": 6, "name": "Frank Martin", "elo": 1750, "record": "18-0 (12KO)", "style": "outboxer"},
+        {"rank": 7, "name": "Abdul Kadir Brown", "elo": 1735, "record": "16-0 (12KO)", "style": "boxer-puncher"},
+        {"rank": 8, "name": "Keyshawn Davis", "elo": 1720, "record": "11-0 (5KO)", "style": "technical"},
+        {"rank": 9, "name": "Tevin Farmer", "elo": 1705, "record": "30-6-1 (8KO)", "style": "swarmer"},
+        {"rank": 10, "name": "Player Placeholder", "elo": 1690, "record": "0-0 (0KO)", "style": "custom"}
+      ],
+      "champions": {
+        "IBF": {"name": "Vasiliy Lomachenko", "defenses": 3},
+        "WBA": {"name": "Devin Haney", "defenses": 2},
+        "WBC": {"name": "Shakur Stevenson", "defenses": 1},
+        "WBO": {"name": "Raymond Muratalla", "defenses": 0}
+      },
+      "regionalTitles": ["North American", "USBA", "NABF"],
+      "purseRange": {"eliminator": 50000, "title": 250000, "unification": 500000}
+    },
+    {
+      "id": "welterweight",
+      "name": "Welterweight (147lbs)",
+      "belts": ["IBF", "WBA", "WBC", "WBO", "Ring Magazine"],
+      "top10": [
+        {"rank": 1, "name": "Terence Crawford", "elo": 1920, "record": "40-0 (31KO)", "style": "switch"},
+        {"rank": 2, "name": "Errol Spence Jr.", "elo": 1880, "record": "28-1 (22KO)", "style": "slugger"},
+        {"rank": 3, "name": "Sebastian Fundora", "elo": 1850, "record": "21-1-1 (14KO)", "style": "outboxer"},
+        {"rank": 4, "name": "Brian Norman Jr.", "elo": 1825, "record": "26-0 (20KO)", "style": "power"},
+        {"rank": 5, "name": "Eimantas Stanionis", "elo": 1800, "record": "14-0 (9KO)", "style": "boxer-puncher"},
+        {"
+
+Citations:
+[1] Which Boxing Game has the best Career mode - YouTube https://www.youtube.com/watch?v=hu8LUT6UkCE
+[2] Knockout Kings 2003 - IGN https://www.ign.com/articles/2002/10/09/knockout-kings-2003
+[3] Muhammad Ali Heavyweight Boxing https://en.wikipedia.org/wiki/Muhammad_Ali_Heavyweight_Boxing
+[4] Undisputed Career Mode Deeper Dive - Operation Sports https://www.operationsports.com/undisputed-career-mode-deeper-dive/
+[5] Muhammad Ali Heavyweight Boxing (Sega Genesis) - YouTube https://www.youtube.com/watch?v=ni-NDTgLy0w
+[6] An Elo-like System for Massive Multiplayer Competitions https://arxiv.org/pdf/2101.00400.pdf
+[7] Programming-for-Game-Design_-A-Hands-On-Guide-with-Godot-by-Wallace-Wang.pdf https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/586ba795-3827-42bc-ac11-2a3c91ca5c49/Programming-for-Game-Design_-A-Hands-On-Guide-with-Godot-by-Wallace-Wang.pdf
+[8] GlassFist-Manager-Enhanced.html https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/2eece1c0-2b29-4938-8b85-35d2477c9214/GlassFist-Manager-Enhanced.html
+[9] franchise.js https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/733beecf-bcdf-4125-8f46-2099111b4e7c/franchise.js
+[10] game.js https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/3f3f9841-69b6-47a8-9172-f935cd068093/game.js
+[11] twofranchise.js https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/e0c34a17-d1c8-4916-9f97-cc8c32c655b9/twofranchise.js
+[12] index.html https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/7b9fa3c3-76bd-415b-a669-cf832c95f62e/index.html
+[13] styles.css https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/f5a77afe-c8f8-43d4-a133-4364a093179a/styles.css
+[14] CHEETAH_TEMPLATE.md https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/8db901fd-eb22-4c3d-bfa9-552ce774e2a8/CHEETAH_TEMPLATE.md
+[15] DIRECT_TASKS.md https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/530c4dee-ba06-44a5-a60c-f8eb64a25583/DIRECT_TASKS.md
+[16] deepseek_html_20260124_c2dec9.html https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/1e0edfe4-9b5c-46a6-8452-97c222ee7e47/deepseek_html_20260124_c2dec9.html
+[17] Knockout Kings - Move List and Guide - PlayStation - By GCaparas https://gamefaqs.gamespot.com/ps/197745-knockout-kings/faqs/3954
+[18] Career feels like a huge missed opportunity... : r/undisputedboxing https://www.reddit.com/r/undisputedboxing/comments/1g5pfth/career_feels_like_a_huge_missed_opportunity/
+[19] Which Boxing Game Has The Best Career Mode: EA Sports Fight ... https://www.youtube.com/watch?v=UGnUAXCRmh8
+[20] Heavyweight TIER LIST: Fight Night Champion - YouTube https://www.youtube.com/watch?v=_b9x9pl8d10
+[21] ALL BELTS we can WIN in Career Mode! (Updated) - YouTube https://www.youtube.com/watch?v=UOKTCcA6BNI
+[22] Moving Up The Ranks on Undisputed Career Mode - YouTube https://www.youtube.com/watch?v=s0gCp308HPI
+[23] Knockout Kings (series) - Codex Gamicus - Fandom https://gamicus.fandom.com/wiki/Knockout_Kings_(series)
+[24] Fight Night Champion Top 100 Ranked Match - YouTube https://www.youtube.com/watch?v=e82Dp48bOJU
+[25] Moving up career mode rankings fast. : r/undisputedboxing - Reddit https://www.reddit.com/r/undisputedboxing/comments/1h96ian/moving_up_career_mode_rankings_fast/
+[26] Knockout Kings 2003 - Drew1440: Blog https://drew1440.com/2025/01/28/knockout-kings-2003/
