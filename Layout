@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Brotherhood Boxing - PS1/Saturn Championship</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            background: #0a0a0a; 
+            overflow: hidden; 
+            font-family: 'Courier New', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        
+        #gameContainer {
+            position: relative;
+            box-shadow: 0 0 60px rgba(255,215,0,0.3);
+        }
+        
+        canvas { 
+            display: block; 
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            background: #000;
+            border: 4px solid #222;
+        }
+        
+        #hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 12px;
+            pointer-events: none;
+        }
+        
+        .health-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+        
+        .fighter-stats {
+            background: rgba(0,0,0,0.85);
+            padding: 8px 12px;
+            border: 3px solid #333;
+            min-width: 220px;
+        }
+        
+        .fighter-stats.player { 
+            border-color: #4169E1;
+            box-shadow: 0 0 15px rgba(65,105,225,0.4);
+        }
+        
+        .fighter-stats.opponent { 
+            border-color: #DC143C;
+            text-align: right;
+            box-shadow: 0 0 15px rgba(220,20,60,0.4);
+        }
+        
+        .fighter-name {
+            color: #FFD700;
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 0 #000, 0 0 10px rgba(255,215,0,0.5);
+            letter-spacing: 1px;
+        }
+        
+        .bar-container {
+            background: #1a1a1a;
+            height: 14px;
+            border: 2px solid #000;
+            margin-bottom: 4px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+        }
+        
+        .bar {
+            height: 100%;
+            transition: width 0.3s ease-out;
+            position: relative;
+            box-shadow: inset 0 2px 6px rgba(255,255,255,0.3);
+        }
+        
+        .health-bar { 
+            background: linear-gradient(to bottom, #00ff00, #00aa00);
+        }
+        
+        .health-bar.danger { 
+            background: linear-gradient(to bottom, #ff4500, #cc0000);
+            animation: pulse-danger 0.8s infinite;
+        }
+        
+        @keyframes pulse-danger {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .stamina-bar { 
+            background: linear-gradient(to bottom, #4169E1, #1E3A8A);
+        }
+        
+        .bar-segments {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+        }
+        
+        .segment {
+            flex: 1;
+            border-right: 1px solid rgba(0,0,0,0.4);
+        }
+        
+        .stat-text {
+            position: absolute;
+            top: 0;
+            right: 4px;
+            font-size: 9px;
+            color: #fff;
+            text-shadow: 1px 1px 2px #000;
+            line-height: 14px;
+            font-weight: bold;
+        }
+        
+        .round-info {
+            text-align: center;
+            color: #fff;
+            font-size: 13px;
+            text-shadow: 2px 2px 0 #000;
+            background: rgba(0,0,0,0.85);
+            padding: 6px 24px;
+            display: inline-block;
+            border: 3px solid #FFD700;
+            margin: 0 auto;
+            box-shadow: 0 0 20px rgba(255,215,0,0.6);
+            letter-spacing: 2px;
+        }
+        
+        .round-center { text-align: center; }
+        
+        .action-popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 42px;
+            font-weight: bold;
+            text-shadow: 
+                4px 4px 0 #000, 
+                -2px -2px 0 #000, 
+                2px -2px 0 #000, 
+                -2px 2px 0 #000,
+                0 0 20px currentColor;
+            animation: popupFade 0.9s forwards;
+            pointer-events: none;
+            z-index: 100;
+            font-family: Impact, sans-serif;
+            letter-spacing: 3px;
+        }
+        
+        @keyframes popupFade {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(1.8) rotate(-5deg); }
+            20% { transform: translate(-50%, -50%) scale(1.2) rotate(2deg); }
+            100% { opacity: 0; transform: translate(-50%, -80%) scale(0.9) rotate(0deg); }
+        }
+        
+        .controls {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.9);
+            padding: 8px 15px;
+            border: 2px solid #555;
+            color: #aaa;
+            font-size: 9px;
+            text-align: center;
+            border-radius: 4px;
+        }
+        
+        .debug {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(0,0,0,0.85);
+            padding: 6px 10px;
+            border: 1px solid #0f0;
+            color: #0f0;
+            font-size: 8px;
+            font-family: monospace;
+            border-radius: 3px;
+        }
+        
+        .damage-indicator {
+            position: absolute;
+            font-family: Impact, sans-serif;
+            font-size: 28px;
+            font-weight: bold;
+            color: #ff0000;
+            text-shadow: 
+                3px 3px 0 #000,
+                0 0 15px #ff0000;
+            animation: damageFloat 1.2s ease-out forwards;
+            pointer-events: none;
+            z-index: 99;
+        }
+        
+        .damage-indicator.critical {
+            color: #ffff00;
+            font-size: 38px;
+            text-shadow: 
+                4px 4px 0 #000,
+                0 0 25px #ffff00,
+                0 0 40px #ff8800;
+        }
+        
+        @keyframes damageFloat {
+            0% { transform: translateY(0) scale(0.5) rotate(-10deg); opacity: 0; }
+            20% { transform: translateY(-15px) scale(1.3) rotate(5deg); opacity: 1; }
+            100% { transform: translateY(-70px) scale(0.8) rotate(0deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="960" height="720"></canvas>
+        
+        <div id="hud">
+            <div class="health-container">
+                <div class="fighter-stats player">
+                    <div class="fighter-name">IRON MIKE</div>
+                    <div class="bar-container">
+                        <div class="bar health-bar" id="playerHealth" style="width: 100%">
+                            <div class="bar-segments">
+                                <div class="segment"></div><div class="segment"></div><div class="segment"></div>
+                                <div class="segment"></div><div class="segment"></div><div class="segment"></div>
+                                <div class="segment"></div><div class="segment"></div><div class="segment"></div>
+                                <div class="segment"></div>
+                            </div>
+                            <span class="stat-text">100</span>
+                        </div>
+                    </div>
+                    <div class="bar-container">
+                        <div class="bar stamina-bar" id="playerStamina" style="width: 100%">
+                            <span class="stat-text">100</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="round-center">
+                    <div class="round-info">
+                        <span>ROUND <span id="roundNum">1</span></span> | 
+                        <span id="timer">3:00</span>
+                    </div>
+                </div>
+                
+                <div class="fighter-stats opponent">
+                    <div class="fighter-name">GLASS JAW JOE</div>
+                    <div class="bar-container">
+                        <div class="bar health-bar" id="opponentHealth" style="width: 100%">
+                            <div class="bar-segments">
+                                <div class="segment"></div><div class="segment"></div><div class="segment"></div>
+                                <div class="segment"></div><div class="segment"></div><div class="segment"></div>
+                                <div class="segment"></div><div class="segment"></div><div class="segment"></div>
+                                <div class="segment"></div>
+                            </div>
+                            <span class="stat-text">100</span>
+                        </div>
+                    </div>
+                    <div class="bar-container">
+                        <div class="bar stamina-bar" id="opponentStamina" style="width: 100%">
+                            <span class="stat-text">100</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            SPACE: Quick Combo | 1-4: Specific Punches | B: Block | R: Reset
+        </div>
+        
+        <div class="debug" id="debug">
+            FPS: 60 | Particles: 0 | State: IDLE
+        </div>
+    </div>
+
+    <script>
+        const CONFIG = {
+            resolution: { w: 320, h: 240 },
+            upscale: 3,
+            targetFPS: 60
+        };
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+
+        const VW = CONFIG.resolution.w;
+        const VH = CONFIG.resolution.h;
+        const SCALE = CONFIG.upscale;
+
+        // ============ ENHANCED LAYERED BOXER ============
+        class LayeredBoxer {
+            constructor(x, facingRight = true, color = '#E0A070', name = 'Fighter') {
+                this.x = x;
+                this.y = VH * 0.68;
+                this.baseColor = color;
+                this.facingRight = facingRight;
+                this.name = name;
+                
+                // Stats
+                this.health = 100;
+                this.maxHealth = 100;
+                this.stamina = 100;
+                this.maxStamina = 100;
+                this.fatigue = 0;
+                
+                // Animation
+                this.state = 'idle';
+                this.frame = 0;
+                this.stateTime = 0;
+                this.actionQueue = [];
+                
+                // Body parts with enhanced transforms
+                this.parts = {
+                    backLeg: { angle: 0, scale: 1, x: 0, y: 0 },
+                    backArm: { angle: 0, scale: 1, x: 0, y: 0 },
+                    torso: { angle: 0, scaleX: 1, scaleY: 1, x: 0, y: 0 },
+                    head: { angle: 0, scaleX: 1, scaleY: 1, x: 0, y: 0 },
+                    frontLeg: { angle: 0, scale: 1, x: 0, y: 0 },
+                    frontArm: { angle: 0, scale: 1, x: 0, y: 0 },
+                    gloves: { angle: 0, scale: 1, x: 0, y: 0 }
+                };
+                
+                // Visual effects
+                this.hurtFlash = 0;
+                this.muscleFlex = 0;
+                this.breathingPhase = 0;
+                this.sweatTimer = 0;
+                
+                // Damage visualization
+                this.cuts = [];
+                this.bruises = [];
+                this.swelling = { leftEye: 0, rightEye: 0, cheek: 0 };
+                
+                // Motion trails for punches
+                this.trailPositions = [];
+            }
+
+            queueAction(action) {
+                if (this.state === 'idle' || this.state === 'block') {
+                    this.actionQueue.push(action);
+                }
+            }
+
+            update(deltaTime) {
+                this.stateTime += deltaTime;
+                this.frame = Math.floor(this.stateTime * 12);
+                this.sweatTimer += deltaTime;
+                
+                // Process action queue
+                if (this.actionQueue.length > 0 && (this.state === 'idle' || this.state === 'block')) {
+                    const action = this.actionQueue.shift();
+                    this.state = action;
+                    this.stateTime = 0;
+                    
+                    if (action.includes('punch') || action === 'jab' || action === 'cross' || action === 'hook' || action === 'uppercut') {
+                        this.muscleFlex = 1.0;
+                        this.stamina = Math.max(0, this.stamina - 8);
+                    }
+                }
+                
+                // State machine transitions
+                const stateDurations = {
+                    'jab': 0.35,
+                    'cross': 0.45,
+                    'hook': 0.5,
+                    'uppercut': 0.55,
+                    'hit': 0.4,
+                    'block': 0.6,
+                    'knockdown': 2.0
+                };
+                
+                if (stateDurations[this.state] && this.stateTime > stateDurations[this.state]) {
+                    this.state = 'idle';
+                    this.stateTime = 0;
+                }
+                
+                // Update effects
+                this.hurtFlash = Math.max(0, this.hurtFlash - deltaTime * 5);
+                this.muscleFlex = Math.max(0, this.muscleFlex - deltaTime * 3.5);
+                
+                // Enhanced breathing based on fatigue
+                this.breathingPhase += deltaTime * (1.2 + this.fatigue * 3);
+                const breathAmount = 0.025 + this.fatigue * 0.06;
+                this.parts.torso.scaleY = 1 + Math.sin(this.breathingPhase) * breathAmount;
+                this.parts.torso.scaleX = 1 - Math.sin(this.breathingPhase) * breathAmount * 0.5;
+                
+                // Stamina management
+                if (this.state !== 'idle' && this.state !== 'block') {
+                    this.stamina = Math.max(0, this.stamina - deltaTime * 12);
+                } else {
+                    this.stamina = Math.min(this.maxStamina, this.stamina + deltaTime * 8);
+                }
+                this.fatigue = 1 - (this.stamina / this.maxStamina);
+                
+                // Sweat particles
+                if (this.sweatTimer > 0.3 && this.fatigue > 0.3) {
+                    ParticleSystem.spawn(
+                        this.x + (this.facingRight ? -8 : 8),
+                        this.y - 42,
+                        'sweat',
+                        Math.floor(this.fatigue * 2)
+                    );
+                    this.sweatTimer = 0;
+                }
+                
+                this.updatePartAnimations();
+                this.updateTrails();
+            }
+
+            updatePartAnimations() {
+                // Reset
+                for (let part in this.parts) {
+                    this.parts[part].angle = 0;
+                    this.parts[part].x = 0;
+                    this.parts[part].y = 0;
+                    if (this.parts[part].scaleX !== undefined) {
+                        this.parts[part].scaleX = 1;
+                        this.parts[part].scaleY = 1;
+                    }
+                }
+
+                const t = this.stateTime;
+                const progress = Math.min(1, t * 4);
+                
+                switch(this.state) {
+                    case 'idle':
+                        const bob = Math.sin(this.breathingPhase * 2);
+                        this.parts.backArm.angle = bob * 0.06;
+                        this.parts.frontArm.angle = bob * 0.06;
+                        this.parts.head.y = bob * 1.5;
+                        this.parts.backLeg.y = -bob * 0.8;
+                        this.parts.frontLeg.y = bob * 0.8;
+                        break;
+                        
+                    case 'jab':
+                        if (t < 0.15) {
+                            // Windup
+                            const wind = t / 0.15;
+                            this.parts.frontArm.angle = -0.3 * wind;
+                            this.parts.frontArm.x = -6 * wind;
+                        } else {
+                            // Release
+                            const rel = (t - 0.15) / 0.2;
+                            this.parts.frontArm.angle = 1.0 * Math.min(1, rel * 2);
+                            this.parts.frontArm.x = 28 * Math.min(1, rel * 2);
+                            this.parts.gloves.x = 32 * Math.min(1, rel * 2);
+                            this.parts.torso.angle = 0.12 * rel;
+                        }
+                        break;
+                        
+                    case 'cross':
+                        if (t < 0.2) {
+                            const wind = t / 0.2;
+                            this.parts.backArm.angle = -0.4 * wind;
+                            this.parts.torso.angle = -0.25 * wind;
+                            this.parts.backArm.x = -8 * wind;
+                        } else {
+                            const rel = (t - 0.2) / 0.25;
+                            this.parts.backArm.angle = 1.3 * Math.min(1, rel * 2);
+                            this.parts.backArm.x = 35 * Math.min(1, rel * 2);
+                            this.parts.torso.angle = 0.35 * rel;
+                            this.parts.gloves.x = 38 * Math.min(1, rel * 2);
+                            this.parts.head.x = 5 * rel;
+                        }
+                        break;
+                        
+                    case 'hook':
+                        if (t < 0.25) {
+                            const wind = t / 0.25;
+                            this.parts.frontArm.angle = -0.5 * wind;
+                            this.parts.torso.angle = -0.4 * wind;
+                        } else {
+                            const rel = (t - 0.25) / 0.25;
+                            const arc = Math.sin(rel * Math.PI * 0.5);
+                            this.parts.frontArm.angle = 0.8 + arc * 0.6;
+                            this.parts.frontArm.x = 18 * arc;
+                            this.parts.frontArm.y = -8 * arc;
+                            this.parts.torso.angle = 0.5 * rel;
+                            this.parts.gloves.angle = arc * 1.2;
+                        }
+                        break;
+                        
+                    case 'uppercut':
+                        if (t < 0.25) {
+                            const wind = t / 0.25;
+                            this.parts.frontArm.y = 12 * wind;
+                            this.parts.torso.y = 8 * wind;
+                        } else {
+                            const rel = (t - 0.25) / 0.3;
+                            this.parts.frontArm.angle = -1.2 * rel;
+                            this.parts.frontArm.y = 12 - 45 * rel;
+                            this.parts.frontArm.x = 15 * rel;
+                            this.parts.torso.y = 8 - 12 * rel;
+                            this.parts.gloves.y = -48 * rel;
+                        }
+                        break;
+                        
+                    case 'block':
+                        this.parts.backArm.angle = 1.0;
+                        this.parts.frontArm.angle = 1.0;
+                        this.parts.backArm.y = -18;
+                        this.parts.frontArm.y = -18;
+                        this.parts.backArm.x = -5;
+                        this.parts.frontArm.x = -5;
+                        this.parts.torso.angle = -0.1;
+                        break;
+                        
+                    case 'hit':
+                        const snap = Math.sin(t * 18);
+                        this.parts.head.angle = snap * 0.5;
+                        this.parts.head.scaleX = 1.2 - snap * 0.2;
+                        this.parts.head.scaleY = 0.8 + snap * 0.2;
+                        this.parts.torso.angle = snap * 0.25;
+                        this.parts.torso.x = -snap * 6;
+                        this.parts.backArm.angle = snap * 0.3;
+                        this.parts.frontArm.angle = -snap * 0.3;
+                        break;
+                        
+                    case 'knockdown':
+                        const fall = Math.min(1, t / 1.5);
+                        this.y = VH * 0.68 + fall * 40;
+                        this.parts.torso.angle = -fall * 1.5;
+                        this.parts.head.angle = -fall * 0.8;
+                        this.parts.backLeg.angle = fall * 0.6;
+                        this.parts.frontLeg.angle = -fall * 0.4;
+                        break;
+                }
+            }
+
+            updateTrails() {
+                // Add trail positions for motion blur
+                if (this.state === 'jab' || this.state === 'cross' || this.state === 'hook') {
+                    this.trailPositions.push({
+                        x: this.parts.gloves.x,
+                        y: this.parts.gloves.y,
+                        alpha: 1.0,
+                        time: 0
+                    });
+                }
+                
+                // Update and remove old trails
+                for (let i = this.trailPositions.length - 1; i >= 0; i--) {
+                    this.trailPositions[i].time += 0.016;
+                    this.trailPositions[i].alpha -= 0.05;
+                    if (this.trailPositions[i].alpha <= 0) {
+                        this.trailPositions.splice(i, 1);
+                    }
+                }
+            }
+
+            takeDamage(amount, isCritical = false) {
+                this.health = Math.max(0, this.health - amount);
+                this.hurtFlash = 1.0;
+                
+                if (this.health > 0) {
+                    this.state = 'hit';
+                    this.stateTime = 0;
+                } else {
+                    this.state = 'knockdown';
+                    this.stateTime = 0;
+                }
+                
+                Camera.shakeScreen(amount / 2.5, 0.2);
+                
+                // Damage effects
+                if (Math.random() < 0.25 && this.cuts.length < 4) {
+                    this.cuts.push({
+                        x: -10 + Math.random() * 20,
+                        y: -28 + Math.random() * 12,
+                        severity: 0.3 + Math.random() * 0.7
+                    });
+                }
+                
+                if (Math.random() < 0.35) {
+                    if (Math.random() < 0.5) {
+                        this.swelling.leftEye = Math.min(1, this.swelling.leftEye + 0.15);
+                    } else {
+                        this.swelling.rightEye = Math.min(1, this.swelling.rightEye + 0.15);
+                    }
+                }
+                
+                // Show damage number
+                showDamageNumber(
+                    this.x * SCALE,
+                    (this.y - 30) * SCALE,
+                    Math.floor(amount),
+                    isCritical
+                );
+            }
+
+            draw() {
+                ctx.save();
+                ctx.scale(SCALE, SCALE);
+                ctx.translate(-Camera.offsetX, -Camera.offsetY);
+                ctx.scale(Camera.zoom, Camera.zoom);
+                
+                ctx.translate(this.x, this.y);
+                if (!this.facingRight) ctx.scale(-1, 1);
+                
+                // Muscle flex
+                const flexScale = 1 + this.muscleFlex * 0.14;
+                ctx.scale(flexScale, flexScale);
+                
+                // Hurt flash overlay
+                if (this.hurtFlash > 0) {
+                    ctx.fillStyle = `rgba(255, 80, 80, ${this.hurtFlash * 0.6})`;
+                    ctx.fillRect(-28, -58, 56, 88);
+                }
+                
+                // Shadow
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+                ctx.beginPath();
+                ctx.ellipse(0, 38, 20, 7, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw motion trails
+                this.drawTrails();
+                
+                // Draw body layers
+                this.drawLayer('backLeg');
+                this.drawLayer('backArm');
+                this.drawLayer('torso');
+                this.drawLayer('head');
+                this.drawLayer('frontLeg');
+                this.drawLayer('frontArm');
+                this.drawLayer('gloves');
+                
+                // Damage overlays
+                this.drawDamage();
+                
+                ctx.restore();
+            }
+
+            drawTrails() {
+                this.trailPositions.forEach(trail => {
+                    ctx.save();
+                    ctx.globalAlpha = trail.alpha * 0.4;
+                    ctx.translate(trail.x, trail.y);
+                    
+                    ctx.fillStyle = '#FF4500';
+                    ctx.beginPath();
+                    ctx.arc(10, -12, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.restore();
+                });
+            }
+
+            drawLayer(layerName) {
+                const part = this.parts[layerName];
+                
+                ctx.save();
+                ctx.translate(part.x, part.y);
+                ctx.rotate(part.angle);
+                
+                const scaleX = part.scaleX !== undefined ? part.scaleX : part.scale;
+                const scaleY = part.scaleY !== undefined ? part.scaleY : part.scale;
+                ctx.scale(scaleX, scaleY);
+                
+                const shadowColor = this.getLighterColor(this.baseColor, -30);
+                const highlightColor = this.getLighterColor(this.baseColor, 20);
+                
+                switch(layerName) {
+                    case 'backLeg':
+                    case 'frontLeg':
+                        // Shorts
+                        ctx.fillStyle = '#1a1a2e';
+                        ctx.fillRect(-6, 8, 12, 12);
+                        ctx.strokeStyle = '#000';
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(-6, 8, 12, 12);
+                        
+                        // Leg
+                        ctx.fillStyle = this.baseColor;
+                        ctx.fillRect(-6, 18, 12, 20);
+                        
+                        // Shading
+                        ctx.fillStyle = shadowColor;
+                        ctx.fillRect(-6, 18, 4, 20);
+                        
+                        // Highlight
+                        ctx.fillStyle = highlightColor;
+                        ctx.fillRect(2, 18, 2, 20);
+                        
+                        ctx.strokeRect(-6, 18, 12, 20);
+                        break;
+                        
+                    case 'backArm':
+                    case 'frontArm':
+                        ctx.fillStyle = this.baseColor;
+                        ctx.fillRect(-5, -20, 10, 24);
+                        
+                        // Muscle definition
+                        ctx.fillStyle = shadowColor;
+                        ctx.fillRect(-5, -20, 3, 24);
+                        ctx.fillStyle = highlightColor;
+                        ctx.fillRect(2, -20, 2, 24);
+                        
+                        ctx.strokeStyle = '#000';
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(-5, -20, 10, 24);
+                        break;
+                        
+                    case 'torso':
+                        // Main torso
+                        ctx.fillStyle = this.baseColor;
+                        ctx.fillRect(-15, -32, 30, 38);
+                        
+                        // Abs/chest definition
+                        ctx.fillStyle = shadowColor;
+                        ctx.fillRect(-12, -28, 24, 6);
+                        ctx.fillRect(-12, -20, 24, 6);
+                        ctx.fillRect(-12, -12, 24, 6);
+                        
+                        // Highlights
+                        ctx.fillStyle = highlightColor;
+                        ctx.fillRect(-2, -28, 4, 30);
+                        
+                        // Shorts waistband
+                        ctx.fillStyle = '#2a2a4e';
+                        ctx.fillRect(-15, 4, 30, 4);
+                        
+                        ctx.strokeStyle = '#000';
