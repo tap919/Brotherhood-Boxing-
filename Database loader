@@ -1,0 +1,300 @@
+/**
+ * Fighter Database Loader
+ * Loads fighters-database.json and integrates with RankingSystem2K
+ * Use in GlassFistGameScene.init()
+ */
+
+class FighterDatabaseLoader {
+  /**
+   * Load fighters from JSON file
+   */
+  static async loadFightersDatabase() {
+    try {
+      const response = await fetch("fighters-database.json");
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Failed to load fighters database:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Parse database into flat array of fighter objects
+   */
+  static parseFightersToArray(database) {
+    const fighters = [];
+
+    // Extract from each weight class
+    ["heavyweight", "middleweight", "lightweight"].forEach((division) => {
+      database[division].fighters.forEach((fighter) => {
+        fighters.push({
+          ...fighter,
+          weightClass: database[division].division,
+          divisionalBelts: database[division].belts
+        });
+      });
+    });
+
+    return fighters;
+  }
+
+  /**
+   * Get fighters by weight class
+   */
+  static getFightersByWeightClass(fighters, weightClass) {
+    return fighters.filter((f) => f.weightClass.includes(weightClass));
+  }
+
+  /**
+   * Get top N fighters by OVR in weight class
+   */
+  static getTopFighters(fighters, weightClass, limit = 10) {
+    return this.getFightersByWeightClass(fighters, weightClass)
+      .sort((a, b) => b.ovr - a.ovr)
+      .slice(0, limit);
+  }
+
+  /**
+   * Create fighter instance (add game-specific fields)
+   */
+  static createFighterInstance(fighter) {
+    return {
+      ...fighter,
+      // Game state fields
+      stamina: 100,
+      health: 100,
+      condition: "Fresh",
+      injuries: [],
+      nextOpponentId: null,
+      trainingFocus: null,
+      // AI-specific
+      tendencies: this.calculateTendencies(fighter),
+      // Career tracking
+      careerRank: this.calculateCareerRank(fighter),
+      isPlayerControlled: false
+    };
+  }
+
+  /**
+   * Calculate fighting tendencies based on archetype
+   */
+  static calculateTendencies(fighter) {
+    const archetypeBase = {
+      "out-boxer": { jabFreq: 85, hookFreq: 30, clinchFreq: 40, foulFreq: 5 },
+      "boxer-puncher": { jabFreq: 75, hookFreq: 55, clinchFreq: 60, foulFreq: 8 },
+      swarmer: { jabFreq: 70, hookFreq: 70, clinchFreq: 80, foulFreq: 10 },
+      slugger: { jabFreq: 50, hookFreq: 80, clinchFreq: 50, foulFreq: 12 },
+      "counter-puncher": { jabFreq: 60, hookFreq: 65, clinchFreq: 70, foulFreq: 6 },
+      "defensive-specialist": { jabFreq: 80, hookFreq: 20, clinchFreq: 85, foulFreq: 4 },
+      "defensive-strategist": { jabFreq: 80, hookFreq: 25, clinchFreq: 90, foulFreq: 5 },
+      "swarmer-brawler": { jabFreq: 75, hookFreq: 75, clinchFreq: 85, foulFreq: 11 },
+      "swarmer-volume": { jabFreq: 95, hookFreq: 70, clinchFreq: 75, foulFreq: 9 },
+      "switch-hitter-brawler": { jabFreq: 70, hookFreq: 75, clinchFreq: 75, foulFreq: 10 },
+      "out-boxer-sniper": { jabFreq: 90, hookFreq: 25, clinchFreq: 45, foulFreq: 4 },
+      "out-boxer-punisher": { jabFreq: 80, hookFreq: 60, clinchFreq: 50, foulFreq: 6 },
+      "power-puncher": { jabFreq: 60, hookFreq: 85, clinchFreq: 55, foulFreq: 12 },
+      "technical-master": { jabFreq: 88, hookFreq: 45, clinchFreq: 60, foulFreq: 5 },
+      "all-around-superstar": { jabFreq: 80, hookFreq: 65, clinchFreq: 65, foulFreq: 6 },
+      "technical-mastermind": { jabFreq: 92, hookFreq: 50, clinchFreq: 70, foulFreq: 4 },
+      "speed-demon": { jabFreq: 95, hookFreq: 60, clinchFreq: 50, foulFreq: 8 },
+      "balanced-fighter": { jabFreq: 75, hookFreq: 60, clinchFreq: 65, foulFreq: 8 },
+      "volume-puncher": { jabFreq: 90, hookFreq: 70, clinchFreq: 70, foulFreq: 9 },
+      "pressure-fighter": { jabFreq: 80, hookFreq: 75, clinchFreq: 85, foulFreq: 10 },
+      "defensive-master": { jabFreq: 90, hookFreq: 20, clinchFreq: 90, foulFreq: 3 },
+      "volume-fighter": { jabFreq: 98, hookFreq: 75, clinchFreq: 80, foulFreq: 10 }
+    };
+
+    return (
+      archetypeBase[fighter.archetype] || {
+        jabFreq: 75,
+        hookFreq: 60,
+        clinchFreq: 65,
+        foulFreq: 8
+      }
+    );
+  }
+
+  /**
+   * Calculate career rank from record
+   */
+  static calculateCareerRank(fighter) {
+    const wins = fighter.record.wins;
+    const ovr = fighter.ovr;
+
+    if (ovr >= 95) return "The Pantheon";
+    if (ovr >= 90) return "Hall of Fame";
+    if (ovr >= 80 && wins >= 20) return "World Champion";
+    if (ovr >= 80 && wins >= 15) return "Mandatory Challenger";
+    if (ovr >= 75 && wins >= 10) return "National Contender";
+    if (ovr >= 70 && wins >= 5) return "Regional Contender";
+    if (ovr >= 65) return "Professional";
+    return "Prospect";
+  }
+
+  /**
+   * Initialize game with fighters database
+   * Call from GlassFistGameScene.init()
+   */
+  static async initializeGameWithFighters(gameState) {
+    // Load database
+    const database = await this.loadFightersDatabase();
+    if (!database) {
+      console.error("Could not load fighters database");
+      return null;
+    }
+
+    // Parse into flat array
+    const fighters = this.parseFightersToArray(database);
+
+    // Convert to game instances
+    const gameInstances = fighters.map((f) => this.createFighterInstance(f));
+
+    // Organize by weight class
+    gameState.fighters = {
+      all: gameInstances,
+      heavyweight: this.getFightersByWeightClass(gameInstances, "Heavyweight"),
+      middleweight: this.getFightersByWeightClass(
+        gameInstances,
+        "Middleweight"
+      ),
+      lightweight: this.getFightersByWeightClass(gameInstances, "Lightweight"),
+      topHeavyweight: this.getTopFighters(gameInstances, "Heavyweight", 10),
+      topMiddleweight: this.getTopFighters(gameInstances, "Middleweight", 10),
+      topLightweight: this.getTopFighters(gameInstances, "Lightweight", 10)
+    };
+
+    return gameState.fighters;
+  }
+}
+
+// ============================================================================
+// INTEGRATION EXAMPLE
+// ============================================================================
+
+/*
+In your GlassFistGameScene:
+
+class GlassFistGameScene extends Phaser.Scene {
+  async init() {
+    // Load fighters database
+    const fighters = await FighterDatabaseLoader.initializeGameWithFighters(
+      this.gameState
+    );
+
+    if (!fighters) {
+      console.error("Game initialization failed");
+      return;
+    }
+
+    // Now use fighters in your ranking system
+    const ranking = new RankingSystem2K(this.gameState);
+
+    // Get top 10 lightweights
+    const topLWs = ranking.getWeightClassRankings(
+      fighters.lightweight,
+      "Lightweight"
+    );
+    console.log("Top 10 Lightweights:", topLWs);
+
+    // Select opponent for player
+    const playerFighter = ranking.initCareerFighter(
+      "Player",
+      "Lightweight",
+      "boxer-puncher"
+    );
+
+    const opponent = ranking.selectOpponent(
+      playerFighter,
+      fighters.lightweight,
+      "balanced"
+    );
+    console.log("Next opponent:", opponent.name, "OVR", opponent.ovr);
+
+    // Start career
+    this.gameState.ranking = ranking;
+    this.gameState.playerFighter = playerFighter;
+  }
+}
+*/
+
+// ============================================================================
+// TESTING FUNCTIONS
+// ============================================================================
+
+class DatabaseTester {
+  /**
+   * Test: Display all fighters in division
+   */
+  static displayDivision(database, division) {
+    console.log(`\n=== ${division.toUpperCase()} ===`);
+    database[division].fighters.forEach((f, idx) => {
+      console.log(
+        `${idx + 1}. ${f.name} (OVR: ${f.ovr}) - ${f.archetype} - ${
+          f.record.wins
+        }-${f.record.losses}`
+      );
+    });
+  }
+
+  /**
+   * Test: Compare two fighters
+   */
+  static compareFighters(database, fighter1Id, fighter2Id) {
+    const allFighters = [];
+    ["heavyweight", "middleweight", "lightweight"].forEach((div) => {
+      allFighters.push(...database[div].fighters);
+    });
+
+    const f1 = allFighters.find((f) => f.id === fighter1Id);
+    const f2 = allFighters.find((f) => f.id === fighter2Id);
+
+    if (!f1 || !f2) {
+      console.log("Fighter not found");
+      return;
+    }
+
+    console.log(`\n=== ${f1.name} vs ${f2.name} ===`);
+    console.log(`OVR: ${f1.ovr} vs ${f2.ovr}`);
+    console.log(`Power: ${f1.attributes.power} vs ${f2.attributes.power}`);
+    console.log(`Speed: ${f1.attributes.speed} vs ${f2.attributes.speed}`);
+    console.log(`Stamina: ${f1.attributes.stamina} vs ${f2.attributes.stamina}`);
+    console.log(`Chin: ${f1.attributes.chin} vs ${f2.attributes.chin}`);
+    console.log(`Defense: ${f1.attributes.defense} vs ${f2.attributes.defense}`);
+    console.log(`Ring IQ: ${f1.attributes.ringIQ} vs ${f2.attributes.ringIQ}`);
+  }
+
+  /**
+   * Test: Calculate OVR matches expected
+   */
+  static validateOVRCalc(database) {
+    const ranking = new RankingSystem2K({});
+    const allFighters = [];
+
+    ["heavyweight", "middleweight", "lightweight"].forEach((div) => {
+      allFighters.push(
+        ...database[div].fighters.map((f) => ({
+          ...f,
+          weightClass: database[div].division
+        }))
+      );
+    });
+
+    let mismatches = 0;
+    allFighters.forEach((f) => {
+      const calculated = ranking.calculateOVR(f);
+      if (calculated !== f.ovr) {
+        console.log(
+          `Mismatch: ${f.name} - Expected ${f.ovr}, Calculated ${calculated}`
+        );
+        mismatches++;
+      }
+    });
+
+    console.log(`OVR Validation: ${mismatches} mismatches found`);
+  }
+}
+
+// Export for use
+window.FighterDatabaseLoader = FighterDatabaseLoader;
+window.DatabaseTester = DatabaseTester;
