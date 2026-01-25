@@ -1,0 +1,691 @@
+{
+  "critical_missing_systems": {
+    "ai_opponent_logic": {
+      "status": "NOT_IMPLEMENTED",
+      "priority": "CRITICAL",
+      "description": "Opponent needs autonomous decision-making to create competitive matches",
+      "components_needed": {
+        "decision_tree": {
+          "inputs": [
+            "player_stamina",
+            "player_health",
+            "distance_to_player",
+            "own_stamina",
+            "own_health",
+            "time_remaining_in_round",
+            "punch_success_rate",
+            "damage_taken_recently"
+          ],
+          "outputs": [
+            "attack_frequency",
+            "defensive_stance",
+            "movement_pattern",
+            "punch_selection",
+            "counter_timing"
+          ]
+        },
+        "personality_archetypes": {
+          "aggressive_brawler": {
+            "punch_frequency": 0.85,
+            "defense_frequency": 0.15,
+            "preferred_punches": ["hook", "cross", "uppercut"],
+            "preferred_range": "close",
+            "stamina_management": "poor",
+            "tells": "winds_up_obviously"
+          },
+          "technical_boxer": {
+            "punch_frequency": 0.55,
+            "defense_frequency": 0.45,
+            "preferred_punches": ["jab", "cross"],
+            "preferred_range": "medium",
+            "stamina_management": "excellent",
+            "tells": "subtle_shoulder_dip"
+          },
+          "defensive_counter": {
+            "punch_frequency": 0.35,
+            "defense_frequency": 0.65,
+            "preferred_punches": ["cross", "uppercut"],
+            "preferred_range": "medium",
+            "stamina_management": "good",
+            "tells": "weight_shift_before_counter"
+          },
+          "unpredictable_wildcard": {
+            "punch_frequency": "random_0.4_to_0.9",
+            "defense_frequency": "random_0.1_to_0.6",
+            "preferred_punches": "random_weighted",
+            "preferred_range": "varies",
+            "stamina_management": "variable",
+            "tells": "inconsistent"
+          }
+        },
+        "pattern_learning": {
+          "track_player_habits": {
+            "most_used_punch": "count_last_20_punches",
+            "favorite_combo": "detect_sequences",
+            "defensive_tendency": "block_vs_dodge_ratio",
+            "fatigue_behavior": "aggression_when_tired"
+          },
+          "adaptive_response": {
+            "if_player_jabs_often": "slip_and_counter",
+            "if_player_turtles": "body_shot_pressure",
+            "if_player_aggressive": "rope_a_dope_defense",
+            "if_player_low_stamina": "increase_pressure_40_percent"
+          }
+        },
+        "difficulty_scaling": {
+          "easy": {
+            "reaction_time_ms": 800,
+            "punch_accuracy": 0.45,
+            "combo_chance": 0.15,
+            "telegraph_obvious": true,
+            "mistake_frequency": 0.35
+          },
+          "medium": {
+            "reaction_time_ms": 500,
+            "punch_accuracy": 0.65,
+            "combo_chance": 0.40,
+            "telegraph_obvious": false,
+            "mistake_frequency": 0.18
+          },
+          "hard": {
+            "reaction_time_ms": 300,
+            "punch_accuracy": 0.80,
+            "combo_chance": 0.65,
+            "telegraph_obvious": false,
+            "mistake_frequency": 0.08
+          },
+          "champion": {
+            "reaction_time_ms": 150,
+            "punch_accuracy": 0.92,
+            "combo_chance": 0.85,
+            "telegraph_obvious": false,
+            "mistake_frequency": 0.02,
+            "reads_player_patterns": true,
+            "perfect_counter_timing": true
+          }
+        }
+      }
+    },
+
+    "punch_collision_detection": {
+      "status": "PARTIALLY_IMPLEMENTED",
+      "priority": "CRITICAL",
+      "missing_components": {
+        "hitbox_system": {
+          "implementation": "frame_based_collision",
+          "hitbox_definitions": {
+            "jab": {
+              "active_frames": [3, 4, 5],
+              "hitbox_offset_x": 25,
+              "hitbox_offset_y": -12,
+              "hitbox_width": 14,
+              "hitbox_height": 10,
+              "damage_falloff": "frame_3_100_percent_frame_5_60_percent"
+            },
+            "cross": {
+              "active_frames": [4, 5, 6, 7],
+              "hitbox_offset_x": 32,
+              "hitbox_offset_y": -10,
+              "hitbox_width": 18,
+              "hitbox_height": 12,
+              "damage_falloff": "peak_on_frame_5"
+            },
+            "hook": {
+              "active_frames": [5, 6, 7, 8],
+              "hitbox_path": "arc_120_degrees",
+              "hitbox_width": 20,
+              "hitbox_height": 14,
+              "sweet_spot_frame": 6
+            },
+            "uppercut": {
+              "active_frames": [6, 7, 8],
+              "hitbox_offset_x": 18,
+              "hitbox_offset_y": -40,
+              "hitbox_width": 16,
+              "hitbox_height": 20,
+              "sweet_spot_frame": 7
+            }
+          },
+          "hurtbox_definitions": {
+            "head": {
+              "offset_x": 0,
+              "offset_y": -42,
+              "width": 20,
+              "height": 22,
+              "damage_multiplier": 1.4
+            },
+            "body": {
+              "offset_x": 0,
+              "offset_y": -18,
+              "width": 28,
+              "height": 30,
+              "damage_multiplier": 1.0
+            },
+            "arms_when_blocking": {
+              "offset_x": -8,
+              "offset_y": -20,
+              "width": 16,
+              "height": 18,
+              "damage_multiplier": 0.3
+            }
+          }
+        },
+        "collision_response": {
+          "clean_hit": {
+            "damage": "base_damage * damage_multiplier",
+            "hit_stun_frames": 15,
+            "knockback": 8,
+            "screen_freeze_frames": 3,
+            "camera_shake": "medium",
+            "particle_effect": "impact_burst",
+            "sound": "solid_hit"
+          },
+          "glancing_blow": {
+            "damage": "base_damage * 0.5",
+            "hit_stun_frames": 6,
+            "knockback": 3,
+            "screen_freeze_frames": 0,
+            "camera_shake": "light",
+            "particle_effect": "graze_sparks",
+            "sound": "light_tap"
+          },
+          "blocked_hit": {
+            "damage": "base_damage * 0.2",
+            "chip_damage": true,
+            "stamina_drain_defender": 8,
+            "push_back": 5,
+            "screen_freeze_frames": 1,
+            "particle_effect": "block_sparks",
+            "sound": "thud_blocked"
+          },
+          "counter_hit": {
+            "damage": "base_damage * 1.5",
+            "hit_stun_frames": 25,
+            "knockback": 15,
+            "screen_freeze_frames": 6,
+            "camera_shake": "heavy",
+            "slow_motion_duration": 0.3,
+            "particle_effect": "critical_explosion",
+            "sound": "devastating_crack"
+          }
+        }
+      }
+    },
+
+    "round_management": {
+      "status": "NOT_IMPLEMENTED",
+      "priority": "HIGH",
+      "components": {
+        "round_timer": {
+          "duration_seconds": 180,
+          "warning_at_seconds": 10,
+          "visual_pulse": "last_10_seconds",
+          "audio_cue": "bell_countdown"
+        },
+        "round_breaks": {
+          "duration_seconds": 60,
+          "corner_sequence": {
+            "camera_transition": "pan_to_corner",
+            "cutman_enters": "frame_10",
+            "treatment_phase": {
+              "duration": 30,
+              "available_actions": [
+                "apply_ice_reduce_swelling",
+                "apply_coagulant_stop_bleeding",
+                "water_restore_stamina_5",
+                "advice_boost_morale"
+              ]
+            },
+            "strategy_phase": {
+              "duration": 20,
+              "coach_instructions": {
+                "aggressive": "increase_punch_output_next_round",
+                "defensive": "focus_block_and_counter",
+                "target_body": "lower_stamina_strategy",
+                "target_head": "knockout_focus",
+                "survive": "minimize_damage_stall"
+              }
+            },
+            "bell_warning": "10_seconds_before_round",
+            "camera_transition_back": "pan_to_ring_center"
+          }
+        },
+        "knockout_system": {
+          "knockdown_triggers": {
+            "health_zero": "immediate_knockdown",
+            "heavy_hit_while_low_health": "chance_based_on_remaining_hp",
+            "accumulated_head_damage": "check_threshold_80_points"
+          },
+          "referee_count": {
+            "count_duration_seconds": 10,
+            "count_interval_seconds": 1,
+            "visual_display": "large_numbers_center_screen",
+            "audio": "referee_voice_count",
+            "fighter_recovery_chance": {
+              "depends_on": ["stamina_remaining", "round_number", "damage_taken"],
+              "button_mashing": "rapid_space_to_recover",
+              "success_threshold": "mash_40_times_in_8_seconds"
+            }
+          },
+          "tko_conditions": {
+            "three_knockdowns_one_round": "automatic_tko",
+            "referee_stoppage_cuts": "excessive_bleeding",
+            "corner_throws_towel": "player_decision",
+            "fighter_unable_to_continue": "health_critical"
+          }
+        },
+        "scoring_system": {
+          "judge_scoring": {
+            "criteria": {
+              "clean_punches_landed": 0.40,
+              "effective_aggression": 0.25,
+              "ring_generalship": 0.20,
+              "defense": 0.15
+            },
+            "round_scores": "10_9_or_10_8_system",
+            "knockdown_penalty": "minus_1_point",
+            "point_deduction": "fouls_or_excessive_holding"
+          },
+          "decision_types": {
+            "unanimous": "all_3_judges_same_winner",
+            "split": "2_judges_vs_1",
+            "majority_draw": "2_judges_draw_1_winner",
+            "technical_decision": "accidental_injury_before_round_4"
+          }
+        }
+      }
+    },
+
+    "damage_accumulation_system": {
+      "status": "BASIC_ONLY",
+      "priority": "HIGH",
+      "missing_features": {
+        "cut_system": {
+          "cut_locations": ["left_eyebrow", "right_eyebrow", "nose", "cheekbone", "lip"],
+          "cut_triggers": {
+            "repeated_head_punches": "accumulation_threshold_50_points",
+            "single_heavy_hit": "chance_15_percent_if_power_above_18",
+            "head_clash": "random_event"
+          },
+          "cut_severity_levels": {
+            "minor": {
+              "bleeding_rate": 0.5,
+              "vision_impairment": 0,
+              "ref_concern_threshold": 100,
+              "visual": "thin_red_line"
+            },
+            "moderate": {
+              "bleeding_rate": 1.5,
+              "vision_impairment": 10,
+              "ref_concern_threshold": 60,
+              "visual": "gash_with_blood_stream"
+            },
+            "severe": {
+              "bleeding_rate": 3.5,
+              "vision_impairment": 30,
+              "ref_concern_threshold": 30,
+              "visual": "deep_cut_heavy_bleeding",
+              "doctor_examination": "between_rounds"
+            }
+          },
+          "treatment_effectiveness": {
+            "ice_enswell": "reduce_swelling_20_percent",
+            "adrenaline_chloride": "reduce_bleeding_60_percent",
+            "vaseline": "prevent_friction_cuts",
+            "coagulant": "stop_bleeding_80_percent_minor_cuts_only"
+          }
+        },
+        "swelling_system": {
+          "eye_swelling_progression": [
+            "stage_0_normal",
+            "stage_1_slight_puffiness_vision_minus_5",
+            "stage_2_noticeable_swelling_vision_minus_15",
+            "stage_3_partial_closure_vision_minus_35",
+            "stage_4_fully_closed_vision_minus_60"
+          ],
+          "treatment": {
+            "ice_between_rounds": "reduce_1_stage_if_applied_quickly",
+            "enswell_cold_compress": "prevent_progression",
+            "if_untreated": "advances_1_stage_every_2_rounds"
+          },
+          "gameplay_impact": {
+            "reduced_vision": "harder_to_see_punches_from_affected_side",
+            "ref_stoppage_risk": "if_both_eyes_stage_3_or_higher"
+          }
+        },
+        "concussion_mechanics": {
+          "accumulation": "track_total_head_damage",
+          "wobble_threshold": 80,
+          "effects_when_wobbling": {
+            "controls_delayed": "input_lag_200ms",
+            "vision_blur": "screen_blur_effect",
+            "balance_issues": "fighter_sways_randomly",
+            "vulnerability": "damage_taken_multiplied_1.3"
+          },
+          "recovery": {
+            "time_based": "reduces_10_points_per_second_idle",
+            "hits_extend": "each_hit_delays_recovery"
+          }
+        },
+        "body_damage": {
+          "rib_damage": {
+            "accumulation_from": "body_shots",
+            "threshold": 60,
+            "effects": {
+              "breathing_impaired": "stamina_regen_reduced_50_percent",
+              "pain_on_exertion": "stamina_cost_increased_20_percent",
+              "visual": "fighter_hunched_breathing_heavy"
+            }
+          },
+          "liver_shot": {
+            "chance_on_body_punch": 0.08,
+            "effects": {
+              "immediate_knockdown": true,
+              "duration_helpless": "5_to_8_seconds",
+              "visual": "fighter_drops_to_knees",
+              "pain_animation": "clutching_side"
+            }
+          }
+        }
+      }
+    },
+
+    "combo_system": {
+      "status": "NOT_IMPLEMENTED",
+      "priority": "MEDIUM",
+      "design": {
+        "combo_definitions": {
+          "one_two": {
+            "sequence": ["jab", "cross"],
+            "timing_window_ms": 600,
+            "bonus_damage": 1.15,
+            "bonus_effect": "slight_stun_increase"
+          },
+          "jab_jab_hook": {
+            "sequence": ["jab", "jab", "hook"],
+            "timing_window_ms": 800,
+            "bonus_damage": 1.25,
+            "bonus_effect": "head_snap_animation"
+          },
+          "body_body_head": {
+            "sequence": ["body_shot", "body_shot", "hook"],
+            "timing_window_ms": 1000,
+            "bonus_damage": 1.35,
+            "bonus_effect": "guard_break_if_blocking",
+            "stamina_cost": 35
+          },
+          "uppercut_hook": {
+            "sequence": ["uppercut", "hook"],
+            "timing_window_ms": 700,
+            "bonus_damage": 1.45,
+            "bonus_effect": "high_knockdown_chance",
+            "requires": "opponent_staggered"
+          }
+        },
+        "combo_breakers": {
+          "opponent_blocks": "interrupt_combo",
+          "opponent_counters": "interrupt_and_reverse",
+          "out_of_stamina": "slow_punch_misses",
+          "out_of_range": "punch_whiffs"
+        },
+        "visual_feedback": {
+          "combo_counter": "display_hit_number_on_screen",
+          "combo_meter": "fill_bar_for_special_moves",
+          "screen_effects": "intensify_with_combo_length"
+        }
+      }
+    },
+
+    "special_moves_system": {
+      "status": "NOT_IMPLEMENTED",
+      "priority": "LOW_TO_MEDIUM",
+      "description": "Signature moves that build up over fight",
+      "mechanics": {
+        "meter_building": {
+          "gain_from": {
+            "landing_punches": 5,
+            "taking_damage": 8,
+            "successful_dodges": 10,
+            "perfect_counters": 15
+          },
+          "meter_max": 100,
+          "meter_segments": 3
+        },
+        "signature_moves": {
+          "devastating_cross": {
+            "cost": 33,
+            "damage": "35_to_45",
+            "animation": "slow_motion_windup",
+            "effects": "guaranteed_knockdown_if_connects",
+            "telegraph": "obvious_2_second_windup",
+            "dodgeable": true
+          },
+          "blur_flurry": {
+            "cost": 50,
+            "damage": "5_hits_of_8_damage",
+            "animation": "rapid_fire_jabs",
+            "effects": "stun_lock_for_duration",
+            "counter": "block_absorbs_all"
+          },
+          "clinch_break_uppercut": {
+            "cost": 25,
+            "damage": "28_to_38",
+            "trigger": "during_clinch",
+            "effects": "escape_clinch_with_damage",
+            "visual": "explosive_separation"
+          }
+        }
+      }
+    }
+  },
+
+  "gameplay_feel_improvements": {
+    "input_system": {
+      "status": "NEEDS_REFINEMENT",
+      "issues": {
+        "no_input_buffering": "commands_during_animation_lost",
+        "no_special_move_inputs": "only_single_button_presses",
+        "no_charge_moves": "cant_hold_for_power",
+        "no_directional_influence": "no_movement_control"
+      },
+      "improvements_needed": {
+        "input_buffer": {
+          "buffer_window_ms": 200,
+          "queue_size": 2,
+          "allows": "combo_inputs_during_recovery"
+        },
+        "special_inputs": {
+          "charge_punch": "hold_button_1_second_release_for_power_punch",
+          "quick_combo": "double_tap_punch_button",
+          "feint": "tap_and_release_quickly"
+        },
+        "movement_controls": {
+          "lean_left_right": "arrow_keys_or_A_D",
+          "duck": "down_arrow_or_S",
+          "step_back": "down_back",
+          "step_forward": "up_forward"
+        }
+      }
+    },
+
+    "feedback_systems": {
+      "status": "MINIMAL",
+      "missing_elements": {
+        "hit_confirmation": {
+          "visual": "freeze_frame_on_connect",
+          "audio": "varying_impact_sounds",
+          "haptic": "controller_rumble_if_available",
+          "ui": "damage_numbers_popup"
+        },
+        "status_indicators": {
+          "stamina_warning": "pulsing_red_when_below_20",
+          "health_critical": "screen_vignette_red",
+          "wobbled_state": "screen_tilt_blur",
+          "combo_active": "hit_counter_display"
+        },
+        "crowd_reaction": {
+          "good_punch": "crowd_roar_increases",
+          "knockdown": "explosive_crowd_noise",
+          "close_round": "intense_murmur",
+          "boring_fight": "crowd_boos"
+        }
+      }
+    },
+
+    "animation_polish": {
+      "missing_transitions": {
+        "idle_to_punch": "needs_smoother_blend",
+        "hit_to_idle": "recovery_animation_abrupt",
+        "block_to_counter": "no_flow",
+        "movement_while_punching": "feet_dont_move"
+      },
+      "additional_animations_needed": {
+        "victory_poses": [
+          "arms_raised",
+          "showboating",
+          "exhausted_relief"
+        ],
+        "defeat_reactions": [
+          "sitting_corner_dejected",
+          "hands_on_knees_gasping",
+          "flat_on_canvas"
+        ],
+        "defensive_animations": [
+          "rope_lean_defense",
+          "shoulder_roll",
+          "bob_and_weave",
+          "parry_deflect"
+        ],
+        "clinch_animations": [
+          "tie_up",
+          "push_off",
+          "referee_break"
+        ]
+      }
+    }
+  },
+
+  "presentation_enhancements": {
+    "audio_system": {
+      "status": "NOT_IMPLEMENTED",
+      "priority": "MEDIUM",
+      "required_sounds": {
+        "punch_impacts": {
+          "jab_connect": "quick_snap.wav",
+          "cross_connect": "heavy_thud.wav",
+          "hook_connect": "meat_slap.wav",
+          "uppercut_connect": "crack_boom.wav",
+          "body_shot": "deep_thump.wav",
+          "missed_punch": "whoosh.wav"
+        },
+        "defensive_sounds": {
+          "block_glove": "leather_smack.wav",
+          "dodge_whoosh": "air_swipe.wav",
+          "rope_bounce": "rope_tension.wav"
+        },
+        "ambience": {
+          "crowd_murmur": "looping_background.wav",
+          "crowd_cheer": "roar_layered.wav",
+          "crowd_boo": "disappointed.wav",
+          "corner_shouts": "coach_voice_lines.wav"
+        },
+        "ui_sounds": {
+          "bell_round_start": "ding_ding_ding.wav",
+          "bell_round_end": "single_ding.wav",
+          "referee_count": "one_through_ten.wav",
+          "knockout_bell": "rapid_ding.wav"
+        }
+      }
+    },
+
+    "visual_presentation": {
+      "missing_elements": {
+        "ring_announcer": {
+          "pre_fight_introduction": "camera_focus_announcer",
+          "fighter_names_announced": "text_display_with_spotlight",
+          "result_announcement": "and_the_winner_is"
+        },
+        "tale_of_the_tape": {
+          "pre_fight_stats": "side_by_side_comparison",
+          "stats_shown": [
+            "height",
+            "reach",
+            "weight",
+            "record_wins_losses",
+            "ko_percentage",
+            "age"
+          ]
+        },
+        "replays": {
+          "knockdown_replay": "slow_mo_instant_replay",
+          "best_punch_of_round": "between_rounds_highlight",
+          "final_knockout": "multiple_angles"
+        },
+        "punch_stats_overlay": {
+          "punches_landed": "real_time_counter",
+          "accuracy_percentage": "calculated_display",
+          "power_punch_percentage": "pie_chart_mini"
+        }
+      }
+    },
+
+    "camera_work": {
+      "additional_angles": {
+        "corner_cam": "between_rounds_over_shoulder",
+        "broadcast_cam": "wider_angle_full_ring",
+        "dramatic_cam": "low_angle_for_knockdowns",
+        "replay_cam": "cinematic_slow_motion"
+      },
+      "transitions": {
+        "round_start": "zoom_from_corner_to_center",
+        "knockdown": "dramatic_zoom_on_fallen",
+        "decision_reading": "split_screen_both_fighters"
+      }
+    }
+  },
+
+  "career_mode_elements": {
+    "status": "MENTIONED_IN_DOCS_NOT_IMPLEMENTED",
+    "priority": "LOW",
+    "components": {
+      "fighter_progression": {
+        "training_system": "improve_stats_between_fights",
+        "skill_trees": "unlock_new_moves",
+        "injuries": "recovery_time_affects_next_fight",
+        "aging": "stats_decline_after_peak"
+      },
+      "opponent_roster": {
+        "tiered_difficulty": "bronze_silver_gold_champion",
+        "unique_ai_per_fighter": "different_personalities",
+        "rivalry_system": "grudge_matches_increase_stakes"
+      },
+      "management": {
+        "sponsorships": "earn_money",
+        "gym_upgrades": "better_training",
+        "corner_team": "hire_better_trainers",
+        "contract_negotiations": "prize_money_splits"
+      }
+    }
+  },
+
+  "implementation_priority_summary": {
+    "phase_1_must_have": [
+      "ai_opponent_decision_making",
+      "punch_collision_detection_complete",
+      "round_timer_and_breaks",
+      "basic_knockdown_system"
+    ],
+    "phase_2_should_have": [
+      "damage_accumulation_cuts_swelling",
+      "combo_system",
+      "input_buffering",
+      "audio_system_basic"
+    ],
+    "phase_3_nice_to_have": [
+      "special_moves",
+      "replays",
+      "enhanced_presentation",
+      "career_mode_foundation"
+    ]
+  }
+}
