@@ -1,0 +1,100 @@
+now I need the system of the cutman and the trainer to be enhanced in a fight, undisputed video game style. Madden type franchise two player career system
+
+Perfect. Now **integration steps** for your fight scene:
+
+## Wiring Corner System Into Fight Scene
+
+Add this to your Phaser fight scene's `update()` loop (replaces previous endRound):
+
+```javascript
+// In FightScene after round ends
+async function endRound() {
+  gameState.fight.round++;
+
+  // Initialize corner handler
+  const cornerHandler = new CornerHandler(gameState, cornerSystemJSON);
+
+  // Show between-round UI (60 sec)
+  const cornerResult = await cornerHandler.startBetweenRoundUI(
+    this, // Phaser scene context
+    gameState.fight.round,
+    gameState.fighters[selectedFighter],
+    gameState.fight.opponent
+  );
+
+  // Apply coach instruction to next round (modifies damage multipliers)
+  const modifiers = cornerHandler.getInstructionModifiers(cornerResult.instruction);
+  applyRoundModifiers(modifiers);
+
+  // Resume fight
+  simulateNextRound();
+}
+```
+
+## Two-Player Franchise Setup
+
+In your `index.html` or GlassFist main menu:
+
+```html
+<button onclick="initiateTwoPlayerFranchise()">
+  👥 Two-Player Franchise Mode
+</button>
+
+<script>
+function initiateTwoPlayerFranchise() {
+  const p1 = { name: prompt("Player 1 Name?"), fighters: [], budget: 50000 };
+  const p2 = { name: prompt("Player 2 Name?"), fighters: [], budget: 50000 };
+  
+  const cornerHandler = new CornerHandler({});
+  const franchise = cornerHandler.setupTwoPlayerCareer(p1, p2);
+  
+  localStorage.setItem('gfm-franchise', JSON.stringify(franchise));
+  window.location.href = '#franchise-view';
+}
+</script>
+```
+
+## Files Summary
+
+| File | Purpose |
+|------|---------|
+| `corner_system.json` | 553-line config: staff, strategies, injuries, franchise mechanics |
+| `corner_handler.js` | JS class: between-round UI, treatments, coach AI, two-player integration |
+| Your GlassFist HTML | Wire via `<script src="corner_handler.js"></script>` + call `cornerHandler.startBetweenRoundUI()` after each round |
+
+**Result**: Full Undisputed/Madden corner experience—trainer gives strategy prompts, cutman manages cuts/swelling, nutrition restores stamina, two players manage separate rosters with shared franchise calendar.[1][2][3][4]
+
+Citations:
+[1] How to Work an Amateur Boxing Corner - YouTube https://www.youtube.com/watch?v=cjQ0UXGT6Nc
+[2] CORNER TIME…The coach's most important time of the fight https://www.onwardathletics.com/blogs/onwardu/corner-time-the-coach-s-most-important-time-of-the-fight
+[3] A Deep Dive into Game Mechanics & Fun Factor - YouTube https://www.youtube.com/watch?v=tIwpcSQnVrw
+[4] Madden 25: How to Create 2-Way Player for Franchise Mode https://www.youtube.com/watch?v=ujuJtqej3V0
+[5] Programming-for-Game-Design_-A-Hands-On-Guide-with-Godot-by-Wallace-Wang.pdf https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/586ba795-3827-42bc-ac11-2a3c91ca5c49/Programming-for-Game-Design_-A-Hands-On-Guide-with-Godot-by-Wallace-Wang.pdf
+[6] GlassFist-Manager-Enhanced.html https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/2eece1c0-2b29-4938-8b85-35d2477c9214/GlassFist-Manager-Enhanced.html
+[7] franchise.js https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/733beecf-bcdf-4125-8f46-2099111b4e7c/franchise.js
+[8] game.js https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/3f3f9841-69b6-47a8-9172-f935cd068093/game.js
+[9] twofranchise.js https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/e0c34a17-d1c8-4916-9f97-cc8c32c655b9/twofranchise.js
+[10] index.html https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/7b9fa3c3-76bd-415b-a669-cf832c95f62e/index.html
+[11] styles.css https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/f5a77afe-c8f8-43d4-a133-4364a093179a/styles.css
+[12] CHEETAH_TEMPLATE.md https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/8db901fd-eb22-4c3d-bfa9-552ce774e2a8/CHEETAH_TEMPLATE.md
+[13] DIRECT_TASKS.md https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/530c4dee-ba06-44a5-a60c-f8eb64a25583/DIRECT_TASKS.md
+[14] deepseek_html_20260124_c2dec9.html https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/128819417/1e0edfe4-9b5c-46a6-8452-97c222ee7e47/deepseek_html_20260124_c2dec9.html
+[15] MAAIP: Multi-Agent Adversarial Interaction Priors for imitation from
+  fighting demonstrations for physics-based characters https://arxiv.org/pdf/2311.02502.pdf
+[16] An Examination of the Biomechanics of the Cross, Hook and Uppercut between Two Elite Boxing Groups https://www.mdpi.com/2504-3900/49/1/61/pdf
+[17] Punch Trackers: Correct Recognition Depends on Punch Type and Training Experience https://www.mdpi.com/1424-8220/21/9/2968/pdf
+[18] Higher Values of Force and Acceleration in Rear Cross Than Lead Jab: Differences in Technique Execution by Boxers https://www.mdpi.com/2076-3417/14/7/2830/pdf?version=1711556467
+[19] Biomechanical and psychophysiological features of qualified veteran boxers of various fighting styles https://hsr-journal.com/index.php/journal/article/download/118/50
+[20] Special Issue Athletes’ Performance and Analysis in Combat Sports and Martial Arts https://www.mdpi.com/2076-3417/14/2/543/pdf?version=1704708591
+[21] Biomechanical Analysis of the Cross, Hook, and Uppercut in Junior vs. Elite Boxers: Implications for Training and Talent Identification https://www.frontiersin.org/articles/10.3389/fspor.2020.598861/pdf
+[22] These 2 Broken Mechanics Are Ruining Undisputed But ... - YouTube https://www.youtube.com/watch?v=xeANHBLT6Jw
+[23] Advanced Boxing Strategy https://expertboxing.com/advanced-boxing-strategy
+[24] Connected Franchise - Madden NFL 25 Guide - IGN https://www.ign.com/wikis/madden-nfl-25/Connected_Franchise
+[25] Game Plan : r/amateur_boxing - Reddit https://www.reddit.com/r/amateur_boxing/comments/1bm8oz6/game_plan/
+[26] Undisputed Career Mode Explained | It's Really Good - YouTube https://www.youtube.com/watch?v=PJlYgEBMwp4
+[27] How To Play CO-OP Career In Madden 26 & CFB 26‼️ - YouTube https://www.youtube.com/shorts/3EghkHoTrPY
+[28] Every Boxing Strategy Explained Like You're 10 - YouTube https://www.youtube.com/watch?v=OqymCTIALyU
+[29] Corner fighting revision idea - Boxing Manager https://community.theboxingmanagergame.com/t/corner-fighting-revision-idea/938
+[30] I want to control my cutman in between rounds : r/undisputedboxing https://www.reddit.com/r/undisputedboxing/comments/10yypsk/i_want_to_control_my_cutman_in_between_rounds/
+[31] 2 player franchise on same console | EA Forums - 8870008 https://forums.ea.com/discussions/madden-nfl-25-game-modes-en/2-player-franchise-on-same-console/8870008
+[32] The Interval Between Boxing Rounds: A Crucial Element of Strategy http://oreateai.com/blog/the-interval-between-boxing-rounds-a-crucial-element-of-strategy/bc104e7aa0535d8da1e0ba4a2b93f769
