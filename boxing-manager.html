@@ -1024,6 +1024,13 @@
                     defender.swelling = Math.min(100, defender.swelling + rand(10, 20));
                     fightLog(`${defender.name}'s eye is swelling!`, 'hit');
                 }
+
+                // Doctor stoppage check: if injuries are too severe, stop the fight via health-based TKO
+                if (defender.cuts >= 75 || defender.swelling >= 75) {
+                    fightLog(`The doctor stops the fight due to ${defender.name}'s severe injuries!`, 'event');
+                    // Force a stoppage using existing health-based end-of-fight logic
+                    defender.health = 0;
+                }
             }
             
             // Commentary
