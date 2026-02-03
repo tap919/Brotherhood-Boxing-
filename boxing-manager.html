@@ -1066,13 +1066,13 @@
         let p1Score = 10;
         let p2Score = 10;
         
-        // Compare damage dealt
-        const f1Damage = 100 - f2.health;
-        const f2Damage = 100 - f1.health;
+        // Compare damage dealt THIS round (using tracked start-of-round health)
+        const f1DamageDealt = (state.roundStartHealth?.f2 || 100) - f2.health;
+        const f2DamageDealt = (state.roundStartHealth?.f1 || 100) - f1.health;
         
-        if (f1Damage > f2Damage + 5) {
+        if (f1DamageDealt > f2DamageDealt + 3) {
             p2Score = 9;
-        } else if (f2Damage > f1Damage + 5) {
+        } else if (f2DamageDealt > f1DamageDealt + 3) {
             p1Score = 9;
         }
         
@@ -1173,17 +1173,28 @@
         document.querySelectorAll(`#p${player}-strategy-btns .strategy-btn`).forEach(btn => {
             btn.classList.remove('selected');
         });
-        event.target.classList.add('selected');
+        // Find the clicked button by matching strategy name
+        const btns = document.querySelectorAll(`#p${player}-strategy-btns .strategy-btn`);
+        btns.forEach(btn => {
+            if (btn.textContent.toLowerCase().includes(strategy)) {
+                btn.classList.add('selected');
+            }
+        });
     }
 
     function nextRound() {
         const state = GameState.fightState;
         
-        // Apply natural recovery
+        // Apply natural recovery (stamina only - health doesn't recover in boxing)
         state.fighters.forEach(f => {
-            f.stamina = Math.min(100, f.stamina + 15); // Base recovery
-            f.health = Math.min(100, f.health + 3); // Small health recovery
+            f.stamina = Math.min(100, f.stamina + 15); // Base stamina recovery
         });
+        
+        // Track health at start of round for scoring
+        state.roundStartHealth = {
+            f1: state.fighters[0].health,
+            f2: state.fighters[1].health
+        };
         
         // Update UI
         document.getElementById('fight-round').textContent = state.round;
