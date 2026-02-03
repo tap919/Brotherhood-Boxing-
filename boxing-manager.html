@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brotherhood Boxing - Two Player Manager Sim</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; image-rendering: pixelated; }
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            color: #eee;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 1px, transparent 1px, transparent 3px);
+            z-index: 9999;
+        }
+        .game-wrapper { max-width: 1000px; margin: 0 auto; padding: 10px; }
+        .game-header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            border: 4px solid #e94560;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.3);
+        }
+        .game-title {
+            font-size: 20px;
+            color: #e94560;
+            text-shadow: 3px 3px 0 #000, -1px -1px 0 #ff6b8a;
+            letter-spacing: 2px;
+            animation: titlePulse 2s infinite;
+        }
+        @keyframes titlePulse {
+            0%, 100% { text-shadow: 3px 3px 0 #000, 0 0 10px #e94560; }
+            50% { text-shadow: 3px 3px 0 #000, 0 0 20px #ff6b8a; }
+        }
+        .game-subtitle { font-size: 8px; color: #00ff88; margin-top: 8px; letter-spacing: 4px; }
+        .screen { display: none; }
+        .screen.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .panel {
+            background: linear-gradient(135deg, #1f4068 0%, #162447 100%);
+            border: 3px solid #e94560;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .panel.blue { border-color: #4da6ff; }
+        .panel.green { border-color: #00ff88; }
+        .panel.gold { border-color: #ffdd00; }
+        .btn {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 9px;
+            padding: 12px 16px;
+            background: linear-gradient(180deg, #e94560 0%, #b83250 100%);
+            color: white;
+            border: 3px solid #fff;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.1s;
+            margin: 4px;
+            text-shadow: 1px 1px 0 #000;
+        }
+        .btn:hover { transform: scale(1.05); box-shadow: 0 0 15px rgba(233, 69, 96, 0.5); }
+        .btn:active { transform: scale(0.95); }
+        .btn.blue { background: linear-gradient(180deg, #4da6ff 0%, #0066cc 100%); }
+        .btn.green { background: linear-gradient(180deg, #00ff88 0%, #00aa55 100%); color: #000; text-shadow: none; }
+        .btn.gold { background: linear-gradient(180deg, #ffdd00 0%, #cc9900 100%); color: #000; text-shadow: none; }
+        .btn.large { font-size: 11px; padding: 18px 30px; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .menu-container { display: flex; flex-direction: column; align-items: center; gap: 15px; padding: 40px 20px; }
+        .menu-btn { width: 280px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .title { font-size: 12px; color: #ffdd00; text-align: center; margin-bottom: 15px; }
+        .subtitle { font-size: 9px; color: #00ff88; margin-bottom: 10px; }
+        .label { font-size: 8px; color: #888; }
+        .value { font-size: 10px; color: #fff; }
+        .highlight { color: #ffdd00; }
+        .success { color: #00ff88; }
+        .danger { color: #e94560; }
+        .input {
+            width: 100%;
+            padding: 10px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 9px;
+            background: #0a0a15;
+            color: #fff;
+            border: 2px solid #555;
+            border-radius: 4px;
+        }
+        .input:focus { border-color: #e94560; outline: none; }
+        .fighter-card {
+            background: linear-gradient(135deg, #1a2a4a 0%, #0f1a2e 100%);
+            border: 3px solid #555;
+            border-radius: 4px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .fighter-card:hover { border-color: #e94560; transform: translateY(-2px); }
+        .fighter-card.selected { border-color: #00ff88; box-shadow: 0 0 15px rgba(0, 255, 136, 0.4); }
+        .fighter-sprite {
+            width: 48px;
+            height: 64px;
+            margin: 0 auto 8px;
+            background: #333;
+            border: 2px solid #555;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        .fighter-name { font-size: 9px; color: #ffdd00; text-align: center; margin-bottom: 6px; }
+        .stat-row { display: flex; justify-content: space-between; align-items: center; font-size: 7px; margin: 3px 0; }
+        .stat-bar { width: 50px; height: 6px; background: #222; border: 1px solid #444; border-radius: 2px; overflow: hidden; }
+        .stat-fill { height: 100%; background: linear-gradient(90deg, #e94560, #ff6b8a); transition: width 0.3s; }
+        .stat-fill.blue { background: linear-gradient(90deg, #4da6ff, #66b3ff); }
+        .stat-fill.green { background: linear-gradient(90deg, #00ff88, #66ffaa); }
+        .ring-container {
+            background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
+            border: 6px solid #8B4513;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .ring-canvas {
+            width: 100%;
+            height: 300px;
+            background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
+            border: 4px solid #ffdd00;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+        .ring-floor {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 60px;
+            background: linear-gradient(180deg, #8B7355 0%, #6B5344 100%);
+            border-top: 3px solid #A08060;
+        }
+        .ring-rope {
+            position: absolute;
+            left: 5%; right: 5%;
+            height: 3px;
+            background: linear-gradient(90deg, #e94560, #ff6b8a, #e94560);
+            box-shadow: 0 0 5px #e94560;
+        }
+        .rope-1 { top: 25%; }
+        .rope-2 { top: 40%; }
+        .rope-3 { top: 55%; }
+        .ring-fighter {
+            position: absolute;
+            bottom: 80px;
+            width: 60px;
+            height: 90px;
+            transition: all 0.3s;
+        }
+        .ring-fighter.left { left: 25%; }
+        .ring-fighter.right { right: 25%; }
+        .pixel-boxer { width: 40px; height: 70px; position: relative; margin: 0 auto; }
+        .boxer-head {
+            width: 24px; height: 24px;
+            background: #daa520;
+            border: 2px solid #8B4513;
+            border-radius: 4px;
+            position: absolute;
+            top: 0; left: 50%;
+            transform: translateX(-50%);
+        }
+        .boxer-body {
+            width: 28px; height: 24px;
+            position: absolute;
+            top: 22px; left: 50%;
+            transform: translateX(-50%);
+            border: 2px solid;
+            border-radius: 2px;
+        }
+        .boxer-body.red { background: #e94560; border-color: #b83250; }
+        .boxer-body.blue { background: #4da6ff; border-color: #0066cc; }
+        .boxer-glove {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            position: absolute;
+            top: 28px;
+            border: 2px solid;
+        }
+        .boxer-glove.left-glove { left: -2px; }
+        .boxer-glove.right-glove { right: -2px; }
+        .boxer-glove.red { background: #ff0000; border-color: #990000; }
+        .boxer-glove.blue { background: #0066cc; border-color: #003366; }
+        .boxer-shorts {
+            width: 24px; height: 14px;
+            position: absolute;
+            top: 44px; left: 50%;
+            transform: translateX(-50%);
+            border: 2px solid;
+            border-radius: 2px;
+        }
+        .boxer-shorts.red { background: #ffdd00; border-color: #cc9900; }
+        .boxer-shorts.blue { background: #00ff88; border-color: #00aa55; }
+        .boxer-legs {
+            position: absolute;
+            top: 56px; left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 4px;
+        }
+        .boxer-leg { width: 8px; height: 16px; background: #daa520; border: 2px solid #8B4513; }
+        .fighter-hud {
+            position: absolute;
+            width: 120px;
+            padding: 5px;
+            background: rgba(0,0,0,0.85);
+            border: 2px solid #555;
+            border-radius: 4px;
+            top: 10px;
+        }
+        .fighter-hud.left { left: 10px; }
+        .fighter-hud.right { right: 10px; }
+        .hud-name { font-size: 7px; color: #ffdd00; margin-bottom: 4px; }
+        .hud-bar {
+            height: 10px;
+            background: #222;
+            border: 1px solid #444;
+            margin-bottom: 3px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .hud-fill { height: 100%; transition: width 0.5s; }
+        .hud-fill.health { background: linear-gradient(90deg, #00ff88, #00cc66); }
+        .hud-fill.health.low { background: linear-gradient(90deg, #ff6b6b, #cc0000); }
+        .hud-fill.stamina { background: linear-gradient(90deg, #4da6ff, #0066cc); }
+        .round-display {
+            text-align: center;
+            padding: 12px;
+            background: #000;
+            border: 3px solid #ffdd00;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        .round-num { font-size: 16px; color: #ffdd00; }
+        .round-timer { font-size: 12px; color: #00ff88; margin-top: 5px; }
+        .commentary {
+            background: #000;
+            border: 2px solid #333;
+            border-radius: 4px;
+            padding: 12px;
+            margin: 10px 0;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+        .commentary p { font-size: 8px; line-height: 1.6; margin: 4px 0; }
+        .commentary .action { color: #00ff88; }
+        .commentary .hit { color: #e94560; }
+        .commentary .info { color: #4da6ff; }
+        .corner-stat { display: flex; justify-content: space-between; font-size: 8px; padding: 5px 0; border-bottom: 1px solid #333; }
+        .corner-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+        .corner-btn { font-size: 7px; padding: 10px 8px; }
+        .strategy-btn { padding: 12px 8px; font-size: 7px; text-align: center; }
+        .strategy-btn.selected { background: linear-gradient(180deg, #00ff88 0%, #00aa55 100%); color: #000; text-shadow: none; }
+        .result-banner {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #1f4068 0%, #162447 100%);
+            border: 4px solid #ffdd00;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .result-title { font-size: 18px; color: #ffdd00; text-shadow: 3px 3px 0 #000; margin-bottom: 15px; }
+        .result-winner { font-size: 14px; color: #00ff88; margin: 15px 0; }
+        .result-method { font-size: 10px; color: #e94560; }
+        .scorecard { background: #000; border: 2px solid #ffdd00; padding: 15px; margin: 15px 0; }
+        .scorecard-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; font-size: 9px; padding: 4px 0; }
+        .score-left { text-align: left; color: #e94560; }
+        .score-center { text-align: center; color: #888; }
+        .score-right { text-align: right; color: #4da6ff; }
+        @keyframes punch { 0% { transform: translateX(0); } 50% { transform: translateX(20px); } 100% { transform: translateX(0); } }
+        @keyframes punchRight { 0% { transform: translateX(0); } 50% { transform: translateX(-20px); } 100% { transform: translateX(0); } }
+        @keyframes hit { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(2) hue-rotate(180deg); } }
+        .punching { animation: punch 0.3s ease-out; }
+        .punching-right { animation: punchRight 0.3s ease-out; }
+        .hit-effect { animation: hit 0.2s; }
+        .divider { height: 4px; background: repeating-linear-gradient(90deg, #e94560 0px, #e94560 8px, transparent 8px, transparent 16px); margin: 15px 0; }
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-box { background: #16213e; border: 4px solid #e94560; border-radius: 8px; padding: 25px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        .modal-title { font-size: 14px; color: #ffdd00; margin-bottom: 15px; text-align: center; }
+        .modal-text { font-size: 8px; color: #ccc; line-height: 1.8; }
+        .turn-banner { text-align: center; padding: 12px; background: linear-gradient(180deg, #e94560 0%, #b83250 100%); border: 3px solid #ffdd00; border-radius: 4px; margin: 10px 0; font-size: 10px; }
+        .injury-tag { display: inline-block; font-size: 6px; padding: 2px 4px; border-radius: 2px; margin: 1px; }
+        .injury-tag.cut { background: #cc0000; color: white; }
+        .injury-tag.swelling { background: #9932CC; color: white; }
+    </style>
+</head>
+<body>
+    <div class="game-wrapper">
+        <div class="game-header">
+            <h1 class="game-title">BROTHERHOOD BOXING</h1>
+            <p class="game-subtitle">★ TWO PLAYER MANAGER SIM ★</p>
+        </div>
+        
+        <div id="menu-screen" class="screen active">
+            <div class="menu-container">
+                <div class="panel" style="text-align: center; max-width: 400px;">
+                    <p style="font-size: 8px; color: #888; margin-bottom: 20px;">
+                        Manage your boxing stable. Watch the fights.<br>Control the corner between rounds.
+                    </p>
+                </div>
+                <button class="btn large menu-btn" onclick="startNewGame()">🥊 NEW FRANCHISE</button>
+                <button class="btn large menu-btn blue" onclick="loadGame()">💾 CONTINUE</button>
+                <button class="btn large menu-btn gold" onclick="showModal('rules-modal')">📖 HOW TO PLAY</button>
+            </div>
+        </div>
+        
+        <div id="setup-screen" class="screen">
+            <h2 class="title">FRANCHISE SETUP</h2>
+            <div class="grid-2">
+                <div class="panel">
+                    <p class="subtitle">🔴 PLAYER 1 - RED CORNER</p>
+                    <input type="text" id="p1-name-input" class="input" placeholder="Enter manager name..." maxlength="12">
+                    <p class="label" style="margin-top: 8px;">Starting Budget: <span class="success">$50,000</span></p>
+                </div>
+                <div class="panel blue">
+                    <p class="subtitle" style="color: #4da6ff;">🔵 PLAYER 2 - BLUE CORNER</p>
+                    <input type="text" id="p2-name-input" class="input" placeholder="Enter manager name..." maxlength="12">
+                    <p class="label" style="margin-top: 8px;">Starting Budget: <span class="success">$50,000</span></p>
+                </div>
+            </div>
+            <div class="divider"></div>
+            <div style="text-align: center;">
+                <button class="btn green large" onclick="confirmSetup()">START FRANCHISE</button>
+                <button class="btn" onclick="showScreen('menu-screen')">BACK</button>
+            </div>
+        </div>
+        
+        <div id="hub-screen" class="screen">
+            <div class="grid-2" style="margin-bottom: 10px;">
+                <div class="panel" id="hub-p1-panel">
+                    <p class="subtitle">🔴 <span id="hub-p1-name">PLAYER 1</span></p>
+                    <p class="value success" id="hub-p1-money">$50,000</p>
+                    <p class="label">Record: <span id="hub-p1-record">0-0</span></p>
+                </div>
+                <div class="panel blue" id="hub-p2-panel">
+                    <p class="subtitle" style="color: #4da6ff;">🔵 <span id="hub-p2-name">PLAYER 2</span></p>
+                    <p class="value success" id="hub-p2-money">$50,000</p>
+                    <p class="label">Record: <span id="hub-p2-record">0-0</span></p>
+                </div>
+            </div>
+            <div class="round-display">
+                <div class="round-num">SEASON <span id="hub-season">1</span> - WEEK <span id="hub-week">1</span></div>
+            </div>
+            <div class="turn-banner" id="turn-banner">PLAYER 1'S TURN</div>
+            <div class="grid-3">
+                <button class="btn" onclick="viewRoster()">📋 ROSTER</button>
+                <button class="btn blue" onclick="scheduleFight()">🥊 FIGHT</button>
+                <button class="btn gold" onclick="trainFighter()">💪 TRAIN</button>
+                <button class="btn green" onclick="viewStandings()">🏆 STANDINGS</button>
+                <button class="btn" onclick="endTurn()">⏭️ END TURN</button>
+                <button class="btn" onclick="saveGame()">💾 SAVE</button>
+            </div>
+            <div class="commentary" id="hub-log"><p class="info">Welcome to Brotherhood Boxing!</p></div>
+        </div>
+        
+        <div id="roster-screen" class="screen">
+            <h2 class="title"><span id="roster-title">ROSTER</span></h2>
+            <div id="roster-grid" class="grid-3"></div>
+            <div class="divider"></div>
+            <div style="text-align: center;"><button class="btn" onclick="showScreen('hub-screen')">BACK TO HUB</button></div>
+        </div>
+        
+        <div id="fight-setup-screen" class="screen">
+            <h2 class="title">SCHEDULE A FIGHT</h2>
+            <div class="grid-2">
+                <div class="panel">
+                    <p class="subtitle">🔴 RED CORNER - Select Fighter</p>
+                    <div id="p1-select-grid"></div>
+                </div>
+                <div class="panel blue">
+                    <p class="subtitle" style="color: #4da6ff;">🔵 BLUE CORNER - Select Fighter</p>
+                    <div id="p2-select-grid"></div>
+                </div>
+            </div>
+            <div class="divider"></div>
+            <div style="text-align: center;">
+                <button class="btn green large" onclick="confirmFight()">🔔 RING THE BELL!</button>
+                <button class="btn" onclick="showScreen('hub-screen')">CANCEL</button>
+            </div>
+        </div>
+        
+        <div id="prefight-screen" class="screen">
+            <div class="round-display">
+                <div class="round-num">FIGHT NIGHT</div>
+                <div class="round-timer">MAIN EVENT - 12 ROUNDS</div>
+            </div>
+            <div class="grid-2">
+                <div class="panel" id="prefight-p1"></div>
+                <div class="panel blue" id="prefight-p2"></div>
+            </div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn green large" onclick="beginFight()">🥊 LET'S GET READY TO RUMBLE!</button>
+            </div>
+        </div>
+        
+        <div id="fight-screen" class="screen">
+            <div class="round-display">
+                <div class="round-num">ROUND <span id="fight-round">1</span></div>
+                <div class="round-timer" id="fight-timer">3:00</div>
+            </div>
+            <div class="ring-container">
+                <div class="ring-canvas">
+                    <div class="fighter-hud left">
+                        <div class="hud-name" id="hud-p1-name">FIGHTER 1</div>
+                        <div class="hud-bar"><div class="hud-fill health" id="hud-p1-health" style="width: 100%"></div></div>
+                        <div class="hud-bar"><div class="hud-fill stamina" id="hud-p1-stamina" style="width: 100%"></div></div>
+                        <div id="hud-p1-injuries"></div>
+                    </div>
+                    <div class="fighter-hud right">
+                        <div class="hud-name" id="hud-p2-name">FIGHTER 2</div>
+                        <div class="hud-bar"><div class="hud-fill health" id="hud-p2-health" style="width: 100%"></div></div>
+                        <div class="hud-bar"><div class="hud-fill stamina" id="hud-p2-stamina" style="width: 100%"></div></div>
+                        <div id="hud-p2-injuries"></div>
+                    </div>
+                    <div class="ring-rope rope-1"></div>
+                    <div class="ring-rope rope-2"></div>
+                    <div class="ring-rope rope-3"></div>
+                    <div class="ring-floor"></div>
+                    <div class="ring-fighter left" id="fighter-1">
+                        <div class="pixel-boxer">
+                            <div class="boxer-head"></div>
+                            <div class="boxer-body red"></div>
+                            <div class="boxer-glove left-glove red"></div>
+                            <div class="boxer-glove right-glove red"></div>
+                            <div class="boxer-shorts red"></div>
+                            <div class="boxer-legs"><div class="boxer-leg"></div><div class="boxer-leg"></div></div>
+                        </div>
+                    </div>
+                    <div class="ring-fighter right" id="fighter-2">
+                        <div class="pixel-boxer">
+                            <div class="boxer-head"></div>
+                            <div class="boxer-body blue"></div>
+                            <div class="boxer-glove left-glove blue"></div>
+                            <div class="boxer-glove right-glove blue"></div>
+                            <div class="boxer-shorts blue"></div>
+                            <div class="boxer-legs"><div class="boxer-leg"></div><div class="boxer-leg"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="commentary" id="fight-commentary"><p class="action">The fighters touch gloves. Here we go!</p></div>
+            <div style="text-align: center;">
+                <button class="btn gold large" id="sim-btn" onclick="simulateExchange()">⏩ SIMULATE EXCHANGE</button>
+            </div>
+        </div>
+        
+        <div id="corner-screen" class="screen">
+            <div class="round-display">
+                <div class="round-num">CORNER TIME</div>
+                <div class="round-timer">60 SECONDS BETWEEN ROUNDS</div>
+            </div>
+            <p style="text-align: center; font-size: 9px; color: #ffdd00; margin: 15px 0;">
+                MANAGERS: Apply treatments and set strategy for the next round!
+            </p>
+            <div class="grid-2">
+                <div class="panel" id="corner-p1-panel">
+                    <p class="subtitle">🔴 RED CORNER</p>
+                    <p class="hud-name" id="corner-p1-name">FIGHTER</p>
+                    <div class="corner-section">
+                        <div class="corner-stat"><span>Health:</span><span id="corner-p1-health" class="success">100%</span></div>
+                        <div class="corner-stat"><span>Stamina:</span><span id="corner-p1-stamina" class="info">100%</span></div>
+                        <div class="corner-stat"><span>Cuts:</span><span id="corner-p1-cuts">None</span></div>
+                        <div class="corner-stat"><span>Swelling:</span><span id="corner-p1-swelling">None</span></div>
+                    </div>
+                    <p class="label" style="margin-top: 10px;">CUTMAN ACTIONS (pick one):</p>
+                    <div class="corner-actions" id="p1-cutman-actions">
+                        <button class="btn corner-btn" onclick="cutmanAction(1,'ice')">🧊 ICE</button>
+                        <button class="btn corner-btn" onclick="cutmanAction(1,'adrenaline')">💉 STOP CUT</button>
+                        <button class="btn corner-btn" onclick="cutmanAction(1,'water')">💧 WATER</button>
+                        <button class="btn corner-btn" onclick="cutmanAction(1,'salts')">👃 SALTS</button>
+                    </div>
+                    <p class="label">TRAINER STRATEGY:</p>
+                    <div class="corner-actions" id="p1-strategy-btns">
+                        <button class="btn strategy-btn" data-strategy="aggressive" onclick="setStrategy(1,'aggressive')">👊 AGGRESSIVE</button>
+                        <button class="btn strategy-btn" data-strategy="defensive" onclick="setStrategy(1,'defensive')">🛡️ DEFENSIVE</button>
+                        <button class="btn strategy-btn" data-strategy="body" onclick="setStrategy(1,'body')">💪 BODY WORK</button>
+                        <button class="btn strategy-btn" data-strategy="head" onclick="setStrategy(1,'head')">🎯 HEAD HUNTER</button>
+                    </div>
+                </div>
+                <div class="panel blue" id="corner-p2-panel">
+                    <p class="subtitle" style="color: #4da6ff;">🔵 BLUE CORNER</p>
+                    <p class="hud-name" id="corner-p2-name">FIGHTER</p>
+                    <div class="corner-section">
+                        <div class="corner-stat"><span>Health:</span><span id="corner-p2-health" class="success">100%</span></div>
+                        <div class="corner-stat"><span>Stamina:</span><span id="corner-p2-stamina" class="info">100%</span></div>
+                        <div class="corner-stat"><span>Cuts:</span><span id="corner-p2-cuts">None</span></div>
+                        <div class="corner-stat"><span>Swelling:</span><span id="corner-p2-swelling">None</span></div>
+                    </div>
+                    <p class="label" style="margin-top: 10px;">CUTMAN ACTIONS (pick one):</p>
+                    <div class="corner-actions" id="p2-cutman-actions">
+                        <button class="btn corner-btn blue" onclick="cutmanAction(2,'ice')">🧊 ICE</button>
+                        <button class="btn corner-btn blue" onclick="cutmanAction(2,'adrenaline')">💉 STOP CUT</button>
+                        <button class="btn corner-btn blue" onclick="cutmanAction(2,'water')">💧 WATER</button>
+                        <button class="btn corner-btn blue" onclick="cutmanAction(2,'salts')">👃 SALTS</button>
+                    </div>
+                    <p class="label">TRAINER STRATEGY:</p>
+                    <div class="corner-actions" id="p2-strategy-btns">
+                        <button class="btn strategy-btn blue" data-strategy="aggressive" onclick="setStrategy(2,'aggressive')">👊 AGGRESSIVE</button>
+                        <button class="btn strategy-btn blue" data-strategy="defensive" onclick="setStrategy(2,'defensive')">🛡️ DEFENSIVE</button>
+                        <button class="btn strategy-btn blue" data-strategy="body" onclick="setStrategy(2,'body')">💪 BODY WORK</button>
+                        <button class="btn strategy-btn blue" data-strategy="head" onclick="setStrategy(2,'head')">🎯 HEAD HUNTER</button>
+                    </div>
+                </div>
+            </div>
+            <div class="divider"></div>
+            <div style="text-align: center;"><button class="btn green large" onclick="nextRound()">🔔 SECONDS OUT!</button></div>
+        </div>
+        
+        <div id="result-screen" class="screen">
+            <div class="result-banner" id="result-banner">
+                <div class="result-title">FIGHT OVER!</div>
+                <div class="result-winner" id="result-winner">WINNER</div>
+                <div class="result-method" id="result-method">BY DECISION</div>
+            </div>
+            <div class="scorecard" id="scorecard"></div>
+            <div class="grid-2" id="result-stats"></div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn green large" onclick="returnToHub()">RETURN TO FRANCHISE</button>
+            </div>
+        </div>
+        
+        <div id="standings-screen" class="screen">
+            <h2 class="title">🏆 RANKINGS</h2>
+            <div class="panel" id="standings-content"></div>
+            <div style="text-align: center; margin-top: 15px;"><button class="btn" onclick="showScreen('hub-screen')">BACK</button></div>
+        </div>
+        
+        <div class="modal" id="rules-modal">
+            <div class="modal-box">
+                <h2 class="modal-title">HOW TO PLAY</h2>
+                <div class="modal-text">
+                    <p class="highlight">🥊 BROTHERHOOD BOXING</p>
+                    <p>A two-player turn-based boxing manager simulation.</p><br>
+                    <p class="highlight">👔 YOU ARE THE MANAGER</p>
+                    <p>You don't control the boxers directly - you watch the fight simulation and make decisions between rounds!</p><br>
+                    <p class="highlight">📋 FRANCHISE MODE</p>
+                    <p>• Each player takes turns managing their stable</p>
+                    <p>• Train your fighters to improve their stats</p>
+                    <p>• Schedule fights against your opponent's boxers</p><br>
+                    <p class="highlight">🥊 FIGHT NIGHT</p>
+                    <p>• Click "Simulate Exchange" to watch the AI fight</p>
+                    <p>• Between rounds, YOU become the corner man!</p><br>
+                    <p class="highlight">🩹 CORNER CONTROLS</p>
+                    <p>• CUTMAN: Apply ice, stop cuts, give water</p>
+                    <p>• TRAINER: Set strategy for next round</p>
+                    <p>• Your choices affect how your fighter performs!</p><br>
+                    <p class="highlight">🏆 WIN THE SEASON</p>
+                    <p>Build the best stable, win fights, earn money!</p>
+                </div>
+                <button class="btn" onclick="closeModal('rules-modal')" style="margin-top: 15px;">GOT IT!</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ============================================
+    // BROTHERHOOD BOXING - GAME ENGINE
+    // Two Player Turn-Based Manager Sim
+    // ============================================
+
+    // Game State
+    const GameState = {
+        players: [
+            { name: 'Player 1', money: 50000, wins: 0, losses: 0, fighters: [] },
+            { name: 'Player 2', money: 50000, wins: 0, losses: 0, fighters: [] }
+        ],
+        currentTurn: 0,
+        season: 1,
+        week: 1,
+        activeFight: null,
+        fightState: null
+    };
+
+    // Fighter Database - Starter Rosters
+    function generateFighterId(playerKey) {
+        // Prefer cryptographically strong UUIDs when available
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+            return playerKey + '-' + window.crypto.randomUUID();
+        }
+        // Fallback: timestamp + random string to reduce collision risk
+        const timestamp = Date.now().toString(36);
+        const random = Math.random().toString(36).substring(2, 8);
+        return playerKey + '-' + timestamp + '-' + random;
+    }
+
+    const starterFighters = {
+        player1: [
+            { id: generateFighterId('player1'), name: 'IRON MIKE', style: 'Slugger', power: 88, speed: 75, stamina: 70, defense: 65, chin: 80, heart: 85, emoji: '👊' },
+            { id: generateFighterId('player1'), name: 'QUICK HANDS', style: 'Outboxer', power: 70, speed: 90, stamina: 80, defense: 85, chin: 65, heart: 75, emoji: '🥊' },
+            { id: generateFighterId('player1'), name: 'THE TANK', style: 'Swarmer', power: 75, speed: 70, stamina: 95, defense: 70, chin: 90, heart: 95, emoji: '🔥' }
+        ],
+        player2: [
+            { id: generateFighterId('player2'), name: 'THUNDER', style: 'Slugger', power: 85, speed: 72, stamina: 75, defense: 68, chin: 82, heart: 80, emoji: '⚡' },
+            { id: generateFighterId('player2'), name: 'THE GHOST', style: 'Outboxer', power: 68, speed: 92, stamina: 78, defense: 88, chin: 62, heart: 78, emoji: '👻' },
+            { id: generateFighterId('player2'), name: 'WARRIOR', style: 'Swarmer', power: 78, speed: 68, stamina: 92, defense: 72, chin: 88, heart: 92, emoji: '⚔️' }
+        ]
+    };
+
+    // Commentary lines
+    const commentary = {
+        jab: ['{attacker} lands a sharp jab!', '{attacker} pops the jab!', 'Quick jab from {attacker}!'],
+        hook: ['{attacker} connects with a devastating hook!', 'HUGE hook by {attacker}!', '{attacker} lands the hook!'],
+        uppercut: ['{attacker} lands an uppercut!', 'BIG uppercut from {attacker}!', '{attacker} finds the chin with an uppercut!'],
+        miss: ['{attacker} misses!', '{defender} dodges!', '{attacker} swings and misses!'],
+        block: ['{defender} blocks the shot!', 'Good defense by {defender}!', '{defender} covers up!'],
+        bodyShot: ['{attacker} digs to the body!', 'Body shot from {attacker}!', '{attacker} goes downstairs!'],
+        bigHit: ['WHAT A SHOT! {defender} is hurt!', '{defender} is ROCKED!', 'DEVASTATING blow by {attacker}!'],
+        clinch: ['The fighters clinch...', 'They tie up in the center.', 'Break it up!'],
+        tired: ['{fighter} is showing signs of fatigue.', '{fighter} is breathing heavy.', '{fighter} needs to pace themselves.']
+    };
+
+    // Utility Functions
+    function showScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+    }
+
+    function showModal(modalId) {
+        document.getElementById(modalId).classList.add('active');
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.remove('active');
+    }
+
+    function log(message, type = 'info') {
+        const logEl = document.getElementById('hub-log');
+        if (logEl) {
+            const p = document.createElement('p');
+            p.className = type;
+            p.textContent = message;
+            logEl.insertBefore(p, logEl.firstChild);
+        }
+    }
+
+    function fightLog(message, type = 'action') {
+        const logEl = document.getElementById('fight-commentary');
+        if (logEl) {
+            const p = document.createElement('p');
+            p.className = type;
+            p.textContent = message;
+            logEl.appendChild(p);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+    }
+
+    function rand(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function pick(arr) {
+        return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    // Menu Functions
+    function startNewGame() {
+        showScreen('setup-screen');
+    }
+
+    function loadGame() {
+        const saved = localStorage.getItem('brotherhood_boxing_save');
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                Object.assign(GameState, data);
+                updateHubUI();
+                showScreen('hub-screen');
+                log('Game loaded!', 'action');
+            } catch (e) {
+                alert('No saved game found or save corrupted.');
+            }
+        } else {
+            alert('No saved game found. Start a new franchise!');
+        }
+    }
+
+    function saveGame() {
+        try {
+            localStorage.setItem('brotherhood_boxing_save', JSON.stringify(GameState));
+            log('Game saved!', 'action');
+        } catch (e) {
+            log('Failed to save game. Storage may be full or unavailable.', 'hit');
+            alert('Could not save game. Please check if you have storage space available.');
+        }
+    }
+
+    function validatePlayerName(name) {
+        // Allow alphanumeric characters, spaces, and common punctuation
+        const sanitized = name.replace(/[^a-zA-Z0-9\s\-_.]/g, '').trim();
+        if (sanitized.length === 0) return null;
+        if (sanitized.length > 12) return sanitized.substring(0, 12);
+        return sanitized;
+    }
+
+    function confirmSetup() {
+        let p1Name = validatePlayerName(document.getElementById('p1-name-input').value) || 'PLAYER 1';
+        let p2Name = validatePlayerName(document.getElementById('p2-name-input').value) || 'PLAYER 2';
+        
+        GameState.players[0].name = p1Name.toUpperCase();
+        GameState.players[1].name = p2Name.toUpperCase();
+        
+        // Assign starter fighters
+        GameState.players[0].fighters = JSON.parse(JSON.stringify(starterFighters.player1));
+        GameState.players[1].fighters = JSON.parse(JSON.stringify(starterFighters.player2));
+        
+        updateHubUI();
+        showScreen('hub-screen');
+        log(`Franchise started! ${p1Name} vs ${p2Name}!`, 'action');
+    }
+
+    // Hub Functions
+    function updateHubUI() {
+        const p1 = GameState.players[0];
+        const p2 = GameState.players[1];
+        
+        document.getElementById('hub-p1-name').textContent = p1.name;
+        document.getElementById('hub-p2-name').textContent = p2.name;
+        document.getElementById('hub-p1-money').textContent = '$' + p1.money.toLocaleString();
+        document.getElementById('hub-p2-money').textContent = '$' + p2.money.toLocaleString();
+        document.getElementById('hub-p1-record').textContent = p1.wins + '-' + p1.losses;
+        document.getElementById('hub-p2-record').textContent = p2.wins + '-' + p2.losses;
+        document.getElementById('hub-season').textContent = GameState.season;
+        document.getElementById('hub-week').textContent = GameState.week;
+        
+        const turnBanner = document.getElementById('turn-banner');
+        const currentPlayer = GameState.players[GameState.currentTurn];
+        turnBanner.textContent = currentPlayer.name + "'S TURN";
+        turnBanner.style.background = GameState.currentTurn === 0 
+            ? 'linear-gradient(180deg, #e94560 0%, #b83250 100%)' 
+            : 'linear-gradient(180deg, #4da6ff 0%, #0066cc 100%)';
+        
+        // Highlight active player panel
+        document.getElementById('hub-p1-panel').style.boxShadow = GameState.currentTurn === 0 ? '0 0 15px rgba(233, 69, 96, 0.5)' : 'none';
+        document.getElementById('hub-p2-panel').style.boxShadow = GameState.currentTurn === 1 ? '0 0 15px rgba(77, 166, 255, 0.5)' : 'none';
+    }
+
+    function endTurn() {
+        GameState.currentTurn = GameState.currentTurn === 0 ? 1 : 0;
+        
+        // If back to player 1, advance week
+        if (GameState.currentTurn === 0) {
+            GameState.week++;
+            if (GameState.week > 12) {
+                GameState.week = 1;
+                GameState.season++;
+                log('NEW SEASON ' + GameState.season + '!', 'action');
+            }
+        }
+        
+        updateHubUI();
+        log(GameState.players[GameState.currentTurn].name + "'s turn!", 'info');
+    }
+
+    // Roster Functions
+    function viewRoster() {
+        const player = GameState.players[GameState.currentTurn];
+        document.getElementById('roster-title').textContent = player.name + "'S ROSTER";
+        
+        const grid = document.getElementById('roster-grid');
+        grid.innerHTML = '';
+        
+        player.fighters.forEach(f => {
+            grid.innerHTML += createFighterCard(f, false);
+        });
+        
+        showScreen('roster-screen');
+    }
+
+    function createFighterCard(fighter, selectable = false, selected = false) {
+        const ovr = Math.round((fighter.power + fighter.speed + fighter.stamina + fighter.defense + fighter.chin + fighter.heart) / 6);
+        return `
+            <div class="fighter-card ${selected ? 'selected' : ''}" 
+                 ${selectable ? `onclick="selectFighter('${fighter.id}')"` : ''} 
+                 data-id="${fighter.id}">
+                <div class="fighter-sprite">${fighter.emoji}</div>
+                <div class="fighter-name">${fighter.name}</div>
+                <div class="label" style="text-align:center; margin-bottom: 8px;">${fighter.style} • OVR ${ovr}</div>
+                <div class="stat-row"><span>PWR</span><div class="stat-bar"><div class="stat-fill" style="width:${fighter.power}%"></div></div></div>
+                <div class="stat-row"><span>SPD</span><div class="stat-bar"><div class="stat-fill blue" style="width:${fighter.speed}%"></div></div></div>
+                <div class="stat-row"><span>STA</span><div class="stat-bar"><div class="stat-fill green" style="width:${fighter.stamina}%"></div></div></div>
+                <div class="stat-row"><span>DEF</span><div class="stat-bar"><div class="stat-fill" style="width:${fighter.defense}%"></div></div></div>
+                <div class="stat-row"><span>CHN</span><div class="stat-bar"><div class="stat-fill" style="width:${fighter.chin}%"></div></div></div>
+                <div class="stat-row"><span>HRT</span><div class="stat-bar"><div class="stat-fill" style="width:${fighter.heart}%"></div></div></div>
+            </div>
+        `;
+    }
+
+    // Training
+    function trainFighter() {
+        const player = GameState.players[GameState.currentTurn];
+        
+        // Ensure there is at least one fighter to train
+        if (!player || !player.fighters || player.fighters.length === 0) {
+            log('No fighters available to train.', 'hit');
+            return;
+        }
+
+        // Select a random fighter to train
+        const fighter = player.fighters[rand(0, player.fighters.length - 1)];
+
+        // Initialize and enforce per-fighter training limits
+        if (typeof fighter.trainingSessions !== 'number') {
+            fighter.trainingSessions = 0;
+        }
+
+        const MAX_TRAINING_SESSIONS = 50;
+        if (fighter.trainingSessions >= MAX_TRAINING_SESSIONS) {
+            log(`${fighter.name} has reached their training limit. Focus on another fighter.`, 'hit');
+            return;
+        }
+
+        // Dynamic training cost: starts at $5,000 and increases with each session
+        const BASE_TRAINING_COST = 5000;
+        const INCREMENTAL_COST = 500;
+        const trainingCost = BASE_TRAINING_COST + (fighter.trainingSessions * INCREMENTAL_COST);
+
+        if (player.money < trainingCost) {
+            log(`Not enough money for training! Need $${trainingCost.toLocaleString()}.`, 'hit');
+            return;
+        }
+        
+        // Random stat boost
+        const stats = ['power', 'speed', 'stamina', 'defense', 'chin', 'heart'];
+        const stat = pick(stats);
+        const boost = rand(1, 3);
+        
+        fighter[stat] = Math.min(99, fighter[stat] + boost);
+        fighter.trainingSessions += 1;
+        player.money -= trainingCost;
+        
+        log(`${fighter.name} trained ${stat.toUpperCase()} +${boost}! (-$${trainingCost.toLocaleString()})`, 'action');
+        updateHubUI();
+    }
+
+    // Fight Setup
+    let selectedP1Fighter = null;
+    let selectedP2Fighter = null;
+
+    function scheduleFight() {
+        selectedP1Fighter = null;
+        selectedP2Fighter = null;
+        
+        const p1Grid = document.getElementById('p1-select-grid');
+        const p2Grid = document.getElementById('p2-select-grid');
+        
+        p1Grid.innerHTML = '';
+        p2Grid.innerHTML = '';
+        
+        GameState.players[0].fighters.forEach(f => {
+            p1Grid.innerHTML += createFighterCard(f, true, false);
+        });
+        
+        GameState.players[1].fighters.forEach(f => {
+            p2Grid.innerHTML += createFighterCard(f, true, false);
+        });
+        
+        showScreen('fight-setup-screen');
+    }
+
+    function selectFighter(fighterId) {
+        // Determine which roster this fighter belongs to
+        const p1Fighter = GameState.players[0].fighters.find(f => f.id === fighterId);
+        const p2Fighter = GameState.players[1].fighters.find(f => f.id === fighterId);
+        
+        if (p1Fighter) {
+            selectedP1Fighter = p1Fighter;
+            // Update UI
+            document.querySelectorAll('#p1-select-grid .fighter-card').forEach(card => {
+                card.classList.toggle('selected', card.dataset.id === fighterId);
+            });
+        } else if (p2Fighter) {
+            selectedP2Fighter = p2Fighter;
+            document.querySelectorAll('#p2-select-grid .fighter-card').forEach(card => {
+                card.classList.toggle('selected', card.dataset.id === fighterId);
+            });
+        }
+    }
+
+    function confirmFight() {
+        if (!selectedP1Fighter || !selectedP2Fighter) {
+            alert('Both corners must select a fighter!');
+            return;
+        }
+        
+        // Setup pre-fight screen
+        const p1Ovr = Math.round((selectedP1Fighter.power + selectedP1Fighter.speed + selectedP1Fighter.stamina + selectedP1Fighter.defense + selectedP1Fighter.chin + selectedP1Fighter.heart) / 6);
+        const p2Ovr = Math.round((selectedP2Fighter.power + selectedP2Fighter.speed + selectedP2Fighter.stamina + selectedP2Fighter.defense + selectedP2Fighter.chin + selectedP2Fighter.heart) / 6);
+        
+        document.getElementById('prefight-p1').innerHTML = `
+            <div class="fighter-sprite" style="font-size:48px; width:80px; height:100px;">${selectedP1Fighter.emoji}</div>
+            <div class="fighter-name" style="font-size:14px; margin: 15px 0;">${selectedP1Fighter.name}</div>
+            <div class="label">${selectedP1Fighter.style} • OVR ${p1Ovr}</div>
+            <div class="label" style="margin-top: 10px;">Managed by ${GameState.players[0].name}</div>
+        `;
+        
+        document.getElementById('prefight-p2').innerHTML = `
+            <div class="fighter-sprite" style="font-size:48px; width:80px; height:100px;">${selectedP2Fighter.emoji}</div>
+            <div class="fighter-name" style="font-size:14px; margin: 15px 0;">${selectedP2Fighter.name}</div>
+            <div class="label">${selectedP2Fighter.style} • OVR ${p2Ovr}</div>
+            <div class="label" style="margin-top: 10px;">Managed by ${GameState.players[1].name}</div>
+        `;
+        
+        showScreen('prefight-screen');
+    }
+
+    // Fight System
+    function beginFight() {
+        // Initialize fight state
+        GameState.fightState = {
+            round: 1,
+            maxRounds: 12,
+            exchangesThisRound: 0,
+            maxExchangesPerRound: 8,
+            isSimulating: false, // Flag to prevent concurrent exchanges
+            fighters: [
+                {
+                    ...selectedP1Fighter,
+                    health: 100,
+                    stamina: 100,
+                    cuts: 0,
+                    swelling: 0,
+                    knockdowns: 0,
+                    punchesLanded: 0,
+                    punchesMissed: 0,
+                    strategy: 'normal',
+                    cutmanAction: null
+                },
+                {
+                    ...selectedP2Fighter,
+                    health: 100,
+                    stamina: 100,
+                    cuts: 0,
+                    swelling: 0,
+                    knockdowns: 0,
+                    punchesLanded: 0,
+                    punchesMissed: 0,
+                    strategy: 'normal',
+                    cutmanAction: null
+                }
+            ],
+            scorecard: [],
+            // Initialize round start health for round 1 scoring
+            roundStartHealth: {
+                f1: 100,
+                f2: 100
+            }
+        };
+        
+        // Update HUD
+        document.getElementById('hud-p1-name').textContent = selectedP1Fighter.name;
+        document.getElementById('hud-p2-name').textContent = selectedP2Fighter.name;
+        document.getElementById('fight-round').textContent = '1';
+        document.getElementById('fight-commentary').innerHTML = '<p class="action">The fighters touch gloves and we\'re underway!</p>';
+        
+        updateFightHUD();
+        showScreen('fight-screen');
+    }
+
+    function updateFightHUD() {
+        const f1 = GameState.fightState.fighters[0];
+        const f2 = GameState.fightState.fighters[1];
+        
+        const h1 = document.getElementById('hud-p1-health');
+        const h2 = document.getElementById('hud-p2-health');
+        const s1 = document.getElementById('hud-p1-stamina');
+        const s2 = document.getElementById('hud-p2-stamina');
+        
+        h1.style.width = f1.health + '%';
+        h2.style.width = f2.health + '%';
+        s1.style.width = f1.stamina + '%';
+        s2.style.width = f2.stamina + '%';
+        
+        h1.classList.toggle('low', f1.health < 30);
+        h2.classList.toggle('low', f2.health < 30);
+        
+        // Injuries
+        let inj1 = '';
+        let inj2 = '';
+        if (f1.cuts > 0) inj1 += '<span class="injury-tag cut">CUT</span>';
+        if (f1.swelling > 0) inj1 += '<span class="injury-tag swelling">SWELLING</span>';
+        if (f2.cuts > 0) inj2 += '<span class="injury-tag cut">CUT</span>';
+        if (f2.swelling > 0) inj2 += '<span class="injury-tag swelling">SWELLING</span>';
+        
+        document.getElementById('hud-p1-injuries').innerHTML = inj1;
+        document.getElementById('hud-p2-injuries').innerHTML = inj2;
+    }
+
+    function simulateExchange() {
+        const state = GameState.fightState;
+        if (!state) return;
+        
+        // Prevent concurrent exchanges from rapid clicking
+        if (state.isSimulating) return;
+        state.isSimulating = true;
+        
+        // Disable button during exchange
+        const simBtn = document.getElementById('sim-btn');
+        if (simBtn) simBtn.disabled = true;
+        
+        const f1 = state.fighters[0];
+        const f2 = state.fighters[1];
+        
+        // Simulate an exchange (both fighters take actions)
+        simulatePunch(f1, f2, 0);
+        
+        setTimeout(() => {
+            simulatePunch(f2, f1, 1);
+            
+            // Check for knockdown/KO
+            if (f1.health <= 0 || f2.health <= 0) {
+                state.isSimulating = false;
+                endFight(f1.health <= 0 ? 1 : 0, 'KO');
+                return;
+            }
+            
+            // Stamina drain:
+            // - Each exchange costs 2–5 stamina (% of max).
+            // - With 8 exchanges per round, ~16–40 stamina lost per round.
+            // - Between rounds, fighters regain 15 stamina + any water boost.
+            f1.stamina = Math.max(0, f1.stamina - rand(2, 5));
+            f2.stamina = Math.max(0, f2.stamina - rand(2, 5));
+            
+            state.exchangesThisRound++;
+            updateFightHUD();
+            
+            // Re-enable button and flag
+            state.isSimulating = false;
+            if (simBtn) simBtn.disabled = false;
+            
+            // Check if round is over
+            if (state.exchangesThisRound >= state.maxExchangesPerRound) {
+                endRound();
+            }
+        }, 500);
+    }
+
+    function simulatePunch(attacker, defender, attackerIndex) {
+        // Calculate hit chance based on stats and strategy
+        let hitChance = 40 + (attacker.speed - defender.defense) / 2;
+        
+        // Strategy modifiers
+        if (attacker.strategy === 'aggressive') hitChance += 10;
+        if (attacker.strategy === 'defensive') hitChance -= 10;
+        if (defender.strategy === 'defensive') hitChance -= 15;
+        
+        // Stamina affects accuracy
+        hitChance = hitChance * (attacker.stamina / 100);
+        
+        // Swelling affects defense
+        if (defender.swelling > 20) hitChance += 10;
+        
+        // Clamp hit chance to ensure both fighters always have a chance
+        hitChance = Math.max(10, Math.min(90, hitChance));
+        
+        const roll = rand(1, 100);
+        
+        if (roll <= hitChance) {
+            // Hit!
+            let damage = rand(3, 8) + Math.floor(attacker.power / 10);
+            
+            // Strategy damage modifiers
+            if (attacker.strategy === 'aggressive') damage = Math.floor(damage * 1.2);
+            if (attacker.strategy === 'body') damage = Math.floor(damage * 0.9);
+            if (attacker.strategy === 'head') damage = Math.floor(damage * 1.3);
+            if (defender.strategy === 'defensive') damage = Math.floor(damage * 0.7);
+            
+            // Chin reduces damage; ensure chin contribution is an integer step
+            damage = Math.floor(damage * (100 - Math.floor(defender.chin / 2)) / 100);
+            
+            defender.health = Math.max(0, defender.health - damage);
+            attacker.punchesLanded++;
+            
+            // Chance for cut/swelling
+            if (attacker.strategy === 'head' && rand(1, 100) <= 15) {
+                if (rand(1, 2) === 1) {
+                    defender.cuts = Math.min(100, defender.cuts + rand(10, 25));
+                    fightLog(`${defender.name} has been CUT!`, 'hit');
+                } else {
+                    defender.swelling = Math.min(100, defender.swelling + rand(10, 20));
+                    fightLog(`${defender.name}'s eye is swelling!`, 'hit');
+                }
+
+                // Doctor stoppage check: if injuries are too severe, stop the fight via health-based TKO
+                if (defender.cuts >= 75 || defender.swelling >= 75) {
+                    fightLog(`The doctor stops the fight due to ${defender.name}'s severe injuries!`, 'event');
+                    // Force a stoppage using existing health-based end-of-fight logic
+                    defender.health = 0;
+                }
+            }
+            
+            // Commentary
+            const punchTypes = ['jab', 'hook', 'uppercut', 'bodyShot'];
+            const punchType = attacker.strategy === 'body' ? 'bodyShot' : pick(punchTypes);
+            let line = pick(commentary[punchType]).replace('{attacker}', attacker.name).replace('{defender}', defender.name);
+            
+            if (damage > 10) {
+                line = pick(commentary.bigHit).replace('{attacker}', attacker.name).replace('{defender}', defender.name);
+            }
+            
+            fightLog(line, 'hit');
+            
+            // Animate
+            const fighterEl = document.getElementById(attackerIndex === 0 ? 'fighter-1' : 'fighter-2');
+            const defenderEl = document.getElementById(attackerIndex === 0 ? 'fighter-2' : 'fighter-1');
+            fighterEl.classList.add(attackerIndex === 0 ? 'punching' : 'punching-right');
+            defenderEl.classList.add('hit-effect');
+            
+            setTimeout(() => {
+                fighterEl.classList.remove('punching', 'punching-right');
+                defenderEl.classList.remove('hit-effect');
+            }, 300);
+            
+        } else {
+            // Miss
+            attacker.punchesMissed++;
+            const line = pick(commentary.miss).replace('{attacker}', attacker.name).replace('{defender}', defender.name);
+            fightLog(line, 'info');
+        }
+    }
+
+    function endRound() {
+        const state = GameState.fightState;
+        
+        // Score the round (10-point must system)
+        const f1 = state.fighters[0];
+        const f2 = state.fighters[1];
+        
+        let p1Score = 10;
+        let p2Score = 10;
+        
+        // Compare damage dealt THIS round (using tracked start-of-round health)
+        // If start-of-round health is unavailable, fall back to current health so
+        // that damage for this round is treated as zero (keeps scoring fair in round 1).
+        const f1StartHealth = (state.roundStartHealth && typeof state.roundStartHealth.f2 === 'number')
+            ? state.roundStartHealth.f2
+            : f2.health;
+        const f2StartHealth = (state.roundStartHealth && typeof state.roundStartHealth.f1 === 'number')
+            ? state.roundStartHealth.f1
+            : f1.health;
+
+        const f1DamageDealt = f1StartHealth - f2.health;
+        const f2DamageDealt = f2StartHealth - f1.health;
+        
+        if (f1DamageDealt > f2DamageDealt + 3) {
+            p2Score = 9;
+        } else if (f2DamageDealt > f1DamageDealt + 3) {
+            p1Score = 9;
+        }
+        
+        state.scorecard.push({ round: state.round, p1: p1Score, p2: p2Score });
+        
+        fightLog(`END OF ROUND ${state.round}! Scores: ${p1Score}-${p2Score}`, 'info');
+        
+        // Check if fight is over
+        if (state.round >= state.maxRounds) {
+            // Go to decision
+            let p1Total = 0, p2Total = 0;
+            state.scorecard.forEach(r => {
+                p1Total += r.p1;
+                p2Total += r.p2;
+            });
+            
+            if (p1Total > p2Total) {
+                endFight(0, 'DECISION');
+            } else if (p2Total > p1Total) {
+                endFight(1, 'DECISION');
+            } else {
+                endFight(-1, 'DRAW');
+            }
+            return;
+        }
+        
+        // Go to corner
+        state.round++;
+        state.exchangesThisRound = 0;
+        
+        // Reset for corner
+        state.fighters[0].cutmanAction = null;
+        state.fighters[1].cutmanAction = null;
+        
+        showCornerScreen();
+    }
+
+    function showCornerScreen() {
+        const f1 = GameState.fightState.fighters[0];
+        const f2 = GameState.fightState.fighters[1];
+        
+        document.getElementById('corner-p1-name').textContent = f1.name;
+        document.getElementById('corner-p2-name').textContent = f2.name;
+        
+        document.getElementById('corner-p1-health').textContent = Math.round(f1.health) + '%';
+        document.getElementById('corner-p1-stamina').textContent = Math.round(f1.stamina) + '%';
+        document.getElementById('corner-p1-cuts').textContent = f1.cuts > 0 ? 'Level ' + Math.ceil(f1.cuts / 25) : 'None';
+        document.getElementById('corner-p1-swelling').textContent = f1.swelling > 0 ? 'Level ' + Math.ceil(f1.swelling / 25) : 'None';
+        
+        document.getElementById('corner-p2-health').textContent = Math.round(f2.health) + '%';
+        document.getElementById('corner-p2-stamina').textContent = Math.round(f2.stamina) + '%';
+        document.getElementById('corner-p2-cuts').textContent = f2.cuts > 0 ? 'Level ' + Math.ceil(f2.cuts / 25) : 'None';
+        document.getElementById('corner-p2-swelling').textContent = f2.swelling > 0 ? 'Level ' + Math.ceil(f2.swelling / 25) : 'None';
+        
+        // Reset button states (keep corner action buttons enabled, preserve strategy selections)
+        document.querySelectorAll('.corner-btn').forEach(btn => btn.disabled = false);
+        
+        showScreen('corner-screen');
+    }
+
+    // Corner Actions
+    function cutmanAction(player, action) {
+        const f = GameState.fightState.fighters[player - 1];
+        
+        if (f.cutmanAction) {
+            return; // Already used action
+        }
+        
+        f.cutmanAction = action;
+        
+        switch(action) {
+            case 'ice':
+                f.swelling = Math.max(0, f.swelling - 30);
+                break;
+            case 'adrenaline':
+                f.cuts = Math.max(0, f.cuts - 40);
+                break;
+            case 'water':
+                f.stamina = Math.min(100, f.stamina + 25);
+                break;
+            case 'salts':
+                // Smelling salts boost alertness, modeled as stamina boost
+                f.stamina = Math.min(100, f.stamina + 15);
+                break;
+        }
+        
+        // Disable buttons for this player
+        document.querySelectorAll(`#p${player}-cutman-actions .corner-btn`).forEach(btn => {
+            btn.disabled = true;
+        });
+    }
+
+    function setStrategy(player, strategy) {
+        const f = GameState.fightState.fighters[player - 1];
+        f.strategy = strategy;
+        
+        // Update button states using data-strategy attribute
+        const btns = document.querySelectorAll(`#p${player}-strategy-btns .strategy-btn`);
+        btns.forEach(btn => {
+            btn.classList.remove('selected');
+            if (btn.dataset.strategy === strategy) {
+                btn.classList.add('selected');
+            }
+        });
+    }
+
+    function nextRound() {
+        const state = GameState.fightState;
+        
+        // Apply natural recovery (stamina only - health doesn't recover in boxing)
+        state.fighters.forEach(f => {
+            f.stamina = Math.min(100, f.stamina + 15); // Base stamina recovery
+        });
+        
+        // Track health at start of round for scoring
+        state.roundStartHealth = {
+            f1: state.fighters[0].health,
+            f2: state.fighters[1].health
+        };
+        
+        // Update UI
+        document.getElementById('fight-round').textContent = state.round;
+        fightLog(`ROUND ${state.round} - FIGHT!`, 'action');
+        
+        updateFightHUD();
+        showScreen('fight-screen');
+    }
+
+    function endFight(winner, method) {
+        const state = GameState.fightState;
+        const f1 = state.fighters[0];
+        const f2 = state.fighters[1];
+        
+        let winnerName, loserName;
+        let winnerIndex = winner;
+        
+        if (winner === -1) {
+            // Draw - small purse split for both
+            document.getElementById('result-winner').textContent = 'IT\'S A DRAW!';
+            document.getElementById('result-method').textContent = 'SPLIT DECISION';
+            const drawPurse = 5000;
+            GameState.players[0].money += drawPurse;
+            GameState.players[1].money += drawPurse;
+        } else {
+            winnerName = state.fighters[winner].name;
+            loserName = state.fighters[winner === 0 ? 1 : 0].name;
+            
+            document.getElementById('result-winner').textContent = winnerName + ' WINS!';
+            document.getElementById('result-method').textContent = 'BY ' + method + ' - ROUND ' + state.round;
+            
+            // Update records
+            GameState.players[winner].wins++;
+            GameState.players[winner === 0 ? 1 : 0].losses++;
+            
+            // Prize money - only winner gets paid (creates economic pressure)
+            const prize = 10000 + (state.round * 1000);
+            GameState.players[winner].money += prize;
+        }
+        
+        // Build scorecard
+        let scorecardHTML = '<div class="scorecard-row" style="border-bottom: 1px solid #333; padding-bottom: 8px; margin-bottom: 8px;"><span class="score-left">' + f1.name + '</span><span class="score-center">RND</span><span class="score-right">' + f2.name + '</span></div>';
+        
+        let p1Total = 0, p2Total = 0;
+        state.scorecard.forEach(r => {
+            scorecardHTML += `<div class="scorecard-row"><span class="score-left">${r.p1}</span><span class="score-center">${r.round}</span><span class="score-right">${r.p2}</span></div>`;
+            p1Total += r.p1;
+            p2Total += r.p2;
+        });
+        
+        scorecardHTML += `<div class="scorecard-row" style="border-top: 1px solid #333; padding-top: 8px; margin-top: 8px;"><span class="score-left" style="font-size: 12px;">${p1Total}</span><span class="score-center">TOTAL</span><span class="score-right" style="font-size: 12px;">${p2Total}</span></div>`;
+        
+        document.getElementById('scorecard').innerHTML = scorecardHTML;
+        
+        // Stats
+        document.getElementById('result-stats').innerHTML = `
+            <div class="panel">
+                <p class="subtitle">${f1.name}</p>
+                <div class="stat-row"><span>Punches Landed:</span><span>${f1.punchesLanded}</span></div>
+                <div class="stat-row"><span>Punches Missed:</span><span>${f1.punchesMissed}</span></div>
+                <div class="stat-row"><span>Final Health:</span><span>${Math.round(f1.health)}%</span></div>
+            </div>
+            <div class="panel blue">
+                <p class="subtitle" style="color: #4da6ff;">${f2.name}</p>
+                <div class="stat-row"><span>Punches Landed:</span><span>${f2.punchesLanded}</span></div>
+                <div class="stat-row"><span>Punches Missed:</span><span>${f2.punchesMissed}</span></div>
+                <div class="stat-row"><span>Final Health:</span><span>${Math.round(f2.health)}%</span></div>
+            </div>
+        `;
+        
+        showScreen('result-screen');
+    }
+
+    function returnToHub() {
+        GameState.fightState = null;
+        selectedP1Fighter = null;
+        selectedP2Fighter = null;
+        updateHubUI();
+        showScreen('hub-screen');
+        log('Fight complete! Back to franchise mode.', 'action');
+    }
+
+    // Standings
+    function viewStandings() {
+        const p1 = GameState.players[0];
+        const p2 = GameState.players[1];
+        
+        let content = '<div style="text-align: center;">';
+        content += '<p class="subtitle" style="margin-bottom: 15px;">MANAGER STANDINGS</p>';
+        content += `<div class="scorecard-row"><span class="score-left">${p1.name}</span><span class="score-center">vs</span><span class="score-right">${p2.name}</span></div>`;
+        content += `<div class="scorecard-row"><span class="score-left">${p1.wins} WINS</span><span class="score-center">-</span><span class="score-right">${p2.wins} WINS</span></div>`;
+        content += `<div class="scorecard-row"><span class="score-left">$${p1.money.toLocaleString()}</span><span class="score-center">BANK</span><span class="score-right">$${p2.money.toLocaleString()}</span></div>`;
+        content += '</div>';
+        
+        content += '<div class="divider"></div>';
+        content += '<p class="subtitle" style="text-align: center;">SEASON ' + GameState.season + ' - WEEK ' + GameState.week + '/12</p>';
+        
+        document.getElementById('standings-content').innerHTML = content;
+        showScreen('standings-screen');
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('Brotherhood Boxing loaded!');
+    });
+    </script>
+</body>
+</html>
