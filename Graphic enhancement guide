@@ -1,0 +1,46 @@
+fight mode graphic enhancement guide 
+SEGA/Punch-Out Style Boxing Game - Modular Outline for Copilot
+
+Develop this game using a modular approach. Structure the code into these independent systems:
+
+1. Rendering Module
+
+· Fixed 640x448 resolution, 4:3, 16-bit color.
+· 60 FPS pixel art. Optimize for <100 draw calls per frame.
+· Optional CRT effects: light scanlines and bloom.
+
+2. Fighter & State System
+
+· Fighter sprites: 64x96px.
+· 7-level visual damage system (fresh → critical injury).
+· Separate animation modules for Movement, Offense, Defense.
+· Use frame interpolation for smooth stance transitions.
+
+3. Animation & Impact Logic
+
+· Punch keyframe structure: Windup (2-4f), Action (2-4f), Impact (1-2f), Recovery (1-2f).
+· Add 2-4 frame hit-stop on heavy punches and screen shake.
+
+4. Interactive Ring Environment
+
+· Persistent floor decals (scuffs, sweat, blood) that fade 20%/round.
+· Elastic rope physics for sway/tension.
+· 3-layer parallax background: reactive crowd, ringside NPCs, foreground corner details.
+
+5. Effects & Particle System
+
+· Emitters for sweat spray, blood mist, impact sparks.
+· Particles with gravity, velocity, and lifetime properties.
+· Dynamic overhead spotlights that dim between rounds and strobe on KOs.
+
+6. Reactive UI/HUD
+
+· Primary info (health/stamina bars) in top corners (Z-pattern layout).
+· Include round timer, momentum bar, knockdown counter.
+· Visual alerts (e.g., health bar flashes red below 20%).
+
+Instructions for Copilot:
+
+· Use naming: fighter{id}_{animation}_{frame}.png.
+· Create separate modules/files (e.g., RenderingManager.js).
+· Specify language (e.g., JavaScript/TypeScript or C#) clearly.
