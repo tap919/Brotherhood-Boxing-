@@ -195,6 +195,8 @@ function hexToInt(hex) {
 }
 
 // Style modifier baselines (tuned to evoke classic Punch-Out archetypes)
+// Modifier scale: small adjustments in the range of -6 to +8 keep fighters within believable 50–99 stat bounds.
+// Each style adds tradeoffs instead of hard advantages, preserving a “pick your flavor” feel.
 // Slugger: big power, slower hands, iron chin
 const STYLE_MODS = {
     slugger: { strength: 8, speed: -5, agility: -2, chin: 4, heart: 92 },
@@ -268,19 +270,13 @@ function startCustomBout(options = {}) {
 
 document.getElementById('create-boxer-form').addEventListener('submit', (e) => {
     e.preventDefault();
-    const powerRange = document.getElementById('power-range');
-    const speedRange = document.getElementById('speed-range');
-    const defenseRange = document.getElementById('defense-range');
-    powerRange.setAttribute('aria-valuenow', powerRange.value);
-    speedRange.setAttribute('aria-valuenow', speedRange.value);
-    defenseRange.setAttribute('aria-valuenow', defenseRange.value);
     startCustomBout({
         name: document.getElementById('boxer-name').value || 'Custom Bruiser',
         paletteKey: document.getElementById('palette-select').value,
         style: document.getElementById('boxer-style').value,
-        power: Number(powerRange.value),
-        speed: Number(speedRange.value),
-        defense: Number(defenseRange.value),
+        power: Number(document.getElementById('power-range').value),
+        speed: Number(document.getElementById('speed-range').value),
+        defense: Number(document.getElementById('defense-range').value),
         crt: document.getElementById('crt-toggle').value
     });
 });
