@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brotherhood Boxing - Phaser 3 Fight Sim</title>
+    <!-- Phaser 3 CDN Load -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Press Start 2P', monospace;
+            background: #0a0a0a;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        #game-container {
+            border: 4px solid #e94560;
+            border-radius: 8px;
+            box-shadow: 0 0 30px rgba(233, 69, 96, 0.4);
+        }
+        .controls-info {
+            margin-top: 15px;
+            font-size: 10px;
+            color: #888;
+            text-align: center;
+        }
+        .controls-info span { color: #ffdd00; }
+        h1 {
+            font-size: 24px;
+            color: #e94560;
+            margin-bottom: 15px;
+            text-shadow: 3px 3px 0 #000;
+        }
+    </style>
+</head>
+<body>
+    <h1>🥊 BROTHERHOOD BOXING 🥊</h1>
+    <div id="game-container"></div>
+    <div class="controls-info">
+        <span>SPACE</span> - Pause/Resume | <span>N</span> - Next Round | <span>R</span> - Restart | <span>Q</span> - Queue Corner Action
+    </div>
+
+<script>
+/**
+ * FighterRenderer Class - Exportable module for procedural pixel sprite rendering
+ * Renders 64x128px boxing fighters with orthodox stance
+ */
+class FighterRenderer {
+    constructor(scene, x, y, config = {}) {
+        this.scene = scene;
+        this.x = x;
+        this.y = y;
+        this.config = {
+            trunkColor: config.trunkColor || 0xff0000,
+            skinColor: config.skinColor || 0xd4a574,
+            gloveColor: config.gloveColor || 0x8b0000,
+            hairColor: config.hairColor || 0x1a1a1a,
+            facing: config.facing || 'right', // 'left' or 'right'
+            scale: config.scale || 1,
+            ...config
+        };
+        
+        this.graphics = scene.add.graphics();
+        this.state = 'idle';
+        this.frame = 0;
+        this.frameTimer = 0;
+        this.swelling = 0;
+        this.damageFlash = 0;
+        
+        // Animation state
+        this.armOffset = { left: 0, right: 0 };
+        this.bodyOffset = { x: 0, y: 0 };
+        this.headOffset = { x: 0, y: 0 };
+        
+        this.render();
+    }
+    
+    /**
+     * Render the fighter using procedural pixel art (fillRect style)
+     */
+    render() {
+        const g = this.graphics;
+        const c = this.config;
+        const flip = c.facing === 'left' ? -1 : 1;
+        
+        g.clear();
+        g.setPosition(this.x + this.bodyOffset.x, this.y + this.bodyOffset.y);
+        
+        // Apply damage flash
+        const flashMod = this.damageFlash > 0 ? 0xffffff : 0;
+        
+        // Scale factor
+        const s = c.scale;
+        
+        // === LEGS (bottom layer) ===
+        // Left leg
+        g.fillStyle(this.applyFlash(c.skinColor, flashMod));
+        g.fillRect(-12 * s * flip, 40 * s, 10 * s, 30 * s);
+        // Right leg
+        g.fillRect(2 * s * flip, 40 * s, 10 * s, 30 * s);
+        
+        // Shoes
+        g.fillStyle(this.applyFlash(0x1a1a1a, flashMod));
+        g.fillRect(-14 * s * flip, 68 * s, 14 * s, 8 * s);
+        g.fillRect(0 * s * flip, 68 * s, 14 * s, 8 * s);
+        
+        // === TRUNKS (shorts) ===
+        g.fillStyle(this.applyFlash(c.trunkColor, flashMod));
+        g.fillRect(-16 * s * flip, 32 * s, 32 * s, 14 * s);
+        // Waistband
+        g.fillStyle(this.applyFlash(this.darkenColor(c.trunkColor), flashMod));
+        g.fillRect(-16 * s * flip, 30 * s, 32 * s, 4 * s);
+        
+        // === TORSO ===
+        g.fillStyle(this.applyFlash(c.skinColor, flashMod));
+        g.fillRect(-14 * s * flip, 0, 28 * s, 34 * s);
+        // Chest definition
+        g.fillStyle(this.applyFlash(this.darkenColor(c.skinColor, 0.1), flashMod));
+        g.fillRect(-10 * s * flip, 4 * s, 8 * s, 10 * s);
+        g.fillRect(2 * s * flip, 4 * s, 8 * s, 10 * s);
+        
+        // === ARMS ===
+        // Left arm (guard position or punch)
+        const leftArmX = -20 * s * flip + this.armOffset.left * flip;
+        const leftArmY = 4 * s;
+        g.fillStyle(this.applyFlash(c.skinColor, flashMod));
+        g.fillRect(leftArmX, leftArmY, 10 * s, 24 * s);
+        
+        // Left glove
+        g.fillStyle(this.applyFlash(c.gloveColor, flashMod));
+        g.fillRect(leftArmX - 2 * s, leftArmY - 4 * s + this.armOffset.left * 0.3, 14 * s, 14 * s);
+        
+        // Right arm
+        const rightArmX = 10 * s * flip + this.armOffset.right * flip;
+        const rightArmY = 4 * s;
+        g.fillStyle(this.applyFlash(c.skinColor, flashMod));
+        g.fillRect(rightArmX, rightArmY, 10 * s, 24 * s);
+        
+        // Right glove
+        g.fillStyle(this.applyFlash(c.gloveColor, flashMod));
+        g.fillRect(rightArmX - 2 * s, rightArmY - 4 * s + this.armOffset.right * 0.3, 14 * s, 14 * s);
+        
+        // === HEAD ===
+        const headX = -12 * s * flip + this.headOffset.x;
+        const headY = -36 * s + this.headOffset.y;
+        
+        // Head shape
+        g.fillStyle(this.applyFlash(c.skinColor, flashMod));
+        g.fillRect(headX, headY, 24 * s, 28 * s);
+        
+        // Hair
+        g.fillStyle(this.applyFlash(c.hairColor, flashMod));
+        g.fillRect(headX, headY - 4 * s, 24 * s, 8 * s);
+        
+        // Eyes (purple when swollen from damage)
+        const eyeDisplayColor = this.swelling > 50 ? 0x660066 : 0x1a1a1a;
+        g.fillStyle(this.applyFlash(eyeDisplayColor, flashMod));
+        if (c.facing === 'right') {
+            g.fillRect(headX + 4 * s, headY + 10 * s, 6 * s, 4 * s);
+            g.fillRect(headX + 14 * s, headY + 10 * s, 6 * s, 4 * s);
+        } else {
+            // Slightly adjust eye positions when facing left to mirror/shift them
+            g.fillRect(headX + 2 * s, headY + 10 * s, 6 * s, 4 * s);
+            g.fillRect(headX + 12 * s, headY + 10 * s, 6 * s, 4 * s);
+        }
+        
+        // Nose
+        g.fillStyle(this.applyFlash(this.darkenColor(c.skinColor, 0.15), flashMod));
+        g.fillRect(headX + 10 * s, headY + 14 * s, 4 * s, 6 * s);
+        
+        // Mouth
+        g.fillStyle(this.applyFlash(0x8b4513, flashMod));
+        g.fillRect(headX + 8 * s, headY + 22 * s, 8 * s, 2 * s);
+        
+        // Swelling effect (if damaged)
+        if (this.swelling > 20) {
+            g.fillStyle(0x9932cc);
+            g.setAlpha(Math.min(this.swelling / 100, 0.6));
+            const swellSize = Math.min(this.swelling / 10, 8) * s;
+            g.fillRect(headX + 2 * s, headY + 8 * s, swellSize, swellSize);
+            g.setAlpha(1);
+        }
+    }
+    
+    /**
+     * Update animation frame
+     */
+    update(delta) {
+        this.frameTimer += delta;
+        
+        // 10-15 FPS animation (66-100ms per frame)
+        if (this.frameTimer > 80) {
+            this.frameTimer = 0;
+            this.frame = (this.frame + 1) % 12;
+            this.updateAnimationState();
+        }
+        
+        // Decay damage flash
+        if (this.damageFlash > 0) {
+            this.damageFlash -= delta * 0.01;
+        }
+        
+        this.render();
+    }
+    
+    /**
+     * Update animation based on current state
+     */
+    updateAnimationState() {
+        const breathOffset = Math.sin(this.frame * 0.5) * 2;
+        
+        switch (this.state) {
+            case 'idle':
+                this.armOffset.left = breathOffset;
+                this.armOffset.right = -breathOffset;
+                this.bodyOffset.y = Math.sin(this.frame * 0.3) * 1;
+                this.headOffset.x = 0;
+                this.headOffset.y = 0;
+                break;
+                
+            case 'jab':
+                // 8 frame jab animation
+                const jabProgress = (this.frame % 8) / 8;
+                if (jabProgress < 0.3) {
+                    this.armOffset.left = jabProgress * 100; // Wind up
+                } else if (jabProgress < 0.5) {
+                    this.armOffset.left = 30 + (jabProgress - 0.3) * 200; // Extend
+                } else {
+                    this.armOffset.left = 70 - (jabProgress - 0.5) * 140; // Retract
+                }
+                this.armOffset.right = -5;
+                break;
+                
+            case 'hook':
+                // 10 frame hook animation
+                const hookProgress = (this.frame % 10) / 10;
+                if (hookProgress < 0.2) {
+                    this.armOffset.right = -20; // Wind back
+                    this.bodyOffset.x = -5;
+                } else if (hookProgress < 0.5) {
+                    this.armOffset.right = 60; // Swing
+                    this.bodyOffset.x = 10;
+                } else {
+                    this.armOffset.right = 60 - (hookProgress - 0.5) * 120;
+                    this.bodyOffset.x = 10 - (hookProgress - 0.5) * 30;
+                }
+                break;
+                
+            case 'uppercut':
+                // 12 frame uppercut
+                const upperProgress = (this.frame % 12) / 12;
+                if (upperProgress < 0.25) {
+                    this.bodyOffset.y = 10; // Crouch
+                    this.armOffset.right = -10;
+                } else if (upperProgress < 0.5) {
+                    this.bodyOffset.y = -15; // Rise
+                    this.armOffset.right = 50;
+                    this.headOffset.y = -5;
+                } else {
+                    this.bodyOffset.y = -15 + (upperProgress - 0.5) * 50;
+                    this.armOffset.right = 50 - (upperProgress - 0.5) * 120;
+                }
+                break;
+                
+            case 'block':
+                // Static block pose with slight movement
+                this.armOffset.left = -15 + breathOffset * 0.5;
+                this.armOffset.right = -15 - breathOffset * 0.5;
+                this.bodyOffset.y = 5;
+                break;
+                
+            case 'knockdown':
+                // 12 frame knockdown
+                const kdProgress = Math.min(this.frame / 12, 1);
+                this.bodyOffset.x = kdProgress * 30 * (this.config.facing === 'right' ? -1 : 1);
+                this.bodyOffset.y = kdProgress * 60;
+                this.headOffset.x = kdProgress * 10;
+                this.armOffset.left = kdProgress * 30;
+                this.armOffset.right = kdProgress * 40;
+                break;
+                
+            case 'damaged':
+                // Stagger animation
+                const dmgOscillate = Math.sin(this.frame * 2) * 5;
+                this.headOffset.x = dmgOscillate;
+                this.bodyOffset.x = dmgOscillate * 0.5;
+                break;
+        }
+    }
+    
+    /**
+     * Set animation state
+     */
+    setState(newState) {
+        if (this.state !== newState) {
+            this.state = newState;
+            this.frame = 0;
+        }
+    }
+    
+    /**
+     * Apply damage
+     */
+    takeDamage(amount) {
+        this.damageFlash = 1;
+        this.swelling = Math.min(100, this.swelling + amount * 0.5);
+    }
+    
+    /**
+     * Set position
+     */
+    setPosition(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+    
+    /**
+     * Color utility - darken
+     */
+    darkenColor(color, factor = 0.2) {
+        const r = ((color >> 16) & 0xff) * (1 - factor);
+        const g = ((color >> 8) & 0xff) * (1 - factor);
+        const b = (color & 0xff) * (1 - factor);
+        return (Math.floor(r) << 16) | (Math.floor(g) << 8) | Math.floor(b);
+    }
+    
+    /**
+     * Color utility - apply flash
+     */
+    applyFlash(color, flash) {
+        if (flash === 0) return color;
+        const r = Math.min(255, ((color >> 16) & 0xff) + 100);
+        const g = Math.min(255, ((color >> 8) & 0xff) + 100);
+        const b = Math.min(255, (color & 0xff) + 100);
+        return (r << 16) | (g << 8) | b;
+    }
+    
+    /**
+     * Destroy graphics
+     */
+    destroy() {
+        this.graphics.destroy();
+    }
+}
+
+/**
+ * Fighter Class - Stats and combat logic
+ */
+class Fighter {
+    constructor(config) {
+        this.name = config.name || 'Fighter';
+        this.health = config.health || 100;
+        this.maxHealth = config.maxHealth || 100;
+        this.stamina = config.stamina || 100;
+        this.maxStamina = config.maxStamina || 100;
+        
+        // Core stats (0-100)
+        this.strength = config.strength || 70;
+        this.agility = config.agility || 70;
+        this.speed = config.speed || 70;
+        this.defense = config.defense || 70;
+        this.chin = config.chin || 70; // Resistance to KO
+        this.heart = config.heart || 70; // Recovery ability
+        
+        // Combat state
+        this.knockdowns = 0;
+        this.roundScore = 0;
+        this.isDown = false;
+        
+        // Corner action queue
+        this.actionQueue = [];
+        this.currentStrategy = 'balanced';
+    }
+    
+    /**
+     * Queue a corner action
+     * @param {Object} action - {action: 'jab'|'hook'|'uppercut'|'block', target: 'head'|'body', intensity: 0-100}
+     */
+    queueAction(action) {
+        this.actionQueue.push(action);
+    }
+    
+    /**
+     * Get next action from queue or generate based on stats
+     */
+    getNextAction() {
+        if (this.actionQueue.length > 0) {
+            return this.actionQueue.shift();
+        }
+        
+        // Auto-generate action based on stats and strategy
+        return this.generateAutoAction();
+    }
+    
+    /**
+     * Generate automatic action based on fighter stats
+     */
+    generateAutoAction() {
+        const roll = Math.random() * 100;
+        const staminaFactor = this.stamina / 100;
+        
+        // Minimum stamina required for attacks
+        const staminaCosts = { jab: 3, hook: 8, uppercut: 12, block: 2 };
+        
+        // Strategy modifiers
+        let aggressionMod = 1;
+        let defenseMod = 1;
+        
+        switch (this.currentStrategy) {
+            case 'aggressive':
+                aggressionMod = 1.5;
+                defenseMod = 0.5;
+                break;
+            case 'defensive':
+                aggressionMod = 0.5;
+                defenseMod = 2;
+                break;
+            case 'body':
+                aggressionMod = 1.2;
+                break;
+            case 'head':
+                aggressionMod = 1.3;
+                break;
+        }
+        
+        // Action selection based on weighted RNG and stats
+        // If stamina is too low for an action, set its chance to 0
+        const jabChance = this.stamina >= staminaCosts.jab ? 
+            (this.speed * 0.5 + this.agility * 0.3) * staminaFactor * aggressionMod : 0;
+        const hookChance = this.stamina >= staminaCosts.hook ? 
+            (this.strength * 0.4 + this.speed * 0.2) * staminaFactor * aggressionMod : 0;
+        const uppercutChance = this.stamina >= staminaCosts.uppercut ? 
+            (this.strength * 0.5) * staminaFactor * aggressionMod * 0.5 : 0;
+        const blockChance = this.defense * defenseMod * staminaFactor;
+        
+        const total = jabChance + hookChance + uppercutChance + blockChance;
+        
+        // If total is 0 (completely exhausted), force block
+        if (total <= 0) {
+            return { action: 'block', target: 'head', intensity: 30 };
+        }
+        
+        const normalized = roll / 100 * total;
+        
+        let action, target, intensity;
+        
+        if (normalized < jabChance) {
+            action = 'jab';
+            intensity = 40 + Math.random() * 30;
+        } else if (normalized < jabChance + hookChance) {
+            action = 'hook';
+            intensity = 60 + Math.random() * 30;
+        } else if (normalized < jabChance + hookChance + uppercutChance) {
+            action = 'uppercut';
+            intensity = 70 + Math.random() * 30;
+        } else {
+            action = 'block';
+            intensity = 50 + this.defense * 0.3;
+        }
+        
+        // Target selection
+        target = this.currentStrategy === 'body' ? 'body' : 
+                 this.currentStrategy === 'head' ? 'head' :
+                 Math.random() > 0.5 ? 'head' : 'body';
+        
+        return { action, target, intensity: Math.min(100, intensity) };
+    }
+    
+    /**
+     * Calculate damage dealt
+     * Note: Uses 70 as baseline stat value (fighters with 70 in a stat have 1.0x multiplier)
+     * This creates a meaningful distribution: 50 = 0.71x, 70 = 1.0x, 100 = 1.43x
+     */
+    calculateDamage(action, intensity) {
+        const baseDamage = {
+            jab: 5,
+            hook: 12,
+            uppercut: 18,
+            block: 0
+        };
+        
+        // 70 is the baseline stat value (1.0x multiplier)
+        const strengthMod = this.strength / 70;
+        const intensityMod = intensity / 70;
+        
+        return Math.floor(baseDamage[action] * strengthMod * intensityMod);
+    }
+    
+    /**
+     * Take damage
+     */
+    takeDamage(damage, target) {
+        // Defense reduction
+        const defenseReduction = this.defense / 200;
+        const actualDamage = Math.max(1, damage * (1 - defenseReduction));
+        
+        this.health = Math.max(0, this.health - actualDamage);
+        
+        // TKO check - if health reaches 0
+        if (this.health <= 0 && !this.isDown) {
+            this.knockdowns++;
+            this.isDown = true;
+            return 'knockdown';
+        }
+        
+        // KO check based on chin stat (for head shots)
+        if (target === 'head' && damage > 15) {
+            // Use effective chin with minimum of 0.1 to avoid near-infinite KO chance
+            const effectiveChin = Math.max(0.1, this.chin);
+            const koChance = (damage - 10) / effectiveChin;
+            if (Math.random() < koChance && !this.isDown) {
+                this.knockdowns++;
+                this.isDown = true;
+                return 'knockdown';
+            }
+        }
+        
+        return actualDamage > 8 ? 'heavy' : actualDamage > 4 ? 'medium' : 'light';
+    }
+    
+    /**
+     * Check dodge based on speed and agility
+     */
+    attemptDodge() {
+        // Base dodge from speed and agility (max ~40% at 100/100)
+        let dodgeChance = (this.speed * 0.2 + this.agility * 0.2) / 100;
+
+        // Stamina modifier: at 0 stamina keep 50% of base, at full keep 100%
+        if (typeof this.maxStamina === 'number' && this.maxStamina > 0) {
+            const staminaRatio = this.stamina / this.maxStamina;
+            const staminaFactor = 0.5 + 0.5 * Math.max(0, Math.min(1, staminaRatio));
+            dodgeChance *= staminaFactor;
+        }
+
+        // Health modifier: below 100 health reduces dodge effectiveness
+        const healthRatio = Math.max(0, Math.min(1, this.health / 100));
+        const healthFactor = 0.5 + 0.5 * healthRatio;
+        dodgeChance *= healthFactor;
+
+        // Clamp to a reasonable upper bound
+        dodgeChance = Math.max(0, Math.min(0.5, dodgeChance));
+        
+        return Math.random() < dodgeChance;
+    }
+    
+    /**
+     * Use stamina
+     */
+    useStamina(amount) {
+        this.stamina = Math.max(0, this.stamina - amount);
+    }
+    
+    /**
+     * Recover stamina (between rounds)
+     */
+    recoverStamina(amount) {
+        const heartBonus = this.heart / 100;
+        this.stamina = Math.min(this.maxStamina, this.stamina + amount * (1 + heartBonus));
+    }
+    
+    /**
+     * Reset for new round
+     */
+    resetRound() {
+        this.roundScore = 0;
+        this.recoverStamina(20);
+    }
+}
+
+/**
+ * FightScene - Main Phaser Scene for boxing simulation
+ */
+class FightScene extends Phaser.Scene {
+    constructor() {
+        super({ key: 'FightScene' });
+    }
+    
+    init(data) {
+        // Fighter configurations (can be passed from manager UI)
+        this.fighter1Config = data?.fighter1 || {
+            name: 'Muhammad Ali',
+            health: 100, maxHealth: 100,
+            stamina: 100, maxStamina: 100,
+            strength: 86, agility: 95, speed: 99,
+            defense: 97, chin: 98, heart: 99,
+            trunkColor: 0xff0000, skinColor: 0xd4a574
+        };
+        
+        this.fighter2Config = data?.fighter2 || {
+            name: 'Mike Tyson',
+            health: 100, maxHealth: 100,
+            stamina: 100, maxStamina: 100,
+            strength: 98, agility: 88, speed: 98,
+            defense: 88, chin: 92, heart: 94,
+            trunkColor: 0x0066cc, skinColor: 0xa0826d
+        };
+    }
+    
+    create() {
+        // === GAME STATE ===
+        this.isPaused = false;
+        this.currentRound = 1;
+        this.maxRounds = 3;
+        this.roundTime = 180; // 3 minutes in seconds
+        this.roundTimer = this.roundTime;
+        this.isRoundActive = true;
+        this.isFightOver = false;
+        
+        // Scoring
+        this.scores = { fighter1: [], fighter2: [] };
+        
+        // === CREATE RING BACKGROUND ===
+        this.createRingBackground();
+        
+        // === CREATE FIGHTERS ===
+        this.fighter1 = new Fighter(this.fighter1Config);
+        this.fighter2 = new Fighter(this.fighter2Config);
+        
+        this.renderer1 = new FighterRenderer(this, 250, 320, {
+            trunkColor: this.fighter1Config.trunkColor || 0xff0000,
+            skinColor: this.fighter1Config.skinColor || 0xd4a574,
+            gloveColor: 0x8b0000,
+            facing: 'right',
+            scale: 1.5
+        });
+        
+        this.renderer2 = new FighterRenderer(this, 550, 320, {
+            trunkColor: this.fighter2Config.trunkColor || 0x0066cc,
+            skinColor: this.fighter2Config.skinColor || 0xa0826d,
+            gloveColor: 0x00008b,
+            facing: 'left',
+            scale: 1.5
+        });
+        
+        // === CREATE HUD ===
+        this.createHUD();
+        
+        // === CREATE PARTICLES ===
+        this.createParticles();
+        
+        // === SETUP INPUT ===
+        this.setupInput();
+        
+        // === SETUP TIMERS ===
+        this.exchangeTimer = this.time.addEvent({
+            delay: 1500, // Exchange every 1.5 seconds
+            callback: this.simulateExchange,
+            callbackScope: this,
+            loop: true
+        });
+        
+        this.roundTimerEvent = this.time.addEvent({
+            delay: 1000,
+            callback: this.updateRoundTimer,
+            callbackScope: this,
+            loop: true
+        });
+        
+        // === COMMENTARY ===
+        this.addCommentary(`ROUND ${this.currentRound}! ${this.fighter1.name} vs ${this.fighter2.name}!`);
+    }
+    
+    /**
+     * Create pseudo-3D ring background
+     */
+    createRingBackground() {
+        const g = this.add.graphics();
+        
+        // Crowd background (gradient simulation)
+        for (let i = 0; i < 50; i++) {
+            const y = 50 + i * 3;
+            const brightness = 0.1 + (i / 50) * 0.2;
+            const color = Phaser.Display.Color.GetColor(
+                Math.floor(30 * brightness),
+                Math.floor(30 * brightness),
+                Math.floor(50 * brightness)
+            );
+            g.fillStyle(color);
+            g.fillRect(0, y, 800, 4);
+        }
+        
+        // Crowd heads (silhouettes)
+        for (let x = 10; x < 790; x += 25) {
+            for (let row = 0; row < 3; row++) {
+                const y = 60 + row * 35 + Math.random() * 10;
+                const shadeBase = 0x1a1a2e;
+                const randomComponent = Math.floor(Math.random() * 0x101010);
+                const shade = Math.min(shadeBase + randomComponent, 0xFFFFFF);
+                g.fillStyle(shade);
+                g.fillCircle(x + Math.random() * 15, y, 8 + Math.random() * 4);
+            }
+        }
+        
+        // Ring mat (canvas floor) - pseudo-3D perspective
+        g.fillStyle(0x4a6741); // Green canvas
+        g.beginPath();
+        g.moveTo(100, 250);
+        g.lineTo(700, 250);
+        g.lineTo(750, 450);
+        g.lineTo(50, 450);
+        g.closePath();
+        g.fillPath();
+        
+        // Ring mat center circle
+        g.lineStyle(3, 0x5a7751);
+        g.strokeCircle(400, 350, 60);
+        
+        // Ring mat lines
+        g.lineStyle(2, 0x5a7751);
+        g.lineBetween(100, 350, 700, 350);
+        
+        // Ring posts (corners)
+        const posts = [
+            { x: 100, y: 250, bottom: 380 },
+            { x: 700, y: 250, bottom: 380 },
+            { x: 50, y: 380, bottom: 450 },
+            { x: 750, y: 380, bottom: 450 }
+        ];
+        
+        posts.forEach(post => {
+            // Post
+            g.fillStyle(0xc0c0c0);
+            g.fillRect(post.x - 6, post.y - 80, 12, post.bottom - post.y + 80);
+            // Post top
+            g.fillStyle(0xe0e0e0);
+            g.fillCircle(post.x, post.y - 80, 8);
+        });
+        
+        // Ring ropes (3 ropes)
+        const ropeColors = [0xe94560, 0xffffff, 0xe94560];
+        const ropeYOffsets = [-60, -40, -20];
+        
+        ropeYOffsets.forEach((yOff, i) => {
+            g.lineStyle(4, ropeColors[i]);
+            // Front rope
+            g.lineBetween(50, 380 + yOff, 750, 380 + yOff);
+            // Left rope
+            g.lineStyle(3, ropeColors[i]);
+            g.lineBetween(100, 250 + yOff, 50, 380 + yOff);
+            // Right rope
+            g.lineBetween(700, 250 + yOff, 750, 380 + yOff);
+            // Back rope
+            g.lineStyle(2, ropeColors[i], 0.5);
+            g.lineBetween(100, 250 + yOff, 700, 250 + yOff);
+        });
+        
+        // Ring apron
+        g.fillStyle(0x1a1a2e);
+        g.beginPath();
+        g.moveTo(40, 450);
+        g.lineTo(760, 450);
+        g.lineTo(800, 480);
+        g.lineTo(0, 480);
+        g.closePath();
+        g.fillPath();
+        
+        // Apron skirt
+        g.fillStyle(0x0a0a1a);
+        g.fillRect(0, 475, 800, 25);
+    }
+    
+    /**
+     * Create HUD elements
+     */
+    createHUD() {
+        const hudStyle = {
+            fontFamily: '"Press Start 2P"',
+            fontSize: '10px',
+            color: '#ffffff'
+        };
+        
+        // Round and timer display
+        this.roundText = this.add.text(400, 20, `ROUND ${this.currentRound}`, {
+            ...hudStyle,
+            fontSize: '16px',
+            color: '#ffdd00'
+        }).setOrigin(0.5);
+        
+        this.timerText = this.add.text(400, 45, this.formatTime(this.roundTimer), {
+            ...hudStyle,
+            fontSize: '14px',
+            color: '#00ff88'
+        }).setOrigin(0.5);
+        
+        // Fighter 1 HUD (left)
+        this.createFighterHUD(1, 20, 80, this.fighter1);
+        
+        // Fighter 2 HUD (right)
+        this.createFighterHUD(2, 580, 80, this.fighter2);
+        
+        // Commentary box
+        this.commentaryBg = this.add.rectangle(400, 465, 760, 50, 0x000000, 0.8);
+        this.commentaryBg.setStrokeStyle(2, 0x333333);
+        
+        this.commentaryText = this.add.text(30, 450, '', {
+            ...hudStyle,
+            fontSize: '8px',
+            color: '#00ff88',
+            wordWrap: { width: 740 }
+        });
+        
+        // Pause indicator
+        this.pauseText = this.add.text(400, 240, 'PAUSED', {
+            ...hudStyle,
+            fontSize: '24px',
+            color: '#ffdd00'
+        }).setOrigin(0.5).setVisible(false);
+    }
+    
+    /**
+     * Create individual fighter HUD
+     */
+    createFighterHUD(playerNum, x, y, fighter) {
+        const prefix = `hud${playerNum}`;
+        const hudStyle = {
+            fontFamily: '"Press Start 2P"',
+            fontSize: '9px',
+            color: '#ffffff'
+        };
+        
+        // Background
+        const bg = this.add.rectangle(x + 100, y + 40, 200, 90, 0x000000, 0.85);
+        bg.setStrokeStyle(2, playerNum === 1 ? 0xe94560 : 0x4da6ff);
+        
+        // Name
+        this[`${prefix}Name`] = this.add.text(x + 10, y, fighter.name, {
+            ...hudStyle,
+            color: '#ffdd00'
+        });
+        
+        // Health bar
+        this.add.text(x + 10, y + 25, 'HP', { ...hudStyle, fontSize: '7px' });
+        this[`${prefix}HealthBg`] = this.add.rectangle(x + 110, y + 28, 150, 12, 0x333333);
+        this[`${prefix}Health`] = this.add.rectangle(x + 35, y + 28, 150, 10, 0x00ff88).setOrigin(0, 0.5);
+        
+        // Stamina bar
+        this.add.text(x + 10, y + 45, 'ST', { ...hudStyle, fontSize: '7px' });
+        this[`${prefix}StaminaBg`] = this.add.rectangle(x + 110, y + 48, 150, 12, 0x333333);
+        this[`${prefix}Stamina`] = this.add.rectangle(x + 35, y + 48, 150, 10, 0x4da6ff).setOrigin(0, 0.5);
+        
+        // Score
+        this[`${prefix}Score`] = this.add.text(x + 10, y + 65, 'SCORE: 0', {
+            ...hudStyle,
+            fontSize: '8px'
+        });
+        
+        // Knockdowns
+        this[`${prefix}KD`] = this.add.text(x + 120, y + 65, 'KD: 0', {
+            ...hudStyle,
+            fontSize: '8px',
+            color: '#e94560'
+        });
+    }
+    
+    /**
+     * Create particle emitters
+     */
+    createParticles() {
+        // Hit particles (sweat/impact)
+        this.hitParticles = this.add.particles(0, 0, null, {
+            speed: { min: 50, max: 150 },
+            angle: { min: -180, max: 180 },
+            scale: { start: 0.4, end: 0 },
+            lifespan: 400,
+            gravityY: 200,
+            emitting: false
+        });
+        
+        // Create a simple particle texture
+        const particleGraphics = this.make.graphics({ x: 0, y: 0, add: false });
+        particleGraphics.fillStyle(0xffffff);
+        particleGraphics.fillCircle(4, 4, 4);
+        particleGraphics.generateTexture('particle', 8, 8);
+        particleGraphics.destroy();
+        
+        this.hitParticles.setTexture('particle');
+    }
+    
+    /**
+     * Setup keyboard input
+     */
+    setupInput() {
+        // Pause toggle
+        this.input.keyboard.on('keydown-SPACE', () => {
+            this.togglePause();
+        });
+        
+        // Next round (for testing)
+        this.input.keyboard.on('keydown-N', () => {
+            if (!this.isFightOver) {
+                this.endRound();
+            }
+        });
+        
+        // Restart
+        this.input.keyboard.on('keydown-R', () => {
+            this.scene.restart();
+        });
+        
+        // Queue action for fighter 1 (example: Q for jab)
+        this.input.keyboard.on('keydown-Q', () => {
+            this.fighter1.queueAction({
+                action: 'jab',
+                target: 'head',
+                intensity: 80
+            });
+            this.addCommentary('Corner calls for a jab!');
+        });
+    }
+    
+    /**
+     * Toggle pause state
+     */
+    togglePause() {
+        this.isPaused = !this.isPaused;
+        this.pauseText.setVisible(this.isPaused);
+        
+        if (this.isPaused) {
+            this.exchangeTimer.paused = true;
+            this.roundTimerEvent.paused = true;
+        } else {
+            this.exchangeTimer.paused = false;
+            this.roundTimerEvent.paused = false;
+        }
+    }
+    
+    /**
+     * Main game update loop
+     */
+    update(time, delta) {
+        if (this.isPaused || this.isFightOver) return;
+        
+        // Update fighter renderers
+        this.renderer1.update(delta);
+        this.renderer2.update(delta);
+        
+        // Update HUD
+        this.updateHUD();
+    }
+    
+    /**
+     * Simulate a single exchange
+     */
+    simulateExchange() {
+        if (this.isPaused || !this.isRoundActive || this.isFightOver) return;
+        
+        // Check if either fighter is down
+        if (this.fighter1.isDown || this.fighter2.isDown) return;
+        
+        // Get actions from both fighters
+        const action1 = this.fighter1.getNextAction();
+        const action2 = this.fighter2.getNextAction();
+        
+        // Determine who acts first based on speed
+        const speed1 = this.fighter1.speed + Math.random() * 20;
+        const speed2 = this.fighter2.speed + Math.random() * 20;
+        
+        if (speed1 >= speed2) {
+            this.executeAction(this.fighter1, this.fighter2, action1, this.renderer1, this.renderer2, 1);
+            this.time.delayedCall(300, () => {
+                if (!this.fighter2.isDown) {
+                    this.executeAction(this.fighter2, this.fighter1, action2, this.renderer2, this.renderer1, 2);
+                }
+            });
+        } else {
+            this.executeAction(this.fighter2, this.fighter1, action2, this.renderer2, this.renderer1, 2);
+            this.time.delayedCall(300, () => {
+                if (!this.fighter1.isDown) {
+                    this.executeAction(this.fighter1, this.fighter2, action1, this.renderer1, this.renderer2, 1);
+                }
+            });
+        }
+    }
+    
+    /**
+     * Execute a single action
+     */
+    executeAction(attacker, defender, action, attackerRenderer, defenderRenderer, attackerNum) {
+        attackerRenderer.setState(action.action);
+        
+        // Stamina cost
+        const staminaCost = {
+            jab: 3,
+            hook: 8,
+            uppercut: 12,
+            block: 2
+        };
+        attacker.useStamina(staminaCost[action.action] || 0);
+        
+        // Check if attacker is blocking (not attacking)
+        if (action.action === 'block') {
+            this.addCommentary(`${attacker.name} covers up!`);
+            return;
+        }
+        
+        // Check dodge
+        if (defender.attemptDodge()) {
+            defenderRenderer.setState('idle');
+            this.addCommentary(`${defender.name} slips the ${action.action}!`);
+            return;
+        }
+        
+        // Calculate and apply damage (reduced if defender is blocking)
+        let damage = attacker.calculateDamage(action.action, action.intensity);
+        
+        // Check if defender is in blocking state - reduce damage significantly
+        if (defenderRenderer.state === 'block') {
+            damage = Math.floor(damage * 0.3); // 70% damage reduction when blocking
+            this.addCommentary(`${defender.name} blocks! Reduced damage!`);
+        }
+        
+        const result = defender.takeDamage(damage, action.target);
+        
+        // Visual feedback
+        defenderRenderer.takeDamage(damage);
+        
+        if (result === 'knockdown') {
+            defenderRenderer.setState('knockdown');
+            this.triggerKnockdown(defender, attacker, attackerNum);
+        } else if (defenderRenderer.state !== 'block') {
+            defenderRenderer.setState('damaged');
+            this.time.delayedCall(200, () => {
+                defenderRenderer.setState('idle');
+            });
+        }
+        
+        // Particles and screen shake
+        this.emitHitParticles(defenderRenderer.x, defenderRenderer.y - 40);
+        this.triggerScreenShake(damage);
+        
+        // Commentary
+        const hitType = result === 'heavy' ? 'HARD ' : result === 'medium' ? 'solid ' : '';
+        this.addCommentary(`${attacker.name} lands a ${hitType}${action.action} to the ${action.target}!`);
+        
+        // Score points
+        attacker.roundScore += damage;
+    }
+    
+    /**
+     * Handle knockdown
+     */
+    triggerKnockdown(downFighter, upFighter, upFighterNum) {
+        this.isRoundActive = false;
+        this.addCommentary(`${downFighter.name} IS DOWN! THE COUNT BEGINS!`);
+        
+        // Big screen shake
+        this.cameras.main.shake(500, 0.02);
+        
+        // Count animation
+        let count = 1;
+        const countEvent = this.time.addEvent({
+            delay: 1000,
+            callback: () => {
+                this.addCommentary(`...${count}!`);
+                
+                // Recovery check at count 8 - fighters typically must beat the 8 count
+                // Recovery chance based on heart stat, decreases as count goes up
+                const recoveryChance = (downFighter.heart / 100) * (1 - (count / 10));
+                
+                if (count >= 10) {
+                    // KO
+                    this.endFight(upFighterNum, 'KO');
+                    countEvent.remove();
+                } else if (count === 8 && Math.random() < recoveryChance) {
+                    // Fighter gets up at count 8 (standard boxing rule)
+                    downFighter.isDown = false;
+                    // Give fighter minimum viable health to continue
+                    if (downFighter.health <= 20) {
+                        downFighter.health = 20;
+                    } else {
+                        downFighter.health = Math.min(100, downFighter.health + 10);
+                    }
+                    this.addCommentary(`${downFighter.name} beats the count at 8!`);
+                    this.isRoundActive = true;
+                    countEvent.remove();
+                    
+                    // Reset renderer state
+                    if (upFighterNum === 1) {
+                        this.renderer2.setState('idle');
+                    } else {
+                        this.renderer1.setState('idle');
+                    }
+                }
+                
+                count++;
+            },
+            loop: true
+        });
+    }
+    
+    /**
+     * Emit hit particles
+     */
+    emitHitParticles(x, y) {
+        this.hitParticles.setPosition(x, y);
+        this.hitParticles.explode(10);
+    }
+    
+    /**
+     * Trigger screen shake based on damage
+     */
+    triggerScreenShake(damage) {
+        const intensity = Math.min(damage / 100, 0.01);
+        const duration = Math.min(damage * 10, 200);
+        this.cameras.main.shake(duration, intensity);
+    }
+    
+    /**
+     * Update round timer
+     */
+    updateRoundTimer() {
+        if (!this.isRoundActive || this.isPaused) return;
+        
+        this.roundTimer--;
+        this.timerText.setText(this.formatTime(this.roundTimer));
+        
+        if (this.roundTimer <= 0) {
+            this.endRound();
+        }
+    }
+    
+    /**
+     * End current round
+     */
+    endRound() {
+        this.isRoundActive = false;
+        
+        // Score the round (10-point must system)
+        const diff = this.fighter1.roundScore - this.fighter2.roundScore;
+        let score1;
+        let score2;
+
+        if (diff === 0) {
+            // Even round: both fighters get 10
+            score1 = 10;
+            score2 = 10;
+        } else {
+            // Translate damage difference into a point margin for the loser (1–4 points)
+            const marginPoints = Math.min(4, Math.max(1, Math.floor(Math.abs(diff) / 20)));
+            
+            if (diff > 0) {
+                // Fighter 1 wins the round
+                score1 = 10;
+                score2 = 10 - marginPoints;
+            } else {
+                // Fighter 2 wins the round
+                score1 = 10 - marginPoints;
+                score2 = 10;
+            }
+        }
+
+        // Defensive clamp to keep scores within 6–10
+        const finalScore1 = Math.max(6, Math.min(10, score1));
+        const finalScore2 = Math.max(6, Math.min(10, score2));
+        
+        this.scores.fighter1.push(finalScore1);
+        this.scores.fighter2.push(finalScore2);
+        
+        this.addCommentary(`END OF ROUND ${this.currentRound}! Scores: ${this.fighter1.name} ${finalScore1} - ${this.fighter2.name} ${finalScore2}`);
+        
+        if (this.currentRound >= this.maxRounds) {
+            // Fight over - go to decision
+            const total1 = this.scores.fighter1.reduce((a, b) => a + b, 0);
+            const total2 = this.scores.fighter2.reduce((a, b) => a + b, 0);
+            
+            if (total1 > total2) {
+                this.endFight(1, 'Decision');
+            } else if (total2 > total1) {
+                this.endFight(2, 'Decision');
+            } else {
+                this.endFight(0, 'Draw');
+            }
+        } else {
+            // Corner break
+            this.showCornerBreak();
+        }
+    }
+    
+    /**
+     * Show corner break (between rounds)
+     */
+    showCornerBreak() {
+        this.addCommentary('CORNER BREAK - Fighters recover...');
+        
+        // Recover fighters
+        this.fighter1.recoverStamina(30);
+        this.fighter2.recoverStamina(30);
+        this.fighter1.resetRound();
+        this.fighter2.resetRound();
+        
+        // Start next round after delay
+        this.time.delayedCall(3000, () => {
+            this.currentRound++;
+            this.roundTimer = this.roundTime;
+            this.roundText.setText(`ROUND ${this.currentRound}`);
+            this.isRoundActive = true;
+            this.addCommentary(`ROUND ${this.currentRound} BEGINS!`);
+        });
+    }
+    
+    /**
+     * End the fight
+     */
+    endFight(winner, method) {
+        this.isFightOver = true;
+        this.exchangeTimer.remove();
+        this.roundTimerEvent.remove();
+        
+        let winnerName;
+        if (winner === 0) {
+            winnerName = 'DRAW';
+            this.addCommentary(`IT'S A DRAW!`);
+        } else {
+            winnerName = winner === 1 ? this.fighter1.name : this.fighter2.name;
+            this.addCommentary(`${winnerName} WINS BY ${method}!`);
+        }
+        
+        // Show result overlay
+        const overlay = this.add.rectangle(400, 250, 600, 200, 0x000000, 0.9);
+        overlay.setStrokeStyle(4, 0xffdd00);
+        
+        this.add.text(400, 200, 'FIGHT OVER', {
+            fontFamily: '"Press Start 2P"',
+            fontSize: '20px',
+            color: '#e94560'
+        }).setOrigin(0.5);
+        
+        this.add.text(400, 250, winner === 0 ? 'DRAW!' : `${winnerName} WINS!`, {
+            fontFamily: '"Press Start 2P"',
+            fontSize: '16px',
+            color: '#00ff88'
+        }).setOrigin(0.5);
+        
+        this.add.text(400, 290, `by ${method}`, {
+            fontFamily: '"Press Start 2P"',
+            fontSize: '12px',
+            color: '#ffdd00'
+        }).setOrigin(0.5);
+        
+        this.add.text(400, 330, 'Press R to restart', {
+            fontFamily: '"Press Start 2P"',
+            fontSize: '10px',
+            color: '#888888'
+        }).setOrigin(0.5);
+    }
+    
+    /**
+     * Update HUD displays
+     */
+    updateHUD() {
+        // Fighter 1
+        const health1Pct = this.fighter1.health / this.fighter1.maxHealth;
+        const stamina1Pct = this.fighter1.stamina / this.fighter1.maxStamina;
+        this.hud1Health.setScale(health1Pct, 1);
+        this.hud1Stamina.setScale(stamina1Pct, 1);
+        this.hud1Score.setText(`SCORE: ${Math.floor(this.fighter1.roundScore)}`);
+        this.hud1KD.setText(`KD: ${this.fighter1.knockdowns}`);
+        
+        // Health bar color
+        if (health1Pct < 0.3) {
+            this.hud1Health.setFillStyle(0xff0000);
+        } else if (health1Pct < 0.6) {
+            this.hud1Health.setFillStyle(0xffaa00);
+        }
+        
+        // Fighter 2
+        const health2Pct = this.fighter2.health / this.fighter2.maxHealth;
+        const stamina2Pct = this.fighter2.stamina / this.fighter2.maxStamina;
+        this.hud2Health.setScale(health2Pct, 1);
+        this.hud2Stamina.setScale(stamina2Pct, 1);
+        this.hud2Score.setText(`SCORE: ${Math.floor(this.fighter2.roundScore)}`);
+        this.hud2KD.setText(`KD: ${this.fighter2.knockdowns}`);
+        
+        if (health2Pct < 0.3) {
+            this.hud2Health.setFillStyle(0xff0000);
+        } else if (health2Pct < 0.6) {
+            this.hud2Health.setFillStyle(0xffaa00);
+        }
+    }
+    
+    /**
+     * Add commentary text
+     */
+    addCommentary(text) {
+        this.commentaryText.setText(text);
+    }
+    
+    /**
+     * Format time as M:SS
+     */
+    formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+}
+
+// === PHASER GAME CONFIGURATION ===
+const config = {
+    type: Phaser.AUTO,
+    width: 800,
+    height: 500,
+    parent: 'game-container',
+    backgroundColor: '#0a0a15',
+    pixelArt: true,
+    scene: [FightScene],
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 0 },
+            debug: false
+        }
+    },
+    scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH
+    }
+};
+
+// Initialize game
+const game = new Phaser.Game(config);
+
+// === INTEGRATION API ===
+// Export for use with manager UI
+window.BrotherhoodBoxing = {
+    FighterRenderer,
+    Fighter,
+    FightScene,
+    
+    /**
+     * Start a fight with custom fighter configurations
+     * @param {Object} fighter1Config - Configuration for fighter 1
+     * @param {Object} fighter2Config - Configuration for fighter 2
+     */
+    startFight: function(fighter1Config, fighter2Config) {
+        // Basic validation
+        if (!fighter1Config || typeof fighter1Config !== 'object') {
+            console.warn('startFight: invalid fighter1Config');
+            return;
+        }
+        if (!fighter2Config || typeof fighter2Config !== 'object') {
+            console.warn('startFight: invalid fighter2Config');
+            return;
+        }
+        game.scene.start('FightScene', { fighter1: fighter1Config, fighter2: fighter2Config });
+    },
+    
+    /**
+     * Queue a corner action for a fighter
+     * @param {number} fighterNum - 1 or 2
+     * @param {Object} action - {action: 'jab'|'hook'|'uppercut'|'block', target: 'head'|'body', intensity: 0-100}
+     */
+    queueCornerAction: function(fighterNum, action) {
+        const validActions = ['jab', 'hook', 'uppercut', 'block'];
+        const validTargets = ['head', 'body'];
+
+        // Basic structure and bounds validation for the corner action
+        if (!action || typeof action !== 'object') {
+            console.warn('queueCornerAction: invalid action object', action);
+            return;
+        }
+
+        const actionType = action.action;
+        const target = action.target;
+        const intensityNum = Number(action.intensity);
+
+        if (!validActions.includes(actionType) ||
+            !validTargets.includes(target) ||
+            !Number.isFinite(intensityNum) ||
+            intensityNum < 0 ||
+            intensityNum > 100) {
+            console.warn('queueCornerAction: action failed validation', action);
+            return;
+        }
+
+        const scene = game.scene.getScene('FightScene');
+        if (scene) {
+            const fighter = fighterNum === 1 ? scene.fighter1 : scene.fighter2;
+            // Pass a normalized action object to the fighter
+            fighter.queueAction({
+                action: actionType,
+                target: target,
+                intensity: intensityNum
+            });
+        }
+    },
+    
+    /**
+     * Set strategy for a fighter
+     * @param {number} fighterNum - 1 or 2
+     * @param {string} strategy - 'aggressive'|'defensive'|'balanced'|'body'|'head'
+     */
+    setStrategy: function(fighterNum, strategy) {
+        const scene = game.scene.getScene('FightScene');
+        if (scene) {
+            const fighter = fighterNum === 1 ? scene.fighter1 : scene.fighter2;
+            const allowedStrategies = ['aggressive', 'defensive', 'balanced', 'body', 'head'];
+            if (allowedStrategies.includes(strategy)) {
+                fighter.currentStrategy = strategy;
+            } else {
+                console.warn('Invalid strategy value passed to setStrategy:', strategy);
+            }
+        }
+    },
+    
+    /**
+     * Get current fight state
+     */
+    getFightState: function() {
+        const scene = game.scene.getScene('FightScene');
+        if (scene) {
+            return {
+                round: scene.currentRound,
+                timer: scene.roundTimer,
+                isPaused: scene.isPaused,
+                isFightOver: scene.isFightOver,
+                fighter1: {
+                    name: scene.fighter1.name,
+                    health: scene.fighter1.health,
+                    stamina: scene.fighter1.stamina,
+                    knockdowns: scene.fighter1.knockdowns,
+                    score: scene.fighter1.roundScore
+                },
+                fighter2: {
+                    name: scene.fighter2.name,
+                    health: scene.fighter2.health,
+                    stamina: scene.fighter2.stamina,
+                    knockdowns: scene.fighter2.knockdowns,
+                    score: scene.fighter2.roundScore
+                }
+            };
+        }
+        return null;
+    }
+};
+
+// Example: Queue corner actions from manager UI
+// window.BrotherhoodBoxing.queueCornerAction(1, {action: 'jab', target: 'head', intensity: 80});
+// window.BrotherhoodBoxing.setStrategy(1, 'aggressive');
+</script>
+</body>
+</html>
