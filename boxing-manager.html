@@ -1450,7 +1450,7 @@
                 // Check if defender can counter
                 if (f2.health > 0 && !f2.isHurt) {
                     if (rand(1, 100) <= 20 + (f2.speed - f1.defense) / 3) {
-                        fightLog(pick(commentary.counter).replace('{attacker}', f2.name).replace('{defender}', f2.name), 'action');
+                        fightLog(pick(commentary.counter).replace('{attacker}', f2.name).replace('{defender}', f1.name), 'action');
                     }
                     simulateEnhancedPunch(f2, f1, 1, state);
                 }
@@ -1463,7 +1463,7 @@
             setTimeout(() => {
                 if (f1.health > 0 && !f1.isHurt) {
                     if (rand(1, 100) <= 20 + (f1.speed - f2.defense) / 3) {
-                        fightLog(pick(commentary.counter).replace('{attacker}', f1.name).replace('{defender}', f1.name), 'action');
+                        fightLog(pick(commentary.counter).replace('{attacker}', f1.name).replace('{defender}', f2.name), 'action');
                     }
                     simulateEnhancedPunch(f1, f2, 0, state);
                 }
@@ -1611,9 +1611,12 @@
         let hitChance = 40 + (attacker.speed * punchData.speed - defender.defense) / 2;
         hitChance *= punchData.accuracy;
         
-        // Distance modifiers
+        // Distance modifiers - map body punches to their base type
         const distanceModifiers = RING_DISTANCES[state.distance].modifiers;
-        const distanceMod = distanceModifiers[punchType] || distanceModifiers[punchType.replace('body', '')] || 1.0;
+        let basePunchType = punchType;
+        if (punchType === 'bodyJab') basePunchType = 'jab';
+        if (punchType === 'bodyHook') basePunchType = 'hook';
+        const distanceMod = distanceModifiers[basePunchType] || 1.0;
         hitChance *= distanceMod;
         
         // Strategy modifiers
@@ -2164,9 +2167,9 @@
                 f.stamina = Math.min(100, f.stamina + 25);
                 break;
             case 'salts':
-                // Smelling salts boost alertness, modeled as health recovery
-                f.health = Math.min(100, f.health + 5);
-                f.stamina = Math.min(100, f.stamina + 10);
+                // Smelling salts boost alertness/focus - improves next round accuracy
+                // Does NOT restore health (trauma damage is permanent in boxing)
+                f.stamina = Math.min(100, f.stamina + 20);
                 break;
         }
         
