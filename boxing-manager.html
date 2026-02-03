@@ -1074,8 +1074,17 @@
         let p2Score = 10;
         
         // Compare damage dealt THIS round (using tracked start-of-round health)
-        const f1DamageDealt = (state.roundStartHealth?.f2 || 100) - f2.health;
-        const f2DamageDealt = (state.roundStartHealth?.f1 || 100) - f1.health;
+        // If start-of-round health is unavailable, fall back to current health so
+        // that damage for this round is treated as zero (keeps scoring fair in round 1).
+        const f1StartHealth = (state.roundStartHealth && typeof state.roundStartHealth.f2 === 'number')
+            ? state.roundStartHealth.f2
+            : f2.health;
+        const f2StartHealth = (state.roundStartHealth && typeof state.roundStartHealth.f1 === 'number')
+            ? state.roundStartHealth.f1
+            : f1.health;
+
+        const f1DamageDealt = f1StartHealth - f2.health;
+        const f2DamageDealt = f2StartHealth - f1.health;
         
         if (f1DamageDealt > f2DamageDealt + 3) {
             p2Score = 9;
