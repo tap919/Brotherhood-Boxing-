@@ -325,6 +325,21 @@ bindRange(defenseRangeEl, defenseValueEl);
  * Features: 7-level damage system, frame interpolation, hit-stop effects
  */
 class FighterRenderer {
+    // Animation constants
+    static TARGET_FPS = 60;
+    static TARGET_FRAME_TIME = 1000 / FighterRenderer.TARGET_FPS; // 16.6ms
+    static FRAME_INTERPOLATION_SPEED = 0.15;
+    
+    // Damage system constants
+    static MAX_DAMAGE = 100;
+    static DAMAGE_LEVELS = 7;
+    static DAMAGE_PER_LEVEL = FighterRenderer.MAX_DAMAGE / FighterRenderer.DAMAGE_LEVELS; // ~14.3
+    
+    // Hit-stop effect constants
+    static MIN_HIT_STOP_FRAMES = 2;
+    static HIT_STOP_FRAME_RANGE = 3; // Results in 2-4 frames
+    static HIT_STOP_DAMAGE_DIVISOR = 8;
+    
     constructor(scene, x, y, config = {}) {
         this.scene = scene;
         this.x = x;
@@ -353,7 +368,7 @@ class FighterRenderer {
         // Frame interpolation for smooth transitions
         this.prevState = 'idle';
         this.stateTransition = 0;
-        this.transitionSpeed = 0.15;
+        this.transitionSpeed = FighterRenderer.FRAME_INTERPOLATION_SPEED;
         
         // Hit-stop effect
         this.hitStopFrames = 0;
@@ -575,8 +590,8 @@ class FighterRenderer {
         
         this.frameTimer += delta;
         
-        // 60 FPS animation (16.6ms per frame)
-        if (this.frameTimer > 16.6) {
+        // 60 FPS animation using TARGET_FRAME_TIME constant
+        if (this.frameTimer > FighterRenderer.TARGET_FRAME_TIME) {
             this.frameTimer = 0;
             this.frame = (this.frame + 1) % 12;
             this.updateAnimationState();
@@ -742,22 +757,34 @@ class FighterRenderer {
         this.swelling = Math.min(100, this.swelling + amount * 0.5);
         this.totalDamage += amount;
         
-        // Update damage level (7 levels: 0-6)
-        // Each level represents ~14.3 damage points (100/7)
-        this.damageLevel = Math.min(6, Math.floor(this.totalDamage / 14.3));
+        // Update damage level (7 levels: 0-6) using DAMAGE_PER_LEVEL constant
+        this.damageLevel = Math.min(
+            FighterRenderer.DAMAGE_LEVELS - 1, 
+            Math.floor(this.totalDamage / FighterRenderer.DAMAGE_PER_LEVEL)
+        );
         
         // Apply hit-stop effect on heavy punches (2-4 frames)
         if (isHeavy) {
-            const stopFrames = 2 + Math.floor(Math.random() * 3); // 2-4 frames
+            const stopFrames = FighterRenderer.MIN_HIT_STOP_FRAMES + 
+                              Math.floor(Math.random() * FighterRenderer.HIT_STOP_FRAME_RANGE);
             this.hitStopFrames = stopFrames;
         }
     }
     
     /**
      * Trigger hit-stop effect for impactful moments
+     * @param {number} damage - Optional damage amount to scale hit-stop duration
      */
-    triggerHitStop(frames = 3) {
-        this.hitStopFrames = Math.max(this.hitStopFrames, frames);
+    triggerHitStop(frames = null, damage = 0) {
+        if (frames !== null) {
+            // Direct frame count specified
+            this.hitStopFrames = Math.max(this.hitStopFrames, frames);
+        } else if (damage > 0) {
+            // Calculate based on damage
+            const calculatedFrames = FighterRenderer.MIN_HIT_STOP_FRAMES + 
+                                    Math.floor(damage / FighterRenderer.HIT_STOP_DAMAGE_DIVISOR);
+            this.hitStopFrames = Math.max(this.hitStopFrames, calculatedFrames);
+        }
     }
     
     /**
@@ -1025,6 +1052,17 @@ class Fighter {
  * FightScene - Main Phaser Scene for boxing simulation
  */
 class FightScene extends Phaser.Scene {
+    // Screen shake constants (SEGA character level spec)
+    static SHAKE_INTENSITY_DIVISOR = 70;
+    static MAX_SHAKE_INTENSITY = 0.018;
+    static SHAKE_DURATION_MULTIPLIER = 10;
+    static BASE_SHAKE_DURATION = 100;
+    static MAX_SHAKE_DURATION = 400;
+    static CRITICAL_INTENSITY_MULTIPLIER = 1.8;
+    static CRITICAL_DURATION_MULTIPLIER = 1.4;
+    static HEAVY_PUNCH_INTENSITY_MULTIPLIER = 1.5;
+    static HEAVY_PUNCH_THRESHOLD = 12;
+    
     constructor() {
         super({ key: 'FightScene' });
     }
@@ -1960,9 +1998,9 @@ class FightScene extends Phaser.Scene {
         
         // Apply hit-stop to both fighters on heavy punches (SEGA character level feature)
         if (isHeavyPunch && !isBlocked) {
-            const hitStopFrames = 2 + Math.floor(damage / 8); // 2-4 frames based on damage
-            attackerRenderer.triggerHitStop(hitStopFrames);
-            defenderRenderer.triggerHitStop(hitStopFrames);
+            // Use damage-based calculation for consistent hit-stop
+            attackerRenderer.triggerHitStop(null, damage);
+            defenderRenderer.triggerHitStop(null, damage);
         }
         
         // Update combo counter (per spec)
@@ -2242,18 +2280,24 @@ class FightScene extends Phaser.Scene {
      */
     triggerScreenShake(damage, isCritical = false) {
         // Base intensity scales with damage (per spec: 4-12 pixels)
-        let intensity = Math.min(damage / 70, 0.018);
-        let duration = Math.min(damage * 10 + 100, 400);
+        let intensity = Math.min(
+            damage / FightScene.SHAKE_INTENSITY_DIVISOR, 
+            FightScene.MAX_SHAKE_INTENSITY
+        );
+        let duration = Math.min(
+            damage * FightScene.SHAKE_DURATION_MULTIPLIER + FightScene.BASE_SHAKE_DURATION, 
+            FightScene.MAX_SHAKE_DURATION
+        );
         
         // Critical hits get extra shake (heavy punches per spec)
         if (isCritical) {
-            intensity *= 1.8;
-            duration *= 1.4;
+            intensity *= FightScene.CRITICAL_INTENSITY_MULTIPLIER;
+            duration *= FightScene.CRITICAL_DURATION_MULTIPLIER;
         }
         
         // Enhanced shake for heavy punches (2-4 frame hit-stop coordination)
-        if (damage > 12) {
-            intensity *= 1.5;
+        if (damage > FightScene.HEAVY_PUNCH_THRESHOLD) {
+            intensity *= FightScene.HEAVY_PUNCH_INTENSITY_MULTIPLIER;
         }
         
         this.cameras.main.shake(duration, intensity);
