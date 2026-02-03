@@ -165,8 +165,9 @@ class FighterRenderer {
             g.fillRect(headX + 4 * s, headY + 10 * s, 6 * s, 4 * s);
             g.fillRect(headX + 14 * s, headY + 10 * s, 6 * s, 4 * s);
         } else {
-            g.fillRect(headX + 4 * s, headY + 10 * s, 6 * s, 4 * s);
-            g.fillRect(headX + 14 * s, headY + 10 * s, 6 * s, 4 * s);
+            // Slightly adjust eye positions when facing left to mirror/shift them
+            g.fillRect(headX + 2 * s, headY + 10 * s, 6 * s, 4 * s);
+            g.fillRect(headX + 12 * s, headY + 10 * s, 6 * s, 4 * s);
         }
         
         // Nose
@@ -370,9 +371,7 @@ class Fighter {
         // Combat state
         this.knockdowns = 0;
         this.roundScore = 0;
-        this.totalScore = 0;
         this.isDown = false;
-        this.recoveryTimer = 0;
         
         // Corner action queue
         this.actionQueue = [];
@@ -406,6 +405,9 @@ class Fighter {
         const roll = Math.random() * 100;
         const staminaFactor = this.stamina / 100;
         
+        // Minimum stamina required for attacks
+        const staminaCosts = { jab: 3, hook: 8, uppercut: 12, block: 2 };
+        
         // Strategy modifiers
         let aggressionMod = 1;
         let defenseMod = 1;
@@ -428,12 +430,22 @@ class Fighter {
         }
         
         // Action selection based on weighted RNG and stats
-        const jabChance = (this.speed * 0.5 + this.agility * 0.3) * staminaFactor * aggressionMod;
-        const hookChance = (this.strength * 0.4 + this.speed * 0.2) * staminaFactor * aggressionMod;
-        const uppercutChance = (this.strength * 0.5) * staminaFactor * aggressionMod * 0.5;
-        const blockChance = this.defense * defenseMod;
+        // If stamina is too low for an action, set its chance to 0
+        const jabChance = this.stamina >= staminaCosts.jab ? 
+            (this.speed * 0.5 + this.agility * 0.3) * staminaFactor * aggressionMod : 0;
+        const hookChance = this.stamina >= staminaCosts.hook ? 
+            (this.strength * 0.4 + this.speed * 0.2) * staminaFactor * aggressionMod : 0;
+        const uppercutChance = this.stamina >= staminaCosts.uppercut ? 
+            (this.strength * 0.5) * staminaFactor * aggressionMod * 0.5 : 0;
+        const blockChance = this.defense * defenseMod * staminaFactor;
         
         const total = jabChance + hookChance + uppercutChance + blockChance;
+        
+        // If total is 0 (completely exhausted), force block
+        if (total <= 0) {
+            return { action: 'block', target: 'head', intensity: 30 };
+        }
+        
         const normalized = roll / 100 * total;
         
         let action, target, intensity;
@@ -462,6 +474,8 @@ class Fighter {
     
     /**
      * Calculate damage dealt
+     * Note: Uses 70 as baseline stat value (fighters with 70 in a stat have 1.0x multiplier)
+     * This creates a meaningful distribution: 50 = 0.71x, 70 = 1.0x, 100 = 1.43x
      */
     calculateDamage(action, intensity) {
         const baseDamage = {
@@ -471,6 +485,7 @@ class Fighter {
             block: 0
         };
         
+        // 70 is the baseline stat value (1.0x multiplier)
         const strengthMod = this.strength / 70;
         const intensityMod = intensity / 70;
         
@@ -487,13 +502,21 @@ class Fighter {
         
         this.health = Math.max(0, this.health - actualDamage);
         
-        // KO check based on chin stat
+        // TKO check - if health reaches 0
+        if (this.health <= 0 && !this.isDown) {
+            this.knockdowns++;
+            this.isDown = true;
+            return 'knockdown';
+        }
+        
+        // KO check based on chin stat (for head shots)
         if (target === 'head' && damage > 15) {
-            const koChance = (damage - 10) / Math.max(1, this.chin);
+            // Use effective chin with minimum of 0.1 to avoid near-infinite KO chance
+            const effectiveChin = Math.max(0.1, this.chin);
+            const koChance = (damage - 10) / effectiveChin;
             if (Math.random() < koChance && !this.isDown) {
                 this.knockdowns++;
                 this.isDown = true;
-                this.recoveryTimer = 10; // 10 count
                 return 'knockdown';
             }
         }
@@ -505,7 +528,24 @@ class Fighter {
      * Check dodge based on speed and agility
      */
     attemptDodge() {
-        const dodgeChance = (this.speed * 0.4 + this.agility * 0.4) / 100;
+        // Base dodge from speed and agility (max ~40% at 100/100)
+        let dodgeChance = (this.speed * 0.2 + this.agility * 0.2) / 100;
+
+        // Stamina modifier: at 0 stamina keep 50% of base, at full keep 100%
+        if (typeof this.maxStamina === 'number' && this.maxStamina > 0) {
+            const staminaRatio = this.stamina / this.maxStamina;
+            const staminaFactor = 0.5 + 0.5 * Math.max(0, Math.min(1, staminaRatio));
+            dodgeChance *= staminaFactor;
+        }
+
+        // Health modifier: below 100 health reduces dodge effectiveness
+        const healthRatio = Math.max(0, Math.min(1, this.health / 100));
+        const healthFactor = 0.5 + 0.5 * healthRatio;
+        dodgeChance *= healthFactor;
+
+        // Clamp to a reasonable upper bound
+        dodgeChance = Math.max(0, Math.min(0.5, dodgeChance));
+        
         return Math.random() < dodgeChance;
     }
     
@@ -649,7 +689,9 @@ class FightScene extends Phaser.Scene {
         for (let x = 10; x < 790; x += 25) {
             for (let row = 0; row < 3; row++) {
                 const y = 60 + row * 35 + Math.random() * 10;
-                const shade = 0x1a1a2e + Math.floor(Math.random() * 0x101010);
+                const shadeBase = 0x1a1a2e;
+                const randomComponent = Math.floor(Math.random() * 0x101010);
+                const shade = Math.min(shadeBase + randomComponent, 0xFFFFFF);
                 g.fillStyle(shade);
                 g.fillCircle(x + Math.random() * 15, y, 8 + Math.random() * 4);
             }
@@ -951,7 +993,7 @@ class FightScene extends Phaser.Scene {
         };
         attacker.useStamina(staminaCost[action.action] || 0);
         
-        // Check if blocking
+        // Check if attacker is blocking (not attacking)
         if (action.action === 'block') {
             this.addCommentary(`${attacker.name} covers up!`);
             return;
@@ -964,8 +1006,15 @@ class FightScene extends Phaser.Scene {
             return;
         }
         
-        // Calculate and apply damage
-        const damage = attacker.calculateDamage(action.action, action.intensity);
+        // Calculate and apply damage (reduced if defender is blocking)
+        let damage = attacker.calculateDamage(action.action, action.intensity);
+        
+        // Check if defender is in blocking state - reduce damage significantly
+        if (defenderRenderer.state === 'block') {
+            damage = Math.floor(damage * 0.3); // 70% damage reduction when blocking
+            this.addCommentary(`${defender.name} blocks! Reduced damage!`);
+        }
+        
         const result = defender.takeDamage(damage, action.target);
         
         // Visual feedback
@@ -974,7 +1023,7 @@ class FightScene extends Phaser.Scene {
         if (result === 'knockdown') {
             defenderRenderer.setState('knockdown');
             this.triggerKnockdown(defender, attacker, attackerNum);
-        } else {
+        } else if (defenderRenderer.state !== 'block') {
             defenderRenderer.setState('damaged');
             this.time.delayedCall(200, () => {
                 defenderRenderer.setState('idle');
@@ -1010,18 +1059,24 @@ class FightScene extends Phaser.Scene {
             callback: () => {
                 this.addCommentary(`...${count}!`);
                 
-                // Recovery check based on heart stat
+                // Recovery check at count 8 - fighters typically must beat the 8 count
+                // Recovery chance based on heart stat, decreases as count goes up
                 const recoveryChance = (downFighter.heart / 100) * (1 - (count / 10));
                 
                 if (count >= 10) {
                     // KO
                     this.endFight(upFighterNum, 'KO');
                     countEvent.remove();
-                } else if (count >= 4 && Math.random() < recoveryChance) {
-                    // Fighter gets up
+                } else if (count === 8 && Math.random() < recoveryChance) {
+                    // Fighter gets up at count 8 (standard boxing rule)
                     downFighter.isDown = false;
-                    downFighter.health = Math.max(downFighter.health, 20);
-                    this.addCommentary(`${downFighter.name} beats the count!`);
+                    // Give fighter minimum viable health to continue
+                    if (downFighter.health <= 20) {
+                        downFighter.health = 20;
+                    } else {
+                        downFighter.health = Math.min(100, downFighter.health + 10);
+                    }
+                    this.addCommentary(`${downFighter.name} beats the count at 8!`);
                     this.isRoundActive = true;
                     countEvent.remove();
                     
@@ -1077,13 +1132,37 @@ class FightScene extends Phaser.Scene {
         this.isRoundActive = false;
         
         // Score the round (10-point must system)
-        const score1 = 10 - Math.floor((this.fighter2.roundScore - this.fighter1.roundScore) / 20);
-        const score2 = 10 - Math.floor((this.fighter1.roundScore - this.fighter2.roundScore) / 20);
+        const diff = this.fighter1.roundScore - this.fighter2.roundScore;
+        let score1;
+        let score2;
+
+        if (diff === 0) {
+            // Even round: both fighters get 10
+            score1 = 10;
+            score2 = 10;
+        } else {
+            // Translate damage difference into a point margin for the loser (1–4 points)
+            const marginPoints = Math.min(4, Math.max(1, Math.floor(Math.abs(diff) / 20)));
+            
+            if (diff > 0) {
+                // Fighter 1 wins the round
+                score1 = 10;
+                score2 = 10 - marginPoints;
+            } else {
+                // Fighter 2 wins the round
+                score1 = 10 - marginPoints;
+                score2 = 10;
+            }
+        }
+
+        // Defensive clamp to keep scores within 6–10
+        const finalScore1 = Math.max(6, Math.min(10, score1));
+        const finalScore2 = Math.max(6, Math.min(10, score2));
         
-        this.scores.fighter1.push(Math.max(6, Math.min(10, score1)));
-        this.scores.fighter2.push(Math.max(6, Math.min(10, score2)));
+        this.scores.fighter1.push(finalScore1);
+        this.scores.fighter2.push(finalScore2);
         
-        this.addCommentary(`END OF ROUND ${this.currentRound}! Scores: ${this.fighter1.name} ${score1} - ${this.fighter2.name} ${score2}`);
+        this.addCommentary(`END OF ROUND ${this.currentRound}! Scores: ${this.fighter1.name} ${finalScore1} - ${this.fighter2.name} ${finalScore2}`);
         
         if (this.currentRound >= this.maxRounds) {
             // Fight over - go to decision
@@ -1260,6 +1339,15 @@ window.BrotherhoodBoxing = {
      * @param {Object} fighter2Config - Configuration for fighter 2
      */
     startFight: function(fighter1Config, fighter2Config) {
+        // Basic validation
+        if (!fighter1Config || typeof fighter1Config !== 'object') {
+            console.warn('startFight: invalid fighter1Config');
+            return;
+        }
+        if (!fighter2Config || typeof fighter2Config !== 'object') {
+            console.warn('startFight: invalid fighter2Config');
+            return;
+        }
         game.scene.start('FightScene', { fighter1: fighter1Config, fighter2: fighter2Config });
     },
     
@@ -1269,10 +1357,37 @@ window.BrotherhoodBoxing = {
      * @param {Object} action - {action: 'jab'|'hook'|'uppercut'|'block', target: 'head'|'body', intensity: 0-100}
      */
     queueCornerAction: function(fighterNum, action) {
+        const validActions = ['jab', 'hook', 'uppercut', 'block'];
+        const validTargets = ['head', 'body'];
+
+        // Basic structure and bounds validation for the corner action
+        if (!action || typeof action !== 'object') {
+            console.warn('queueCornerAction: invalid action object', action);
+            return;
+        }
+
+        const actionType = action.action;
+        const target = action.target;
+        const intensityNum = Number(action.intensity);
+
+        if (!validActions.includes(actionType) ||
+            !validTargets.includes(target) ||
+            !Number.isFinite(intensityNum) ||
+            intensityNum < 0 ||
+            intensityNum > 100) {
+            console.warn('queueCornerAction: action failed validation', action);
+            return;
+        }
+
         const scene = game.scene.getScene('FightScene');
         if (scene) {
             const fighter = fighterNum === 1 ? scene.fighter1 : scene.fighter2;
-            fighter.queueAction(action);
+            // Pass a normalized action object to the fighter
+            fighter.queueAction({
+                action: actionType,
+                target: target,
+                intensity: intensityNum
+            });
         }
     },
     
@@ -1285,7 +1400,12 @@ window.BrotherhoodBoxing = {
         const scene = game.scene.getScene('FightScene');
         if (scene) {
             const fighter = fighterNum === 1 ? scene.fighter1 : scene.fighter2;
-            fighter.currentStrategy = strategy;
+            const allowedStrategies = ['aggressive', 'defensive', 'balanced', 'body', 'head'];
+            if (allowedStrategies.includes(strategy)) {
+                fighter.currentStrategy = strategy;
+            } else {
+                console.warn('Invalid strategy value passed to setStrategy:', strategy);
+            }
         }
     },
     

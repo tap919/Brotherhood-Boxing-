@@ -4,7 +4,7 @@
 
 The `phaser-fight-scene.html` provides a complete auto-sim boxing fight engine using Phaser 3, featuring:
 
-- **64x128px procedural pixel sprites** for fighters in orthodox stance
+- **64x128px base (design resolution) procedural pixel sprites** for fighters in orthodox stance, scaled at runtime based on canvas resolution and game scale
 - **Stats-driven auto-simulation** (stamina, health, strength, agility, speed, defense)
 - **State machine** for animations: idle, jab, hook, uppercut, block, knockdown, damaged
 - **Pseudo-3D ring** with ropes, mat, crowd background
@@ -12,7 +12,7 @@ The `phaser-fight-scene.html` provides a complete auto-sim boxing fight engine u
 - **Visual effects**: hit particles, screen shake, damage swelling/flash
 - **Corner inputs** via JSON action queue
 - **3x3-minute rounds** with 10-point must scoring system
-- **60fps** desktop-ready performance
+- **60fps game loop** with deliberately **10–15fps sprite animations** for retro aesthetics (desktop-ready on typical modern desktops)
 - **Keyboard controls**: SPACE (pause), N (next round), R (restart), Q (queue action)
 
 ## Quick Start
@@ -116,6 +116,15 @@ Your `game.js` fighters have these stats:
 Map to FightScene format:
 
 ```javascript
+// Helper to convert hex color string to numeric hex
+function hexStringToNumber(hexStr) {
+  if (typeof hexStr === 'number') return hexStr;
+  if (typeof hexStr === 'string' && hexStr.startsWith('#')) {
+    return parseInt(hexStr.slice(1), 16);
+  }
+  return 0xff0000; // Default red if invalid
+}
+
 function convertFighter(yourFighter) {
   return {
     name: yourFighter.name,
@@ -123,21 +132,47 @@ function convertFighter(yourFighter) {
     maxHealth: 100,
     stamina: yourFighter.stamina || 100,
     maxStamina: 100,
-    strength: yourFighter.power,      // power -> strength
-    agility: yourFighter.aggression,  // aggression -> agility (affects dodge)
-    speed: yourFighter.speed,
+    strength: yourFighter.power,      // power -> strength (damage output)
+    agility: yourFighter.speed,       // speed contributes to agility (dodge)
+    speed: yourFighter.speed,         // speed -> speed (initiative)
     defense: yourFighter.defense,
     chin: yourFighter.chin,
     heart: yourFighter.heart,
-    trunkColor: yourFighter.characterColor === '#FFD700' ? 0xffd700 : 
-                yourFighter.characterColor === '#FF4444' ? 0xff4444 : 0xff0000,
+    trunkColor: hexStringToNumber(yourFighter.characterColor),
     skinColor: 0xd4a574  // Default skin tone
   };
 }
 
-// Usage
-const fighter1 = convertFighter(gameState.fighters[0]);
-const fighter2 = convertFighter(gameState.fighters[1]);
+// Usage: safely select two fighters from your roster
+function getMatchupFighters(gameState, options = {}) {
+  const roster = Array.isArray(gameState.fighters) ? gameState.fighters : [];
+  const { fighterIndices } = options;
+
+  if (roster.length < 2) {
+    throw new Error('Need at least 2 fighters in gameState.fighters to start a fight');
+  }
+
+  // Default to first two fighters if no indices are provided
+  let [aIdx, bIdx] = fighterIndices ?? [0, 1];
+  const maxIndex = roster.length - 1;
+
+  // Clamp indices into valid range
+  aIdx = Math.min(Math.max(aIdx, 0), maxIndex);
+  bIdx = Math.min(Math.max(bIdx, 0), maxIndex);
+
+  // Ensure fighters are not the same; if so, pick the next one
+  if (aIdx === bIdx) {
+    bIdx = (aIdx + 1) % roster.length;
+  }
+
+  const fighter1 = convertFighter(roster[aIdx]);
+  const fighter2 = convertFighter(roster[bIdx]);
+
+  return { fighter1, fighter2 };
+}
+
+// Example: use the first two fighters in the roster
+const { fighter1, fighter2 } = getMatchupFighters(gameState);
 window.BrotherhoodBoxing.startFight(fighter1, fighter2);
 ```
 
@@ -221,6 +256,13 @@ To package as a desktop app:
 # Install Electron
 npm install electron --save-dev
 
+# Download Phaser locally for offline use (CDN won't work without internet)
+curl -o phaser.min.js https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js
+
+# Update phaser-fight-scene.html to use local Phaser:
+# Change: <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+# To:     <script src="phaser.min.js"></script>
+
 # Create main.js
 const { app, BrowserWindow } = require('electron');
 
@@ -246,6 +288,8 @@ app.whenReady().then(() => {
 # Run
 npm start
 ```
+
+**Note:** For true offline functionality, download the Phaser library locally and update the script tag. The CDN version requires internet connectivity.
 
 ## File Structure
 
