@@ -1607,10 +1607,15 @@ class FightScene extends Phaser.Scene {
      * Update damage number animations (per spec: rise and fade)
      */
     updateDamageNumbers(delta) {
+        // Use delta (ms) for frame-rate–independent movement and fading
+        const dt = delta / 1000; // convert to seconds
+        const riseSpeed = 30;    // pixels per second (approx. 0.5 px/frame at 60 FPS)
+        const fadeSpeed = 1.2;   // alpha per second (approx. 0.02/frame at 60 FPS)
+        
         for (let i = this.damageNumbers.length - 1; i >= 0; i--) {
             const dmgNum = this.damageNumbers[i];
-            dmgNum.y -= 0.5;
-            dmgNum.alpha -= 0.02;
+            dmgNum.y -= riseSpeed * dt;
+            dmgNum.alpha -= fadeSpeed * dt;
             
             if (dmgNum.alpha <= 0) {
                 dmgNum.destroy();
