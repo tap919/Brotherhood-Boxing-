@@ -333,11 +333,11 @@ class FighterRenderer {
     // Damage system constants
     static MAX_DAMAGE = 100;
     static DAMAGE_LEVELS = 7;
-    static DAMAGE_PER_LEVEL = FighterRenderer.MAX_DAMAGE / FighterRenderer.DAMAGE_LEVELS; // ~14.3
+    static DAMAGE_PER_LEVEL = FighterRenderer.MAX_DAMAGE / FighterRenderer.DAMAGE_LEVELS; // Damage threshold per level
     
     // Hit-stop effect constants
     static MIN_HIT_STOP_FRAMES = 2;
-    static HIT_STOP_FRAME_RANGE = 3; // Results in 2-4 frames
+    static HIT_STOP_ADDITIONAL_FRAMES = 3; // Random 0-2 added to MIN (results in 2-4 total frames)
     static HIT_STOP_DAMAGE_DIVISOR = 8;
     
     constructor(scene, x, y, config = {}) {
@@ -766,7 +766,7 @@ class FighterRenderer {
         // Apply hit-stop effect on heavy punches (2-4 frames)
         if (isHeavy) {
             const stopFrames = FighterRenderer.MIN_HIT_STOP_FRAMES + 
-                              Math.floor(Math.random() * FighterRenderer.HIT_STOP_FRAME_RANGE);
+                              Math.floor(Math.random() * FighterRenderer.HIT_STOP_ADDITIONAL_FRAMES);
             this.hitStopFrames = stopFrames;
         }
     }
@@ -1991,7 +1991,9 @@ class FightScene extends Phaser.Scene {
         const result = defender.takeDamage(damage, action.target);
         
         // Determine if this is a heavy punch for hit-stop effect
-        const isHeavyPunch = damage > 12 || action.action === 'hook' || action.action === 'uppercut';
+        const isHeavyPunch = damage > FightScene.HEAVY_PUNCH_THRESHOLD || 
+                            action.action === 'hook' || 
+                            action.action === 'uppercut';
         
         // Visual feedback with 7-level damage system and hit-stop on heavy punches
         defenderRenderer.takeDamage(damage, isHeavyPunch);
