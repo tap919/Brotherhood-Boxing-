@@ -208,14 +208,19 @@ const STYLE_MODS = {
     balanced: { strength: 0, speed: 0, agility: 0, chin: 0, heart: 95 }
 };
 
+// Clamp core fighter stats to the intended 50–99 bounds
+function clampStat(value) {
+    return Math.max(50, Math.min(99, value));
+}
+
 function buildStyleStats(style, power, speed, defense) {
     const mod = STYLE_MODS[style] || STYLE_MODS.balanced;
     return {
-        strength: power + (mod.strength || 0),
-        speed: speed + (mod.speed || 0),
-        agility: speed + (mod.agility || 0),
-        defense: defense + (mod.defense || 0),
-        chin: defense + (mod.chin || 0),
+        strength: clampStat(power + (mod.strength || 0)),
+        speed: clampStat(speed + (mod.speed || 0)),
+        agility: clampStat(speed + (mod.agility || 0)),
+        defense: clampStat(defense + (mod.defense || 0)),
+        chin: clampStat(defense + (mod.chin || 0)),
         heart: mod.heart || 95
     };
 }
