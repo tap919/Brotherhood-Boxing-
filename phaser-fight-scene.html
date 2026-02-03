@@ -194,11 +194,16 @@ function hexToInt(hex) {
     return parseInt(hex.replace('#', ''), 16);
 }
 
+// Style modifier baselines (tuned to evoke classic Punch-Out archetypes)
+// Slugger: big power, slower hands, iron chin
 const STYLE_MODS = {
     slugger: { strength: 8, speed: -5, agility: -2, chin: 4, heart: 92 },
+    // Out-boxer: fleet footwork, lower power, lighter chin
     outboxer: { strength: -6, speed: 8, agility: 6, chin: -2, heart: 94 },
+    // Counter: slick defense, solid chin, bonus defense
     counter: { strength: -2, speed: 0, agility: 4, chin: 6, defense: 8, heart: 96 },
-    balanced: { strength: 0, speed: 0, agility: -2, chin: 2, heart: 95 }
+    // Balanced: neutral, no penalties
+    balanced: { strength: 0, speed: 0, agility: 0, chin: 0, heart: 95 }
 };
 
 function buildStyleStats(style, power, speed, defense) {
