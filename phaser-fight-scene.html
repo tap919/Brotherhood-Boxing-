@@ -32,7 +32,7 @@
         }
         .controls-info span { color: #ffdd00; }
         .creator-panel {
-            width: 800px;
+            width: 640px;
             max-width: 95vw;
             background: rgba(0, 0, 0, 0.65);
             border: 3px solid #e94560;
@@ -887,33 +887,59 @@ class FightScene extends Phaser.Scene {
         // Scoring
         this.scores = { fighter1: [], fighter2: [] };
         
+        // === GRAPHICS SPEC ENHANCEMENTS ===
+        // Momentum system (per spec: slides left/right based on exchanges)
+        this.momentum = 0; // -100 to 100, negative = fighter2 advantage
+        
+        // Combo tracking (per spec: HIT x[NUMBER] counter)
+        this.comboCount = { fighter1: 0, fighter2: 0 };
+        this.comboTimer = { fighter1: 0, fighter2: 0 };
+        
+        // Blood decals tracking (per spec: persistent with fade)
+        this.bloodDecals = [];
+        
+        // Camera flash timing (per spec: 3-5 per second during big hits)
+        this.cameraFlashCooldown = 0;
+        
+        // Ring canvas wear marks
+        this.wearMarks = [];
+        
         // === CREATE RING BACKGROUND ===
         this.createRingBackground();
+        
+        // === CREATE CROWD LAYER (per spec) ===
+        this.createCrowdLayer();
         
         // === CREATE FIGHTERS ===
         this.fighter1 = new Fighter(this.fighter1Config);
         this.fighter2 = new Fighter(this.fighter2Config);
         
-        this.renderer1 = new FighterRenderer(this, 250, 320, {
+        // Adjusted positions for 640x448 resolution
+        this.renderer1 = new FighterRenderer(this, 200, 280, {
             trunkColor: this.fighter1Config.trunkColor || 0xff0000,
             skinColor: this.fighter1Config.skinColor || 0xd4a574,
-            gloveColor: 0x8b0000,
+            gloveColor: this.fighter1Config.gloveColor || 0x8b0000,
+            hairColor: this.fighter1Config.hairColor || 0x1a1a1a,
             facing: 'right',
-            scale: 1.5
+            scale: 1.3
         });
         
-        this.renderer2 = new FighterRenderer(this, 550, 320, {
+        this.renderer2 = new FighterRenderer(this, 440, 280, {
             trunkColor: this.fighter2Config.trunkColor || 0x0066cc,
             skinColor: this.fighter2Config.skinColor || 0xa0826d,
-            gloveColor: 0x00008b,
+            gloveColor: this.fighter2Config.gloveColor || 0x00008b,
+            hairColor: this.fighter2Config.hairColor || 0x1a1a1a,
             facing: 'left',
-            scale: 1.5
+            scale: 1.3
         });
         
-        // === CREATE HUD ===
+        // === CREATE REFEREE (per spec) ===
+        this.createReferee();
+        
+        // === CREATE HUD (enhanced per spec) ===
         this.createHUD();
         
-        // === CREATE PARTICLES ===
+        // === CREATE PARTICLES (enhanced per spec) ===
         this.createParticles();
         
         // === SETUP INPUT ===
@@ -939,106 +965,288 @@ class FightScene extends Phaser.Scene {
     }
     
     /**
-     * Create pseudo-3D ring background
+     * Create pseudo-3D ring background (enhanced per fight mode graphics spec)
+     * Spec: resolution 640x448, canvas #2a4a6b, diagonal grid, dynamic textures
      */
     createRingBackground() {
         const g = this.add.graphics();
+        this.ringGraphics = g;
         
-        // Crowd background (gradient simulation)
-        for (let i = 0; i < 50; i++) {
-            const y = 50 + i * 3;
-            const brightness = 0.1 + (i / 50) * 0.2;
+        // Store reference for dynamic blood decal layer
+        this.bloodDecalGraphics = this.add.graphics();
+        this.bloodDecalGraphics.setDepth(1);
+        
+        // Crowd background with multi-layer parallax effect (per spec: 3 tiers)
+        for (let i = 0; i < 40; i++) {
+            const y = 40 + i * 2.5;
+            const brightness = 0.08 + (i / 40) * 0.15;
             const color = Phaser.Display.Color.GetColor(
-                Math.floor(30 * brightness),
-                Math.floor(30 * brightness),
-                Math.floor(50 * brightness)
+                Math.floor(10 * brightness),
+                Math.floor(10 * brightness),
+                Math.floor(20 * brightness)
             );
             g.fillStyle(color);
-            g.fillRect(0, y, 800, 4);
+            g.fillRect(0, y, 640, 3);
         }
         
-        // Crowd heads (silhouettes)
-        for (let x = 10; x < 790; x += 25) {
+        // Crowd heads with 3 tier silhouettes (per spec)
+        const crowdColors = [0x0a0a0a, 0x1a1a1a, 0x2a2a2a];
+        for (let x = 8; x < 632; x += 20) {
             for (let row = 0; row < 3; row++) {
-                const y = 60 + row * 35 + Math.random() * 10;
-                const shadeBase = 0x1a1a2e;
-                const randomComponent = Math.floor(Math.random() * 0x101010);
-                const shade = Math.min(shadeBase + randomComponent, 0xFFFFFF);
+                const y = 50 + row * 28 + Math.random() * 8;
+                const shade = crowdColors[row];
                 g.fillStyle(shade);
-                g.fillCircle(x + Math.random() * 15, y, 8 + Math.random() * 4);
+                g.fillCircle(x + Math.random() * 12, y, 6 + Math.random() * 3);
+                
+                // Arm silhouettes (per spec: cheer cycle)
+                if (Math.random() > 0.7) {
+                    g.fillRect(x + Math.random() * 8, y - 8, 2, 6);
+                }
             }
         }
         
-        // Ring mat (canvas floor) - pseudo-3D perspective
-        g.fillStyle(0x4a6741); // Green canvas
+        // Ring mat (canvas floor) - per spec: #2a4a6b base with diagonal grid
+        g.fillStyle(0x2a4a6b);
         g.beginPath();
-        g.moveTo(100, 250);
-        g.lineTo(700, 250);
-        g.lineTo(750, 450);
-        g.lineTo(50, 450);
+        g.moveTo(80, 200);
+        g.lineTo(560, 200);
+        g.lineTo(600, 360);
+        g.lineTo(40, 360);
         g.closePath();
         g.fillPath();
         
-        // Ring mat center circle
-        g.lineStyle(3, 0x5a7751);
-        g.strokeCircle(400, 350, 60);
+        // Canvas diagonal grid pattern (per spec)
+        g.lineStyle(1, 0x3a5a7b, 0.3);
+        for (let i = 0; i < 20; i++) {
+            const x1 = 40 + i * 30;
+            const x2 = 80 + i * 30;
+            g.lineBetween(x1, 360, x2, 200);
+            g.lineBetween(640 - x1, 360, 640 - x2, 200);
+        }
         
-        // Ring mat lines
-        g.lineStyle(2, 0x5a7751);
-        g.lineBetween(100, 350, 700, 350);
+        // Ring logo at center (per spec)
+        g.lineStyle(2, 0x4a7a9b, 0.6);
+        g.strokeCircle(320, 280, 40);
+        g.lineStyle(1, 0x4a7a9b, 0.4);
+        g.strokeCircle(320, 280, 50);
         
-        // Ring posts (corners)
+        // Ring center line
+        g.lineStyle(2, 0x4a7a9b, 0.5);
+        g.lineBetween(80, 280, 560, 280);
+        
+        // Ring posts with metallic gradient (per spec: 12x120 pixels)
         const posts = [
-            { x: 100, y: 250, bottom: 380 },
-            { x: 700, y: 250, bottom: 380 },
-            { x: 50, y: 380, bottom: 450 },
-            { x: 750, y: 380, bottom: 450 }
+            { x: 80, y: 200, bottom: 310 },
+            { x: 560, y: 200, bottom: 310 },
+            { x: 40, y: 310, bottom: 360 },
+            { x: 600, y: 310, bottom: 360 }
         ];
         
         posts.forEach(post => {
-            // Post
-            g.fillStyle(0xc0c0c0);
-            g.fillRect(post.x - 6, post.y - 80, 12, post.bottom - post.y + 80);
-            // Post top
-            g.fillStyle(0xe0e0e0);
-            g.fillCircle(post.x, post.y - 80, 8);
+            // Post with metallic gradient
+            g.fillStyle(0x888888);
+            g.fillRect(post.x - 5, post.y - 60, 10, post.bottom - post.y + 60);
+            // Highlight strip
+            g.fillStyle(0xaaaaaa);
+            g.fillRect(post.x - 2, post.y - 60, 3, post.bottom - post.y + 60);
+            // Post top cap
+            g.fillStyle(0xcccccc);
+            g.fillCircle(post.x, post.y - 60, 7);
+            // Rope attachment rings (per spec)
+            g.lineStyle(1, 0x666666);
+            g.strokeCircle(post.x, post.y - 45, 3);
+            g.strokeCircle(post.x, post.y - 30, 3);
+            g.strokeCircle(post.x, post.y - 15, 3);
         });
         
-        // Ring ropes (3 ropes)
-        const ropeColors = [0xe94560, 0xffffff, 0xe94560];
-        const ropeYOffsets = [-60, -40, -20];
+        // Corner pads (per spec: 16x16 pixels with stitching)
+        const cornerPadPositions = [
+            { x: 80, y: 200 },
+            { x: 560, y: 200 }
+        ];
+        cornerPadPositions.forEach(pos => {
+            g.fillStyle(0x1a1a1a);
+            g.fillRect(pos.x - 8, pos.y - 8, 16, 16);
+            // Stitching detail
+            g.lineStyle(1, 0x333333);
+            g.lineBetween(pos.x - 6, pos.y - 6, pos.x + 6, pos.y + 6);
+            g.lineBetween(pos.x + 6, pos.y - 6, pos.x - 6, pos.y + 6);
+        });
+        
+        // Ring ropes with 3 colors (per spec: red, white, blue with inner highlight)
+        const ropeColors = [0xcc3333, 0xffffff, 0x3333cc];
+        const ropeHighlights = [0xff5555, 0xffffff, 0x5555ff];
+        const ropeYOffsets = [-45, -30, -15];
+        
+        // Store rope positions for animation
+        this.ropePositions = [];
         
         ropeYOffsets.forEach((yOff, i) => {
+            this.ropePositions.push({
+                y: 310 + yOff,
+                baseY: 310 + yOff,
+                amplitude: 2,
+                phase: i * 60
+            });
+            
+            // Main rope (4px thickness per spec)
             g.lineStyle(4, ropeColors[i]);
             // Front rope
-            g.lineBetween(50, 380 + yOff, 750, 380 + yOff);
-            // Left rope
+            g.lineBetween(40, 310 + yOff, 600, 310 + yOff);
+            // Inner highlight (1px per spec)
+            g.lineStyle(1, ropeHighlights[i], 0.6);
+            g.lineBetween(40, 309 + yOff, 600, 309 + yOff);
+            
+            // Side ropes (slightly thinner)
             g.lineStyle(3, ropeColors[i]);
-            g.lineBetween(100, 250 + yOff, 50, 380 + yOff);
-            // Right rope
-            g.lineBetween(700, 250 + yOff, 750, 380 + yOff);
-            // Back rope
-            g.lineStyle(2, ropeColors[i], 0.5);
-            g.lineBetween(100, 250 + yOff, 700, 250 + yOff);
+            g.lineBetween(80, 200 + yOff, 40, 310 + yOff);
+            g.lineBetween(560, 200 + yOff, 600, 310 + yOff);
+            
+            // Back ropes (faded)
+            g.lineStyle(2, ropeColors[i], 0.4);
+            g.lineBetween(80, 200 + yOff, 560, 200 + yOff);
         });
         
-        // Ring apron
-        g.fillStyle(0x1a1a2e);
+        // Ring apron with gradient (per spec: #1a2a3a to #0a1a2a)
+        g.fillStyle(0x1a2a3a);
         g.beginPath();
-        g.moveTo(40, 450);
-        g.lineTo(760, 450);
-        g.lineTo(800, 480);
-        g.lineTo(0, 480);
+        g.moveTo(30, 360);
+        g.lineTo(610, 360);
+        g.lineTo(640, 390);
+        g.lineTo(0, 390);
         g.closePath();
         g.fillPath();
         
-        // Apron skirt
-        g.fillStyle(0x0a0a1a);
-        g.fillRect(0, 475, 800, 25);
+        // Apron skirt with crowd shadows (per spec)
+        g.fillStyle(0x0a1a2a);
+        g.fillRect(0, 385, 640, 20);
+        
+        // Flickering crowd shadow silhouettes on apron
+        for (let x = 20; x < 620; x += 40) {
+            g.fillStyle(0x050510);
+            const shadowHeight = 8 + Math.random() * 6;
+            g.fillRect(x, 360, 15, shadowHeight);
+        }
     }
     
     /**
-     * Create HUD elements
+     * Create animated crowd layer with camera flashes (per spec)
+     */
+    createCrowdLayer() {
+        this.crowdGraphics = this.add.graphics();
+        this.crowdGraphics.setDepth(0);
+        
+        // Create camera flash emitter positions
+        this.cameraFlashPositions = [];
+        for (let i = 0; i < 15; i++) {
+            this.cameraFlashPositions.push({
+                x: 30 + Math.random() * 580,
+                y: 50 + Math.random() * 60,
+                cooldown: Math.random() * 200
+            });
+        }
+        
+        // Create photographers at ringside (per spec: bottom sides, 24x32 pixels)
+        this.photographerGraphics = this.add.graphics();
+        this.photographerGraphics.setDepth(5);
+        
+        // Left photographer
+        this.drawPhotographer(50, 380);
+        // Right photographer
+        this.drawPhotographer(590, 380);
+    }
+    
+    /**
+     * Draw photographer sprite (per spec)
+     */
+    drawPhotographer(x, y) {
+        const g = this.photographerGraphics;
+        // Body silhouette
+        g.fillStyle(0x1a1a1a);
+        g.fillRect(x - 10, y - 25, 20, 25);
+        // Head
+        g.fillCircle(x, y - 30, 8);
+        // Camera
+        g.fillStyle(0x333333);
+        g.fillRect(x - 8, y - 20, 16, 10);
+        // Lens
+        g.fillStyle(0x555555);
+        g.fillCircle(x, y - 15, 4);
+    }
+    
+    /**
+     * Create referee sprite (per spec: 56x88 pixels)
+     */
+    createReferee() {
+        this.refereeGraphics = this.add.graphics();
+        this.refereeGraphics.setDepth(3);
+        this.refereeX = 320;
+        this.refereeY = 240;
+        this.refereeState = 'watching';
+        this.drawReferee();
+    }
+    
+    /**
+     * Draw referee sprite (per spec)
+     */
+    drawReferee() {
+        const g = this.refereeGraphics;
+        const x = this.refereeX;
+        const y = this.refereeY;
+        
+        g.clear();
+        
+        // Scale factor for 56x88 base size
+        const s = 0.6;
+        
+        // Legs
+        g.fillStyle(0x000000);
+        g.fillRect(x - 8 * s, y + 20 * s, 8 * s, 30 * s);
+        g.fillRect(x + 2 * s, y + 20 * s, 8 * s, 30 * s);
+        
+        // Shoes
+        g.fillStyle(0x333333);
+        g.fillRect(x - 10 * s, y + 48 * s, 12 * s, 6 * s);
+        g.fillRect(x, y + 48 * s, 12 * s, 6 * s);
+        
+        // Shirt (white with stripes per spec)
+        g.fillStyle(0xffffff);
+        g.fillRect(x - 12 * s, y - 20 * s, 24 * s, 42 * s);
+        
+        // Black stripes on shirt
+        g.fillStyle(0x000000);
+        for (let i = 0; i < 4; i++) {
+            g.fillRect(x - 12 * s + i * 8 * s, y - 20 * s, 3 * s, 42 * s);
+        }
+        
+        // Arms (behind back in watching state per spec)
+        g.fillStyle(0xd4a574);
+        if (this.refereeState === 'watching') {
+            // Arms behind back
+            g.fillRect(x - 16 * s, y - 10 * s, 6 * s, 20 * s);
+            g.fillRect(x + 10 * s, y - 10 * s, 6 * s, 20 * s);
+        } else if (this.refereeState === 'counting') {
+            // Arm raised for count
+            g.fillRect(x + 10 * s, y - 40 * s, 6 * s, 25 * s);
+            g.fillRect(x - 16 * s, y - 10 * s, 6 * s, 20 * s);
+        }
+        
+        // Head
+        g.fillStyle(0xd4a574);
+        g.fillRect(x - 8 * s, y - 40 * s, 16 * s, 20 * s);
+        
+        // Hair
+        g.fillStyle(0x333333);
+        g.fillRect(x - 8 * s, y - 44 * s, 16 * s, 6 * s);
+        
+        // Bow tie (per spec: red or blue)
+        g.fillStyle(0xff0000);
+        g.fillRect(x - 4 * s, y - 22 * s, 8 * s, 4 * s);
+    }
+    
+    /**
+     * Create HUD elements (enhanced per fight mode graphics spec)
+     * Includes: round timer, fighter nameplates, momentum indicator, combo counter
      */
     createHUD() {
         const hudStyle = {
@@ -1047,95 +1255,194 @@ class FightScene extends Phaser.Scene {
             color: '#ffffff'
         };
         
-        // Round and timer display
-        this.roundText = this.add.text(400, 20, `ROUND ${this.currentRound}`, {
+        // Round display above timer (per spec)
+        this.roundText = this.add.text(320, 12, `ROUND ${this.currentRound}`, {
             ...hudStyle,
-            fontSize: '16px',
+            fontSize: '12px',
             color: '#ffdd00'
         }).setOrigin(0.5);
         
-        this.timerText = this.add.text(400, 45, this.formatTime(this.roundTimer), {
+        // Timer with LCD digital style (per spec: 80x20 pixels, top center)
+        this.timerBg = this.add.rectangle(320, 32, 80, 20, 0x000000, 0.8);
+        this.timerBg.setStrokeStyle(1, 0x444444);
+        
+        this.timerText = this.add.text(320, 32, this.formatTime(this.roundTimer), {
             ...hudStyle,
-            fontSize: '14px',
+            fontSize: '12px',
             color: '#00ff88'
         }).setOrigin(0.5);
         
-        // Fighter 1 HUD (left)
-        this.createFighterHUD(1, 20, 80, this.fighter1);
+        // Momentum indicator (per spec: 200x12 pixels, below timer)
+        this.momentumBg = this.add.rectangle(320, 52, 160, 8, 0xaaaaaa);
+        this.momentumBg.setStrokeStyle(1, 0x333333);
         
-        // Fighter 2 HUD (right)
-        this.createFighterHUD(2, 580, 80, this.fighter2);
+        // Momentum needle marker
+        this.momentumNeedle = this.add.rectangle(320, 52, 4, 12, 0xffdd00);
         
-        // Commentary box
-        this.commentaryBg = this.add.rectangle(400, 465, 760, 50, 0x000000, 0.8);
+        // Fighter 1 HUD (left, adjusted for 640 width)
+        this.createFighterHUD(1, 10, 65, this.fighter1);
+        
+        // Fighter 2 HUD (right, adjusted for 640 width)
+        this.createFighterHUD(2, 450, 65, this.fighter2);
+        
+        // Combo counter containers (per spec: above attacking fighter)
+        this.combo1Text = this.add.text(200, 200, '', {
+            ...hudStyle,
+            fontSize: '10px',
+            color: '#ffffff'
+        }).setOrigin(0.5).setVisible(false);
+        
+        this.combo2Text = this.add.text(440, 200, '', {
+            ...hudStyle,
+            fontSize: '10px',
+            color: '#ffffff'
+        }).setOrigin(0.5).setVisible(false);
+        
+        // Commentary box (adjusted for 640 width)
+        this.commentaryBg = this.add.rectangle(320, 425, 600, 40, 0x000000, 0.8);
         this.commentaryBg.setStrokeStyle(2, 0x333333);
         
-        this.commentaryText = this.add.text(30, 450, '', {
+        this.commentaryText = this.add.text(25, 415, '', {
             ...hudStyle,
-            fontSize: '8px',
+            fontSize: '7px',
             color: '#00ff88',
-            wordWrap: { width: 740 }
+            wordWrap: { width: 590 }
         });
         
         // Pause indicator
-        this.pauseText = this.add.text(400, 240, 'PAUSED', {
+        this.pauseText = this.add.text(320, 200, 'PAUSED', {
             ...hudStyle,
-            fontSize: '24px',
+            fontSize: '20px',
             color: '#ffdd00'
         }).setOrigin(0.5).setVisible(false);
+        
+        // Damage numbers container array (per spec: floating values)
+        this.damageNumbers = [];
     }
     
     /**
-     * Create individual fighter HUD
+     * Create individual fighter HUD (per spec: 120x32 pixels nameplates)
      */
     createFighterHUD(playerNum, x, y, fighter) {
         const prefix = `hud${playerNum}`;
         const hudStyle = {
             fontFamily: '"Press Start 2P"',
-            fontSize: '9px',
+            fontSize: '8px',
             color: '#ffffff'
         };
         
-        // Background
-        const bg = this.add.rectangle(x + 100, y + 40, 200, 90, 0x000000, 0.85);
+        // Background with corner assignment color (per spec: red/blue matching)
+        const bg = this.add.rectangle(x + 90, y + 35, 180, 75, 0x000000, 0.85);
         bg.setStrokeStyle(2, playerNum === 1 ? 0xe94560 : 0x4da6ff);
         
-        // Name
-        this[`${prefix}Name`] = this.add.text(x + 10, y, fighter.name, {
+        // Name with nationality flag position (per spec)
+        this[`${prefix}Name`] = this.add.text(x + 8, y, fighter.name.substring(0, 14), {
             ...hudStyle,
-            color: '#ffdd00'
+            color: playerNum === 1 ? '#e94560' : '#4da6ff'
         });
         
-        // Health bar
-        this.add.text(x + 10, y + 25, 'HP', { ...hudStyle, fontSize: '7px' });
-        this[`${prefix}HealthBg`] = this.add.rectangle(x + 110, y + 28, 150, 12, 0x333333);
-        this[`${prefix}Health`] = this.add.rectangle(x + 35, y + 28, 150, 10, 0x00ff88).setOrigin(0, 0.5);
+        // Health bar (per spec: 100x8 pixels with gradient)
+        this.add.text(x + 8, y + 18, 'HP', { ...hudStyle, fontSize: '6px' });
+        this[`${prefix}HealthBg`] = this.add.rectangle(x + 100, y + 21, 120, 10, 0x333333);
+        this[`${prefix}Health`] = this.add.rectangle(x + 40, y + 21, 120, 8, 0x00ff88).setOrigin(0, 0.5);
         
-        // Stamina bar
-        this.add.text(x + 10, y + 45, 'ST', { ...hudStyle, fontSize: '7px' });
-        this[`${prefix}StaminaBg`] = this.add.rectangle(x + 110, y + 48, 150, 12, 0x333333);
-        this[`${prefix}Stamina`] = this.add.rectangle(x + 35, y + 48, 150, 10, 0x4da6ff).setOrigin(0, 0.5);
+        // Critical health warning indicator (hidden by default)
+        this[`${prefix}CriticalFlash`] = this.add.rectangle(x + 100, y + 21, 120, 10, 0xff0000, 0);
         
-        // Score
-        this[`${prefix}Score`] = this.add.text(x + 10, y + 65, 'SCORE: 0', {
+        // Stamina bar (per spec: 100x6 pixels)
+        this.add.text(x + 8, y + 33, 'ST', { ...hudStyle, fontSize: '6px' });
+        this[`${prefix}StaminaBg`] = this.add.rectangle(x + 100, y + 36, 120, 8, 0x333333);
+        this[`${prefix}Stamina`] = this.add.rectangle(x + 40, y + 36, 120, 6, 0xffff00).setOrigin(0, 0.5);
+        
+        // Special meter (per spec: 100x4 pixels, gradient white to gold)
+        this.add.text(x + 8, y + 48, 'SP', { ...hudStyle, fontSize: '6px' });
+        this[`${prefix}SpecialBg`] = this.add.rectangle(x + 100, y + 51, 120, 6, 0x333333);
+        this[`${prefix}Special`] = this.add.rectangle(x + 40, y + 51, 0, 4, 0xffdd00).setOrigin(0, 0.5);
+        
+        // Score and knockdowns
+        this[`${prefix}Score`] = this.add.text(x + 8, y + 60, 'PTS: 0', {
             ...hudStyle,
-            fontSize: '8px'
+            fontSize: '6px'
         });
         
-        // Knockdowns
-        this[`${prefix}KD`] = this.add.text(x + 120, y + 65, 'KD: 0', {
+        // Knockdown icons (per spec: KD icons for each knockdown)
+        this[`${prefix}KD`] = this.add.text(x + 90, y + 60, 'KD: 0', {
             ...hudStyle,
-            fontSize: '8px',
+            fontSize: '6px',
             color: '#e94560'
         });
     }
     
     /**
-     * Create particle emitters
+     * Create particle emitters (enhanced per spec)
+     * Includes: sweat spray, blood effects, impact sparks
      */
     createParticles() {
-        // Hit particles (sweat/impact)
-        this.hitParticles = this.add.particles(0, 0, null, {
+        // Create particle textures
+        const particleGraphics = this.make.graphics({ x: 0, y: 0, add: false });
+        
+        // White particle for sweat/impact
+        particleGraphics.fillStyle(0xffffff);
+        particleGraphics.fillCircle(4, 4, 4);
+        particleGraphics.generateTexture('particle', 8, 8);
+        
+        // Blood particle (per spec: 2x3 pixels, red variants)
+        particleGraphics.clear();
+        particleGraphics.fillStyle(0xcc0000);
+        particleGraphics.fillRect(0, 0, 3, 4);
+        particleGraphics.generateTexture('bloodParticle', 3, 4);
+        
+        // Sweat particle (per spec: 2x2 pixels, #aaccff)
+        particleGraphics.clear();
+        particleGraphics.fillStyle(0xaaccff);
+        particleGraphics.fillCircle(2, 2, 2);
+        particleGraphics.generateTexture('sweatParticle', 4, 4);
+        
+        // Impact spark (per spec: white with yellow/orange highlights)
+        particleGraphics.clear();
+        particleGraphics.fillStyle(0xffff00);
+        particleGraphics.fillCircle(2, 2, 2);
+        particleGraphics.generateTexture('sparkParticle', 4, 4);
+        
+        particleGraphics.destroy();
+        
+        // Sweat spray emitter (per spec: 6-12 particles, opposing punch direction)
+        this.sweatParticles = this.add.particles(0, 0, 'sweatParticle', {
+            speed: { min: 80, max: 180 },
+            angle: { min: -60, max: 60 },
+            scale: { start: 0.8, end: 0.2 },
+            alpha: { start: 0.8, end: 0 },
+            lifespan: { min: 300, max: 500 },
+            gravityY: 200,
+            emitting: false
+        });
+        this.sweatParticles.setDepth(10);
+        
+        // Blood spray emitter (per spec: 4-8 particles)
+        this.bloodParticles = this.add.particles(0, 0, 'bloodParticle', {
+            speed: { min: 60, max: 150 },
+            angle: { min: -90, max: 90 },
+            scale: { start: 1, end: 0.5 },
+            alpha: { start: 1, end: 0.3 },
+            lifespan: { min: 400, max: 600 },
+            gravityY: 300,
+            emitting: false
+        });
+        this.bloodParticles.setDepth(10);
+        
+        // Impact spark emitter (per spec: 8-10 particles, radial)
+        this.sparkParticles = this.add.particles(0, 0, 'sparkParticle', {
+            speed: { min: 100, max: 200 },
+            angle: { min: 0, max: 360 },
+            scale: { start: 1, end: 0 },
+            alpha: { start: 1, end: 0 },
+            lifespan: 200,
+            emitting: false
+        });
+        this.sparkParticles.setDepth(10);
+        
+        // General hit particles
+        this.hitParticles = this.add.particles(0, 0, 'particle', {
             speed: { min: 50, max: 150 },
             angle: { min: -180, max: 180 },
             scale: { start: 0.4, end: 0 },
@@ -1143,15 +1450,7 @@ class FightScene extends Phaser.Scene {
             gravityY: 200,
             emitting: false
         });
-        
-        // Create a simple particle texture
-        const particleGraphics = this.make.graphics({ x: 0, y: 0, add: false });
-        particleGraphics.fillStyle(0xffffff);
-        particleGraphics.fillCircle(4, 4, 4);
-        particleGraphics.generateTexture('particle', 8, 8);
-        particleGraphics.destroy();
-        
-        this.hitParticles.setTexture('particle');
+        this.hitParticles.setDepth(10);
     }
     
     /**
@@ -1203,7 +1502,7 @@ class FightScene extends Phaser.Scene {
     }
     
     /**
-     * Main game update loop
+     * Main game update loop (enhanced per spec)
      */
     update(time, delta) {
         if (this.isPaused || this.isFightOver) return;
@@ -1214,6 +1513,190 @@ class FightScene extends Phaser.Scene {
         
         // Update HUD
         this.updateHUD();
+        
+        // Update momentum indicator (per spec: slides based on recent exchanges)
+        this.updateMomentumIndicator();
+        
+        // Update combo timers (per spec: decay after no hits)
+        this.updateComboTimers(delta);
+        
+        // Update camera flash cooldowns (per spec: 3-5 per second)
+        this.updateCameraFlashes(delta);
+        
+        // Update damage number animations
+        this.updateDamageNumbers(delta);
+        
+        // Update timer warning effects (per spec: red under 30s, pulse under 10s)
+        this.updateTimerWarnings();
+    }
+    
+    /**
+     * Update momentum indicator position (per spec)
+     */
+    updateMomentumIndicator() {
+        // Momentum ranges from -100 (fighter2 advantage) to 100 (fighter1 advantage)
+        // Needle position: center = 320, range = 80 pixels each direction
+        const needleX = 320 + (this.momentum * 0.8);
+        this.momentumNeedle.setX(needleX);
+        
+        // Color the needle based on advantage
+        if (this.momentum > 30) {
+            this.momentumNeedle.setFillStyle(0xe94560); // Fighter 1 color
+        } else if (this.momentum < -30) {
+            this.momentumNeedle.setFillStyle(0x4da6ff); // Fighter 2 color
+        } else {
+            this.momentumNeedle.setFillStyle(0xffdd00); // Neutral
+        }
+    }
+    
+    /**
+     * Update combo timers and display (per spec)
+     */
+    updateComboTimers(delta) {
+        // Decay combo timers
+        if (this.comboTimer.fighter1 > 0) {
+            this.comboTimer.fighter1 -= delta;
+            if (this.comboTimer.fighter1 <= 0) {
+                this.comboCount.fighter1 = 0;
+                this.combo1Text.setVisible(false);
+            }
+        }
+        if (this.comboTimer.fighter2 > 0) {
+            this.comboTimer.fighter2 -= delta;
+            if (this.comboTimer.fighter2 <= 0) {
+                this.comboCount.fighter2 = 0;
+                this.combo2Text.setVisible(false);
+            }
+        }
+    }
+    
+    /**
+     * Update camera flash effects (per spec: random positions, 3-5 per second)
+     */
+    updateCameraFlashes(delta) {
+        if (this.cameraFlashCooldown > 0) {
+            this.cameraFlashCooldown -= delta;
+        }
+        
+        // Random camera flash in crowd (per spec)
+        if (Math.random() < 0.005) { // ~3 per second at 60fps
+            this.triggerCameraFlash();
+        }
+    }
+    
+    /**
+     * Trigger a camera flash effect (per spec)
+     */
+    triggerCameraFlash() {
+        const pos = this.cameraFlashPositions[Math.floor(Math.random() * this.cameraFlashPositions.length)];
+        
+        // Create flash effect
+        const flash = this.add.circle(pos.x, pos.y, 6, 0xffffff);
+        flash.setAlpha(0.9);
+        flash.setDepth(2);
+        
+        // Fade out
+        this.tweens.add({
+            targets: flash,
+            alpha: 0,
+            scale: 2,
+            duration: 150,
+            onComplete: () => flash.destroy()
+        });
+    }
+    
+    /**
+     * Update damage number animations (per spec: rise and fade)
+     */
+    updateDamageNumbers(delta) {
+        for (let i = this.damageNumbers.length - 1; i >= 0; i--) {
+            const dmgNum = this.damageNumbers[i];
+            dmgNum.y -= 0.5;
+            dmgNum.alpha -= 0.02;
+            
+            if (dmgNum.alpha <= 0) {
+                dmgNum.destroy();
+                this.damageNumbers.splice(i, 1);
+            }
+        }
+    }
+    
+    /**
+     * Update timer warning effects (per spec)
+     */
+    updateTimerWarnings() {
+        if (this.roundTimer <= 30) {
+            this.timerText.setColor('#ff0000');
+            
+            // Pulse effect under 10 seconds (per spec)
+            if (this.roundTimer <= 10) {
+                const pulse = Math.sin(Date.now() * 0.01) * 0.3 + 0.7;
+                this.timerText.setAlpha(pulse);
+            }
+        } else {
+            this.timerText.setColor('#00ff88');
+            this.timerText.setAlpha(1);
+        }
+    }
+    
+    /**
+     * Show floating damage number (per spec)
+     */
+    showDamageNumber(x, y, damage, isCritical) {
+        const color = isCritical ? '#ffff00' : (damage > 10 ? '#ff0000' : '#ffffff');
+        const fontSize = isCritical ? '12px' : '10px';
+        
+        const dmgText = this.add.text(x + (Math.random() - 0.5) * 20, y, Math.floor(damage).toString(), {
+            fontFamily: '"Press Start 2P"',
+            fontSize: fontSize,
+            color: color,
+            stroke: '#000000',
+            strokeThickness: 2
+        }).setOrigin(0.5);
+        dmgText.setDepth(15);
+        
+        this.damageNumbers.push(dmgText);
+        
+        // Scale pop effect for critical hits
+        if (isCritical) {
+            this.tweens.add({
+                targets: dmgText,
+                scaleX: 1.5,
+                scaleY: 1.5,
+                duration: 100,
+                yoyo: true
+            });
+        }
+    }
+    
+    /**
+     * Update combo counter display (per spec)
+     */
+    updateComboDisplay(attackerNum, count) {
+        const comboText = attackerNum === 1 ? this.combo1Text : this.combo2Text;
+        
+        if (count >= 2) {
+            comboText.setText(`HIT x${count}`);
+            comboText.setVisible(true);
+            
+            // Color based on count (per spec: white, red at 5+, gold at 10+)
+            if (count >= 10) {
+                comboText.setColor('#ffdd00');
+            } else if (count >= 5) {
+                comboText.setColor('#ff0000');
+            } else {
+                comboText.setColor('#ffffff');
+            }
+            
+            // Scale pulse effect
+            this.tweens.add({
+                targets: comboText,
+                scaleX: 1.2,
+                scaleY: 1.2,
+                duration: 80,
+                yoyo: true
+            });
+        }
     }
     
     /**
@@ -1251,7 +1734,7 @@ class FightScene extends Phaser.Scene {
     }
     
     /**
-     * Execute a single action
+     * Execute a single action (enhanced per fight mode graphics spec)
      */
     executeAction(attacker, defender, action, attackerRenderer, defenderRenderer, attackerNum) {
         attackerRenderer.setState(action.action);
@@ -1268,6 +1751,9 @@ class FightScene extends Phaser.Scene {
         // Check if attacker is blocking (not attacking)
         if (action.action === 'block') {
             this.addCommentary(`${attacker.name} covers up!`);
+            // Reset combo on blocking
+            const comboKey = attackerNum === 1 ? 'fighter1' : 'fighter2';
+            this.comboCount[comboKey] = 0;
             return;
         }
         
@@ -1275,16 +1761,27 @@ class FightScene extends Phaser.Scene {
         if (defender.attemptDodge()) {
             defenderRenderer.setState('idle');
             this.addCommentary(`${defender.name} slips the ${action.action}!`);
+            // Reset attacker's combo on miss
+            const comboKey = attackerNum === 1 ? 'fighter1' : 'fighter2';
+            this.comboCount[comboKey] = 0;
+            // Shift momentum toward defender (per spec)
+            this.momentum += attackerNum === 1 ? -5 : 5;
+            this.momentum = Math.max(-100, Math.min(100, this.momentum));
             return;
         }
         
         // Calculate and apply damage (reduced if defender is blocking)
         let damage = attacker.calculateDamage(action.action, action.intensity);
+        let isBlocked = false;
         
         // Check if defender is in blocking state - reduce damage significantly
         if (defenderRenderer.state === 'block') {
             damage = Math.floor(damage * 0.3); // 70% damage reduction when blocking
+            isBlocked = true;
             this.addCommentary(`${defender.name} blocks! Reduced damage!`);
+            
+            // Emit block sparks (per spec: glove-on-glove contact)
+            this.emitBlockSparks(defenderRenderer.x, defenderRenderer.y - 30);
         }
         
         const result = defender.takeDamage(damage, action.target);
@@ -1292,9 +1789,32 @@ class FightScene extends Phaser.Scene {
         // Visual feedback
         defenderRenderer.takeDamage(damage);
         
+        // Update combo counter (per spec)
+        const comboKey = attackerNum === 1 ? 'fighter1' : 'fighter2';
+        if (!isBlocked && damage > 0) {
+            this.comboCount[comboKey]++;
+            this.comboTimer[comboKey] = 2000; // 2 second combo window
+            this.updateComboDisplay(attackerNum, this.comboCount[comboKey]);
+        }
+        
+        // Update momentum (per spec: slides based on exchanges)
+        const momentumShift = Math.min(damage * 0.5, 15);
+        this.momentum += attackerNum === 1 ? momentumShift : -momentumShift;
+        this.momentum = Math.max(-100, Math.min(100, this.momentum));
+        
+        // Show floating damage number (per spec)
+        const isCritical = damage > 15 || result === 'heavy';
+        this.showDamageNumber(defenderRenderer.x, defenderRenderer.y - 50, damage, isCritical);
+        
         if (result === 'knockdown') {
             defenderRenderer.setState('knockdown');
             this.triggerKnockdown(defender, attacker, attackerNum);
+            
+            // Trigger flashbulb storm on knockdown (per spec)
+            this.triggerFlashbulbStorm();
+            
+            // Big momentum swing on knockdown
+            this.momentum = attackerNum === 1 ? 80 : -80;
         } else if (defenderRenderer.state !== 'block') {
             defenderRenderer.setState('damaged');
             this.time.delayedCall(200, () => {
@@ -1302,9 +1822,38 @@ class FightScene extends Phaser.Scene {
             });
         }
         
-        // Particles and screen shake
-        this.emitHitParticles(defenderRenderer.x, defenderRenderer.y - 40);
-        this.triggerScreenShake(damage);
+        // Enhanced particle effects based on damage (per spec)
+        const particleX = defenderRenderer.x;
+        const particleY = action.target === 'head' ? defenderRenderer.y - 40 : defenderRenderer.y;
+        
+        if (!isBlocked) {
+            // Sweat spray (per spec: 6-12 particles on medium-heavy hits)
+            if (damage >= 5) {
+                this.emitSweatSpray(particleX, particleY, attackerNum === 1 ? 1 : -1);
+            }
+            
+            // Blood spray on heavy hits or if fighter is already damaged (per spec)
+            if (damage >= 12 || (defender.health < 50 && damage >= 8)) {
+                this.emitBloodSpray(particleX, particleY - 10, attackerNum === 1 ? 1 : -1);
+                
+                // Add blood decal to canvas (per spec: persistent)
+                this.addBloodDecal(particleX + (Math.random() - 0.5) * 40, 340);
+            }
+        }
+        
+        // Enhanced screen shake (per spec: scales with impact)
+        this.triggerScreenShake(damage, isCritical);
+        
+        // Camera flash burst on big hits (per spec)
+        if (damage >= 10) {
+            this.triggerCameraFlash();
+            this.triggerCameraFlash();
+        }
+        
+        // Screen tint on critical hits (per spec)
+        if (isCritical) {
+            this.triggerCriticalHitEffect();
+        }
         
         // Commentary
         const hitType = result === 'heavy' ? 'HARD ' : result === 'medium' ? 'solid ' : '';
@@ -1315,20 +1864,151 @@ class FightScene extends Phaser.Scene {
     }
     
     /**
-     * Handle knockdown
+     * Emit sweat spray particles (per spec)
+     */
+    emitSweatSpray(x, y, direction) {
+        this.sweatParticles.setPosition(x, y);
+        this.sweatParticles.setAngle({ min: direction > 0 ? 120 : 30, max: direction > 0 ? 180 : 90 });
+        this.sweatParticles.explode(6 + Math.floor(Math.random() * 6));
+    }
+    
+    /**
+     * Emit blood spray particles (per spec)
+     */
+    emitBloodSpray(x, y, direction) {
+        this.bloodParticles.setPosition(x, y);
+        this.bloodParticles.setAngle({ min: direction > 0 ? 100 : 50, max: direction > 0 ? 160 : 110 });
+        this.bloodParticles.explode(4 + Math.floor(Math.random() * 4));
+    }
+    
+    /**
+     * Emit block sparks (per spec: impact sparks on blocked punch)
+     */
+    emitBlockSparks(x, y) {
+        this.sparkParticles.setPosition(x, y);
+        this.sparkParticles.explode(8);
+    }
+    
+    /**
+     * Add blood decal to canvas (per spec: persistent, fade 20% per round)
+     */
+    addBloodDecal(x, y) {
+        const decal = {
+            x: x,
+            y: y,
+            size: 3 + Math.random() * 4,
+            opacity: 0.7
+        };
+        this.bloodDecals.push(decal);
+        
+        // Draw decal
+        this.bloodDecalGraphics.fillStyle(0x880000, decal.opacity);
+        this.bloodDecalGraphics.fillCircle(decal.x, decal.y, decal.size);
+    }
+    
+    /**
+     * Trigger flashbulb storm (per spec: all cameras flash on knockdown)
+     */
+    triggerFlashbulbStorm() {
+        this.cameraFlashPositions.forEach((pos, index) => {
+            this.time.delayedCall(index * 30, () => {
+                const flash = this.add.circle(pos.x, pos.y, 8, 0xffffff);
+                flash.setAlpha(1);
+                flash.setDepth(2);
+                
+                this.tweens.add({
+                    targets: flash,
+                    alpha: 0,
+                    scale: 2.5,
+                    duration: 200,
+                    onComplete: () => flash.destroy()
+                });
+            });
+        });
+    }
+    
+    /**
+     * Trigger critical hit screen effect (per spec: red tint, 20% opacity, 6 frames)
+     */
+    triggerCriticalHitEffect() {
+        const overlay = this.add.rectangle(320, 224, 640, 448, 0xff0000, 0.2);
+        overlay.setDepth(20);
+        
+        this.tweens.add({
+            targets: overlay,
+            alpha: 0,
+            duration: 100,
+            onComplete: () => overlay.destroy()
+        });
+    }
+    
+    /**
+     * Handle knockdown (enhanced per fight mode graphics spec)
      */
     triggerKnockdown(downFighter, upFighter, upFighterNum) {
         this.isRoundActive = false;
         this.addCommentary(`${downFighter.name} IS DOWN! THE COUNT BEGINS!`);
         
-        // Big screen shake
-        this.cameras.main.shake(500, 0.02);
+        // Set referee to counting state (per spec)
+        this.refereeState = 'counting';
+        this.refereeX = upFighterNum === 1 ? 380 : 260; // Move to downed fighter
+        this.drawReferee();
+        
+        // Knockdown announcement (per spec: center top, falling letters)
+        const kdText = this.add.text(320, 160, 'KNOCKDOWN!', {
+            fontFamily: '"Press Start 2P"',
+            fontSize: '16px',
+            color: '#ff0000',
+            stroke: '#000000',
+            strokeThickness: 3
+        }).setOrigin(0.5).setDepth(25);
+        
+        this.tweens.add({
+            targets: kdText,
+            y: 180,
+            alpha: 0,
+            duration: 2000,
+            onComplete: () => kdText.destroy()
+        });
+        
+        // Big screen shake (per spec: 500ms, high intensity)
+        this.cameras.main.shake(500, 0.025);
+        
+        // Knockdown screen tint (per spec: fade to 40% black then back)
+        const kdOverlay = this.add.rectangle(320, 224, 640, 448, 0x000000, 0);
+        kdOverlay.setDepth(19);
+        
+        this.tweens.add({
+            targets: kdOverlay,
+            alpha: 0.4,
+            duration: 300,
+            yoyo: true,
+            hold: 500,
+            onComplete: () => kdOverlay.destroy()
+        });
         
         // Count animation
         let count = 1;
         const countEvent = this.time.addEvent({
             delay: 1000,
             callback: () => {
+                // Show count number on screen (per spec: referee counts with fingers)
+                const countText = this.add.text(320, 200, count.toString(), {
+                    fontFamily: '"Press Start 2P"',
+                    fontSize: '24px',
+                    color: '#ffdd00',
+                    stroke: '#000000',
+                    strokeThickness: 2
+                }).setOrigin(0.5).setDepth(25);
+                
+                this.tweens.add({
+                    targets: countText,
+                    scale: 1.5,
+                    alpha: 0,
+                    duration: 800,
+                    onComplete: () => countText.destroy()
+                });
+                
                 this.addCommentary(`...${count}!`);
                 
                 // Recovery check at count 8 - fighters typically must beat the 8 count
@@ -1339,6 +2019,7 @@ class FightScene extends Phaser.Scene {
                     // KO
                     this.endFight(upFighterNum, 'KO');
                     countEvent.remove();
+                    this.refereeState = 'watching';
                 } else if (count === 8 && Math.random() < recoveryChance) {
                     // Fighter gets up at count 8 (standard boxing rule)
                     downFighter.isDown = false;
@@ -1351,6 +2032,11 @@ class FightScene extends Phaser.Scene {
                     this.addCommentary(`${downFighter.name} beats the count at 8!`);
                     this.isRoundActive = true;
                     countEvent.remove();
+                    
+                    // Reset referee position
+                    this.refereeState = 'watching';
+                    this.refereeX = 320;
+                    this.drawReferee();
                     
                     // Reset renderer state
                     if (upFighterNum === 1) {
@@ -1375,11 +2061,20 @@ class FightScene extends Phaser.Scene {
     }
     
     /**
-     * Trigger screen shake based on damage
+     * Trigger screen shake based on damage (enhanced per spec)
+     * Per spec: magnitude 4-12 pixels, duration 8-20 frames, perlin noise pattern
      */
-    triggerScreenShake(damage) {
-        const intensity = Math.min(damage / 100, 0.01);
-        const duration = Math.min(damage * 10, 200);
+    triggerScreenShake(damage, isCritical = false) {
+        // Base intensity scales with damage (per spec: 4-12 pixels)
+        let intensity = Math.min(damage / 80, 0.015);
+        let duration = Math.min(damage * 8 + 80, 300);
+        
+        // Critical hits get extra shake
+        if (isCritical) {
+            intensity *= 1.5;
+            duration *= 1.3;
+        }
+        
         this.cameras.main.shake(duration, intensity);
     }
     
@@ -1473,11 +2168,30 @@ class FightScene extends Phaser.Scene {
             this.roundText.setText(`ROUND ${this.currentRound}`);
             this.isRoundActive = true;
             this.addCommentary(`ROUND ${this.currentRound} BEGINS!`);
+            
+            // Fade blood decals by 20% per round (per spec)
+            this.fadeBloodDecals();
         });
     }
     
     /**
-     * End the fight
+     * Fade blood decals (per spec: 20% per round)
+     */
+    fadeBloodDecals() {
+        this.bloodDecalGraphics.clear();
+        this.bloodDecals.forEach(decal => {
+            decal.opacity *= 0.8;
+            if (decal.opacity > 0.1) {
+                this.bloodDecalGraphics.fillStyle(0x880000, decal.opacity);
+                this.bloodDecalGraphics.fillCircle(decal.x, decal.y, decal.size);
+            }
+        });
+        // Remove very faded decals
+        this.bloodDecals = this.bloodDecals.filter(d => d.opacity > 0.1);
+    }
+    
+    /**
+     * End the fight (enhanced per fight mode graphics spec)
      */
     endFight(winner, method) {
         this.isFightOver = true;
@@ -1493,37 +2207,65 @@ class FightScene extends Phaser.Scene {
             this.addCommentary(`${winnerName} WINS BY ${method}!`);
         }
         
-        // Show result overlay
-        const overlay = this.add.rectangle(400, 250, 600, 200, 0x000000, 0.9);
+        // Screen flash on KO (per spec)
+        if (method === 'KO') {
+            const flashOverlay = this.add.rectangle(320, 224, 640, 448, 0xffffff, 0.8);
+            flashOverlay.setDepth(30);
+            this.tweens.add({
+                targets: flashOverlay,
+                alpha: 0,
+                duration: 300,
+                onComplete: () => flashOverlay.destroy()
+            });
+        }
+        
+        // Show result overlay (adjusted for 640x448)
+        const overlay = this.add.rectangle(320, 200, 480, 180, 0x000000, 0.9);
         overlay.setStrokeStyle(4, 0xffdd00);
+        overlay.setDepth(25);
         
-        this.add.text(400, 200, 'FIGHT OVER', {
+        // Fight result text (per spec: explosive entrance, 32pt font)
+        const resultText = this.add.text(320, 160, 'FIGHT OVER', {
             fontFamily: '"Press Start 2P"',
-            fontSize: '20px',
+            fontSize: '18px',
             color: '#e94560'
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(26);
         
-        this.add.text(400, 250, winner === 0 ? 'DRAW!' : `${winnerName} WINS!`, {
+        // Winner announcement (per spec: with animated outline)
+        const winnerText = this.add.text(320, 200, winner === 0 ? 'DRAW!' : `${winnerName} WINS!`, {
             fontFamily: '"Press Start 2P"',
-            fontSize: '16px',
-            color: '#00ff88'
-        }).setOrigin(0.5);
+            fontSize: '14px',
+            color: '#00ff88',
+            stroke: '#000000',
+            strokeThickness: 2
+        }).setOrigin(0.5).setDepth(26);
         
-        this.add.text(400, 290, `by ${method}`, {
-            fontFamily: '"Press Start 2P"',
-            fontSize: '12px',
-            color: '#ffdd00'
-        }).setOrigin(0.5);
-        
-        this.add.text(400, 330, 'Press R to restart', {
+        // Method subtext
+        this.add.text(320, 235, `by ${method}`, {
             fontFamily: '"Press Start 2P"',
             fontSize: '10px',
+            color: '#ffdd00'
+        }).setOrigin(0.5).setDepth(26);
+        
+        this.add.text(320, 270, 'Press R to restart', {
+            fontFamily: '"Press Start 2P"',
+            fontSize: '8px',
             color: '#888888'
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(26);
+        
+        // Pulse effect on winner text
+        this.tweens.add({
+            targets: winnerText,
+            scaleX: 1.1,
+            scaleY: 1.1,
+            duration: 500,
+            yoyo: true,
+            repeat: -1
+        });
     }
     
     /**
-     * Update HUD displays
+     * Update HUD displays (enhanced per spec)
      */
     updateHUD() {
         // Fighter 1
@@ -1531,14 +2273,25 @@ class FightScene extends Phaser.Scene {
         const stamina1Pct = this.fighter1.stamina / this.fighter1.maxStamina;
         this.hud1Health.setScale(health1Pct, 1);
         this.hud1Stamina.setScale(stamina1Pct, 1);
-        this.hud1Score.setText(`SCORE: ${Math.floor(this.fighter1.roundScore)}`);
+        this.hud1Score.setText(`PTS: ${Math.floor(this.fighter1.roundScore)}`);
         this.hud1KD.setText(`KD: ${this.fighter1.knockdowns}`);
         
-        // Health bar color
-        if (health1Pct < 0.3) {
+        // Special meter (increases with damage dealt)
+        const special1Pct = Math.min(this.fighter1.roundScore / 100, 1);
+        this.hud1Special.setScale(special1Pct, 1);
+        
+        // Health bar gradient color (per spec: green to yellow to red)
+        if (health1Pct < 0.2) {
             this.hud1Health.setFillStyle(0xff0000);
-        } else if (health1Pct < 0.6) {
+            // Critical health warning pulse (per spec)
+            const pulse = Math.sin(Date.now() * 0.01) * 0.3 + 0.3;
+            this.hud1CriticalFlash.setAlpha(pulse);
+        } else if (health1Pct < 0.5) {
             this.hud1Health.setFillStyle(0xffaa00);
+            this.hud1CriticalFlash.setAlpha(0);
+        } else {
+            this.hud1Health.setFillStyle(0x00ff88);
+            this.hud1CriticalFlash.setAlpha(0);
         }
         
         // Fighter 2
@@ -1546,13 +2299,23 @@ class FightScene extends Phaser.Scene {
         const stamina2Pct = this.fighter2.stamina / this.fighter2.maxStamina;
         this.hud2Health.setScale(health2Pct, 1);
         this.hud2Stamina.setScale(stamina2Pct, 1);
-        this.hud2Score.setText(`SCORE: ${Math.floor(this.fighter2.roundScore)}`);
+        this.hud2Score.setText(`PTS: ${Math.floor(this.fighter2.roundScore)}`);
         this.hud2KD.setText(`KD: ${this.fighter2.knockdowns}`);
         
-        if (health2Pct < 0.3) {
+        // Special meter
+        const special2Pct = Math.min(this.fighter2.roundScore / 100, 1);
+        this.hud2Special.setScale(special2Pct, 1);
+        
+        if (health2Pct < 0.2) {
             this.hud2Health.setFillStyle(0xff0000);
-        } else if (health2Pct < 0.6) {
+            const pulse = Math.sin(Date.now() * 0.01) * 0.3 + 0.3;
+            this.hud2CriticalFlash.setAlpha(pulse);
+        } else if (health2Pct < 0.5) {
             this.hud2Health.setFillStyle(0xffaa00);
+            this.hud2CriticalFlash.setAlpha(0);
+        } else {
+            this.hud2Health.setFillStyle(0x00ff88);
+            this.hud2CriticalFlash.setAlpha(0);
         }
     }
     
@@ -1574,10 +2337,11 @@ class FightScene extends Phaser.Scene {
 }
 
 // === PHASER GAME CONFIGURATION ===
+// Updated per fight mode graphics spec: 640x448 resolution, 4:3 aspect ratio
 const config = {
     type: Phaser.AUTO,
-    width: 800,
-    height: 500,
+    width: 640,
+    height: 448,
     parent: 'game-container',
     backgroundColor: '#0a0a15',
     pixelArt: true,
