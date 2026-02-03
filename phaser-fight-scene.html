@@ -1507,6 +1507,9 @@ class FightScene extends Phaser.Scene {
     update(time, delta) {
         if (this.isPaused || this.isFightOver) return;
         
+        // Store time for use in other methods
+        this.gameTime = time;
+        
         // Update fighter renderers
         this.renderer1.update(delta);
         this.renderer2.update(delta);
@@ -1578,8 +1581,8 @@ class FightScene extends Phaser.Scene {
             this.cameraFlashCooldown -= delta;
         }
         
-        // Random camera flash in crowd (per spec)
-        if (Math.random() < 0.005) { // ~3 per second at 60fps
+        // Random camera flash in crowd (per spec: 3-5 per second, frame-rate independent)
+        if (Math.random() < (delta / 1000) * 3) {
             this.triggerCameraFlash();
         }
     }
@@ -1628,9 +1631,9 @@ class FightScene extends Phaser.Scene {
         if (this.roundTimer <= 30) {
             this.timerText.setColor('#ff0000');
             
-            // Pulse effect under 10 seconds (per spec)
+            // Pulse effect under 10 seconds (per spec) - use gameTime for frame-rate independence
             if (this.roundTimer <= 10) {
-                const pulse = Math.sin(Date.now() * 0.01) * 0.3 + 0.7;
+                const pulse = Math.sin((this.gameTime || 0) * 0.01) * 0.3 + 0.7;
                 this.timerText.setAlpha(pulse);
             }
         } else {
@@ -2283,8 +2286,8 @@ class FightScene extends Phaser.Scene {
         // Health bar gradient color (per spec: green to yellow to red)
         if (health1Pct < 0.2) {
             this.hud1Health.setFillStyle(0xff0000);
-            // Critical health warning pulse (per spec)
-            const pulse = Math.sin(Date.now() * 0.01) * 0.3 + 0.3;
+            // Critical health warning pulse (per spec) - use gameTime for frame-rate independence
+            const pulse = Math.sin((this.gameTime || 0) * 0.01) * 0.3 + 0.3;
             this.hud1CriticalFlash.setAlpha(pulse);
         } else if (health1Pct < 0.5) {
             this.hud1Health.setFillStyle(0xffaa00);
@@ -2308,7 +2311,7 @@ class FightScene extends Phaser.Scene {
         
         if (health2Pct < 0.2) {
             this.hud2Health.setFillStyle(0xff0000);
-            const pulse = Math.sin(Date.now() * 0.01) * 0.3 + 0.3;
+            const pulse = Math.sin((this.gameTime || 0) * 0.01) * 0.3 + 0.3;
             this.hud2CriticalFlash.setAlpha(pulse);
         } else if (health2Pct < 0.5) {
             this.hud2Health.setFillStyle(0xffaa00);
