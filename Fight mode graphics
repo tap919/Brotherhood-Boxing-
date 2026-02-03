@@ -1,0 +1,1292 @@
+{
+  "fight_graphics_spec": {
+    "display_settings": {
+      "resolution": "640x448",
+      "aspect_ratio": "4:3",
+      "color_depth": "16-bit (65,536 colors)",
+      "frame_rate": "60 fps",
+      "pixel_style": "sharp, no filtering",
+      "scanline_effect": "optional 25% opacity",
+      "crt_glow": "optional subtle bloom"
+    },
+    
+    "ring_environment": {
+      "canvas": {
+        "base_color": "#2a4a6b",
+        "pattern": "subtle diagonal grid lines + ring logo at center",
+        "wear_marks": "dynamic scuff marks that accumulate during fight",
+        "blood_decals": "persistent with varying sizes, fade 20% per round",
+        "sweat_puddles": "appear after rounds, reflective surface effect",
+        "animation": "subtle breathing effect (0.5px vertical shift, 120 frame cycle)",
+        "dynamic_texture": "light reflection spots move with camera angle"
+      },
+      "ropes": {
+        "count": 3,
+        "colors": ["#cc3333", "#ffffff", "#3333cc"],
+        "thickness": "4 pixels with 1px inner highlight",
+        "animation": {
+          "gentle_sway": "2px amplitude, 180 frame cycle",
+          "contact_bounce": "elastic physics simulation",
+          "tension_waves": "propagate from impact point"
+        },
+        "corner_pads": {
+          "color": "#1a1a1a",
+          "size": "16x16 pixels",
+          "highlight": "stitching detail + corner sponsor logos",
+          "wear_damage": "creases appear over time"
+        }
+      },
+      "ring_posts": {
+        "color": "#888888",
+        "size": "12x120 pixels",
+        "position": "corners",
+        "detail": "metallic gradient + rope attachment rings",
+        "reflection": "dynamic based on ring lighting"
+      },
+      "apron": {
+        "visible": true,
+        "color": "#1a2a3a with gradient to #0a1a2a",
+        "sponsor_logos": "scrolling marquee with parallax effect",
+        "crowd_shadows": "flickering silhouettes cast from overhead lights"
+      },
+      "dynamic_elements": {
+        "camera_flash_reflections": "brief white spots on canvas during crowd flashes",
+        "blood_splatter_accumulation": "ringside area stains after knockdowns",
+        "equipment_scatter": "mouthguards, tape rolls appear after knockdowns"
+      }
+    },
+    
+    "background_layers": {
+      "layer_1_crowd": {
+        "depth": "far back",
+        "style": "multi-layer parallax: 3 tiers of silhouettes",
+        "colors": ["#0a0a0a", "#1a1a1a", "#2a2a2a", "#3a3a3a"],
+        "animation": {
+          "base_wave": "30 frame cycle, vertical movement",
+          "reaction_wave": "trigger on big hits, spreads through crowd",
+          "stand_up": "figures rise on knockdowns",
+          "cheer_cycle": "60 frame cycle with arm movements"
+        },
+        "density": "80-100 figures with 3 variations each",
+        "special_effects": {
+          "camera_flash_bursts": "random positions, 3-5 per second + sync with big hits",
+          "glowing_cellphones": "scattered points that light up during intros",
+          "sign_waving": "random 2-3 signs with pixel art"
+        }
+      },
+      "layer_2_ringside": {
+        "depth": "middle",
+        "parallax_factor": 0.6,
+        "elements": [
+          {
+            "type": "judges_table",
+            "position": "bottom center",
+            "size": "80x24 pixels",
+            "detail": "3 judges with scorecards that update after rounds",
+            "animation": "judges write scores, compare notes, react to action"
+          },
+          {
+            "type": "commentators",
+            "position": "bottom left",
+            "size": "32x32 pixels each",
+            "animation": "talking gestures, leaning forward on big moments",
+            "microphone_flash": "picks up camera flashes"
+          },
+          {
+            "type": "photographers",
+            "position": "bottom sides",
+            "size": "24x32 pixels",
+            "animation": "camera raise/lower, flash triggers sync with big punches",
+            "camera_flash": "brief white circles with lens flare effect"
+          },
+          {
+            "type": "security_guards",
+            "position": "near corners",
+            "size": "28x36 pixels",
+            "animation": "idle patrol, block crowd surges"
+          },
+          {
+            "type": "ring_card_girls",
+            "position": "corners between rounds",
+            "size": "24x48 pixels",
+            "animation": "round card display, walk around ring"
+          }
+        ]
+      },
+      "layer_3_corners": {
+        "depth": "foreground",
+        "parallax_factor": 0.3,
+        "corner_stools": {
+          "size": "32x24 pixels",
+          "color": "#aa2222 or #2222aa",
+          "visible": true,
+          "visibility_condition": "between_rounds",
+          "detail": "team logos, towel draped on corner",
+          "animation": "subtle wobble when fighter sits"
+        },
+        "cutman_sprite": {
+          "size": "48x64 pixels",
+          "animation": {
+            "working_sequence": "8 frame cycle, applies vaseline/swabs",
+            "examination": "leans in to inspect damage",
+            "advice_giving": "gestures while talking"
+          },
+          "tools_visible": ["swab", "ice bag", "vaseline", "cut gel"],
+          "dynamic_stains": "blood appears on gloves during treatment"
+        },
+        "water_buckets": {
+          "size": "16x16 pixels",
+          "position": "next to stool",
+          "detail": "metal shine with water reflections",
+          "animation": {
+            "splash": "when fighter drinks or cutman uses water",
+            "water_drips": "from sponge between rounds"
+          }
+        },
+        "corner_equipment": {
+          "towels": "folded on stool or thrown into ring",
+          "ice_bag": "applied between rounds with steam effect",
+          "medical_kit": "open during severe cuts"
+        }
+      },
+      "dynamic_background_events": {
+        "flashbulb_storm": "trigger on knockdown - all cameras flash simultaneously",
+        "crowd_surge": "on big punches - crowd leans forward in unison",
+        "confetti_shower": "during championship fight intros",
+        "smoke_effects": "fighter entrances, dissipates before round 1"
+      }
+    },
+    
+    "fighter_sprites": {
+      "base_dimensions": "64x96 pixels",
+      "high_res_variant": "128x192 (for close-ups)",
+      "color_palette_per_fighter": "16 colors max + 8 transparency/shading",
+      "dynamic_shading": "changes based on ring lighting direction",
+      "shadow": {
+        "type": "dynamic soft oval",
+        "size": "48x12 pixels",
+        "color": "#00000060",
+        "position": "at feet with slight offset based on light source",
+        "blur_radius": "2 pixels",
+        "opacity_variation": "changes with fighter height (crouch vs standing)"
+      },
+      
+      "body_parts": {
+        "head": {
+          "size": "24x24 pixels",
+          "detail_levels": [
+            "fresh: clean, sharp features, sweat sheen",
+            "bruised_1: red patches on cheeks",
+            "bruised_2: purple around eyes, swelling begins",
+            "bruised_3: severe swelling, eyes narrowing",
+            "bloodied_1: small cut, blood trickle",
+            "bloodied_2: multiple cuts, blood streaks",
+            "critical: severe damage, eyes half-closed, nose possibly broken"
+          ],
+          "animation_points": {
+            "jaw_movement": "during breathing/talking",
+            "eye_blink": "random 3 frame cycle",
+            "hair_movement": "sways with head motion",
+            "sweat_beads": "form and drip during exertion"
+          },
+          "facial_expressions": [
+            "neutral", "determined", "pain", "anger", "exhaustion", "triumph"
+          ]
+        },
+        "torso": {
+          "size": "32x40 pixels",
+          "detail": "muscular definition with vein details during exertion",
+          "breathing_animation": {
+            "normal": "1px expansion, 60 frame cycle",
+            "tired": "2px expansion, 45 frame cycle with shoulder heave",
+            "exhausted": "3px expansion, 30 frame cycle with visible strain"
+          },
+          "damage_states": [
+            "normal: clean skin",
+            "reddened: impact marks from body shots",
+            "bruised: purple/blue patches",
+            "critical: severe bruising, possible rib damage visual"
+          ]
+        },
+        "arms": {
+          "size": "8x32 pixels each",
+          "glove_size": "12x12 pixels",
+          "glove_colors": "red, blue, black, white, gold with team logos",
+          "glove_wear": "scuff marks appear during fight",
+          "wrist_tape": "detailed wrap pattern, can become loose",
+          "arm_muscles": "flex during punches, veins visible during exertion"
+        },
+        "legs": {
+          "size": "12x36 pixels each",
+          "detail": "quad definition, knee caps, calf separation",
+          "damage_states": "reddening on thigh from leg kicks",
+          "foot_size": "10x6 pixels",
+          "boot_types": ["high-top", "low-cut", "traditional"],
+          "boot_wear": "scuff marks accumulate"
+        },
+        "trunks": {
+          "size": "28x20 pixels",
+          "patterns": ["solid", "stripes", "stars", "gradient", "sponsor logo"],
+          "waistband": "contrasting color, 2-3 pixels with country flag",
+          "name_text": "optional, 6px font on waistband with glow effect",
+          "dynamic_wrinkles": "crease patterns change with movement",
+          "sweat_absorption": "dark patches appear as fighter sweats"
+        }
+      },
+      
+      "animation_sets": {
+        "idle_stance": {
+          "frames": 8,
+          "loop": true,
+          "details": "subtle weight shift, glove position adjustment, guard breathing, head movement",
+          "variants": ["fresh", "tired", "hurt", "confident"]
+        },
+        "footwork": {
+          "walk_forward": {
+            "frames": 12,
+            "speed": "2 pixels per frame",
+            "details": "footwork with heel-toe roll, shoulder rotation, guard maintained"
+          },
+          "walk_backward": {
+            "frames": 12,
+            "speed": "1.5 pixels per frame",
+            "details": "defensive posture, tighter guard, careful steps"
+          },
+          "shuffle_left": {
+            "frames": 8,
+            "details": "lateral movement without crossing feet, upper body stability"
+          },
+          "shuffle_right": {
+            "frames": 8,
+            "details": "lateral movement without crossing feet, upper body stability"
+          },
+          "pivot": {
+            "frames": 6,
+            "details": "quick 45-90 degree rotation, weight transfer"
+          }
+        },
+        "stance_transitions": {
+          "crouch": {
+            "frames": 4,
+            "details": "lower stance for defense/body punching"
+          },
+          "stand_tall": {
+            "frames": 4,
+            "details": "rise up for reach advantage"
+          },
+          "switch_orthodox_southpaw": {
+            "frames": 8,
+            "details": "smooth transition between stances"
+          }
+        }
+      },
+      
+      "offensive_animations": {
+        "punches": {
+          "jab": {
+            "frames": 6,
+            "duration": "10 frames total (60fps)",
+            "keyframes": [
+              "wind-up: 2 frames, shoulder rotation back",
+              "extension: 2 frames, arm fully extended with speed lines",
+              "impact: 1 frame, glove deformation + screen shake (tiny)",
+              "retract: 1 frame, snap back to guard"
+            ],
+            "effects": {
+              "motion_blur": "on glove during extension",
+              "speed_lines": "4-6 trailing lines",
+              "shoulder_smoke": "subtle particle effect on hard jabs"
+            }
+          },
+          "cross": {
+            "frames": 8,
+            "duration": "15 frames total",
+            "keyframes": [
+              "wind-up: 3 frames, hip rotation visible, rear foot pivot",
+              "extension: 2 frames, shoulder drops, full torque",
+              "impact: 2 frames, full body rotation, glove impact effect",
+              "retract: 1 frame, return with defensive guard"
+            ],
+            "effects": {
+              "canvas_dust": "pivot foot creates dust cloud",
+              "body_torque_visual": "torso twist highlighted",
+              "power_glow": "on glove at impact for heavy cross"
+            }
+          },
+          "hook": {
+            "frames": 10,
+            "duration": "18 frames total",
+            "keyframes": [
+              "wind-up: 4 frames, wide circular motion begins, elbow raises",
+              "arc: 3 frames, arm travels in tight hook path",
+              "impact: 2 frames, waist torque visible, opposite hand protects chin",
+              "retract: 1 frame, circling back to guard"
+            ],
+            "effects": {
+              "circular_motion_trail": "semi-transparent afterimages",
+              "hip_rotation_emphasis": "visual cue for proper form"
+            }
+          },
+          "uppercut": {
+            "frames": 12,
+            "duration": "22 frames total",
+            "keyframes": [
+              "crouch: 4 frames, knees bend, drop low, coil spring",
+              "rise: 4 frames, explosive upward movement, legs extend",
+              "impact: 3 frames, full extension upward, chin tucks",
+              "recovery: 1 frame, return to defensive position"
+            ],
+            "effects": {
+              "upward_motion_lines": "vertical speed lines",
+              "leg_spring_effect": "visible energy from leg extension",
+              "dust_cloud": "from canvas on upward explosion"
+            }
+          }
+        },
+        "combinations": {
+          "jab_cross": {
+            "frames": 14,
+            "details": "smooth transition between punches, no reset"
+          },
+          "hook_uppercut": {
+            "frames": 20,
+            "details": "body drop between punches, fluid motion"
+          },
+          "four_piece_combo": {
+            "frames": 26,
+            "details": "jab, cross, left hook, right uppercut with flowing footwork"
+          },
+          "body_head_combo": {
+            "frames": 22,
+            "details": "body shot to head shot, level change emphasis"
+          }
+        },
+        "special_attacks": {
+          "windup_punch": {
+            "frames": 24,
+            "details": "visible charge up, glowing effect, screen shake on windup",
+            "effects": "energy gathers in fist, trail on release"
+          },
+          "multi_hit_flurry": {
+            "frames": 32,
+            "details": "rapid 8-10 punch sequence, afterimage effects",
+            "screen_effect": "background blur during activation"
+          },
+          "counter_strike": {
+            "frames": 8,
+            "details": "instant retaliation after successful dodge",
+            "effect": "golden flash on impact, slow-motion follow-through"
+          }
+        }
+      },
+      
+      "defensive_animations": {
+        "blocks": {
+          "high_block": {
+            "frames": 4,
+            "details": "gloves raised to face, elbows tight, head tuck",
+            "impact_effect": "glove spark on contact"
+          },
+          "low_block": {
+            "frames": 4,
+            "details": "elbows to ribs, slight crouch, forearms protect body",
+            "impact_effect": "body armor visual effect"
+          },
+          "philly_shell": {
+            "frames": 6,
+            "details": "shoulder roll defense, right hand high, left hand low"
+          }
+        },
+        "dodges": {
+          "slip_left": {
+            "frames": 6,
+            "details": "head moves 8 pixels left, waist bend, shoulder dip",
+            "success_effect": "blue afterimage trail"
+          },
+          "slip_right": {
+            "frames": 6,
+            "details": "head moves 8 pixels right, waist bend, shoulder dip",
+            "success_effect": "blue afterimage trail"
+          },
+          "duck": {
+            "frames": 8,
+            "details": "full body crouch, head drops 12 pixels, knees bend",
+            "counter_opportunity": "fighter rises with uppercut option"
+          },
+          "pull_back": {
+            "frames": 6,
+            "details": "lean torso back just out of range",
+            "effect": "hair/clothing follow-through motion"
+          }
+        },
+        "footwork_defense": {
+          "backstep": {
+            "frames": 8,
+            "details": "quick retreat, 8-12 pixels backward, guard maintained"
+          },
+          "lateral_slide": {
+            "frames": 10,
+            "details": "circle away from opponent's power hand"
+          }
+        },
+        "advanced_defense": {
+          "parry": {
+            "frames": 6,
+            "details": "redirect incoming punch with glove",
+            "effect": "golden spark on successful parry"
+          },
+          "catch": {
+            "frames": 8,
+            "details": "catch opponent's glove, create opening",
+            "setup": "for counter attacks"
+          },
+          "weave": {
+            "frames": 12,
+            "details": "U-shaped head movement, 10 pixel arc, smooth motion",
+            "variants": ["bob_left", "bob_right", "full_weave"]
+          }
+        },
+        "clinch": {
+          "initiate": {
+            "frames": 10,
+            "details": "arms wrap around opponent, heads close together"
+          },
+          "struggle": {
+            "frames": 16,
+            "details": "fighters jockey for position, referee may break"
+          },
+          "dirty_boxing": {
+            "frames": 12,
+            "details": "short punches while in clinch"
+          }
+        }
+      },
+      
+      "impact_reactions": {
+        "head_impacts": {
+          "head_snap_left": {
+            "frames": 5,
+            "details": "head rotates 15 degrees left, sweat spray, facial distortion",
+            "effect": "temporary vision blur overlay"
+          },
+          "head_snap_right": {
+            "frames": 5,
+            "details": "head rotates 15 degrees right, sweat spray, facial distortion",
+            "effect": "temporary vision blur overlay"
+          },
+          "head_snap_back": {
+            "frames": 6,
+            "details": "head tilts back, neck extension, mouthguard visible",
+            "effect": "spit/mouthguard particle chance"
+          },
+          "rocked_stagger": {
+            "frames": 18,
+            "details": "brief equilibrium loss, legs wobble, arms drop"
+          }
+        },
+        "body_impacts": {
+          "body_recoil": {
+            "frames": 6,
+            "details": "torso bends backward, exhale visible, gloves drop slightly",
+            "air_puff": "visible exhale cloud"
+          },
+          "liver_shot": {
+            "frames": 14,
+            "details": "delayed reaction, knee buckle, visible pain expression",
+            "effect": "screen desaturates briefly for recipient"
+          },
+          "body_crumple": {
+            "frames": 10,
+            "details": "folds at waist, arms protect ribs"
+          }
+        },
+        "leg_impacts": {
+          "leg_buckle": {
+            "frames": 8,
+            "details": "knees bend inward, fighter drops 8 pixels, recovery attempt"
+          },
+          "foot_stumble": {
+            "frames": 10,
+            "details": "lose footing, corrective steps needed"
+          }
+        },
+        "stagger_states": {
+          "stumble_back": {
+            "frames": 12,
+            "details": "backward stagger 16-24 pixels, arms flail, leg wobble",
+            "recovery": "fighter grabs ropes to steady"
+          },
+          "rope_bounce": {
+            "frames": 15,
+            "details": "hit ropes and bounce forward, vulnerable state"
+          },
+          "corner_trap": {
+            "frames": 20,
+            "details": "pinned in corner, defensive shell, looking for escape"
+          }
+        }
+      },
+      
+      "knockdown_sequence": {
+        "stunned_state": {
+          "frames": 8,
+          "details": "gloves drop, eyes glazed, equilibrium loss before fall"
+        },
+        "falling": {
+          "frames": 14,
+          "details": "slow-motion effect, 180 degree rotation, limbs sprawl",
+          "camera_effect": "zoom slightly on falling fighter"
+        },
+        "on_canvas": {
+          "frames": 6,
+          "details": "prone position, slight breathing movement, laying variations",
+          "canvas_interaction": "blood/sweat stains spread",
+          "consciousness_check": "fighter's eyes open/close"
+        },
+        "count_animation": {
+          "referee_count": {
+            "frames": 10,
+            "details": "referee points at fighter, counts with fingers"
+          },
+          "fighter_reaction": {
+            "attempt_rise": {
+              "frames": 20,
+              "details": "roll to knees, grab ropes, push up, wobbly stance"
+            },
+            "stay_down": {
+              "frames": 15,
+              "details": "fighter shakes head, remains on canvas"
+            }
+          }
+        },
+        "stand_on_count": {
+          "frames": 10,
+          "details": "referee checking, fighter nods, gloves shown, ready position",
+          "clearing_effect": "fighter shakes head to clear cobwebs"
+        },
+        "get_up_animations": {
+          "quick_rise": {
+            "frames": 12,
+            "details": "spring up quickly, show resilience"
+          },
+          "struggle_rise": {
+            "frames": 24,
+            "details": "slow, painful rise using ropes"
+          },
+          "beat_count": {
+            "frames": 8,
+            "details": "rise at count of 9, dramatic survival"
+          }
+        }
+      },
+      
+      "status_indicators": {
+        "dazed": {
+          "effect": "swirling stars/circles around head",
+          "stars_count": 4,
+          "star_size": "8x8 pixels",
+          "orbit_radius": "16 pixels",
+          "rotation_speed": "120 frames per revolution",
+          "duration": "3-5 seconds",
+          "visual_distortion": "fighter sprite has slight wave effect"
+        },
+        "hurt": {
+          "effect": "pulsing red overlay on fighter",
+          "flash_duration": "3 frames on, 6 frames off cycle",
+          "flash_color": "#ff000040 to #ff000060",
+          "pain_expression": "fighter face shows pain"
+        },
+        "tired": {
+          "effect": "sweat drops falling + heavy breathing visual",
+          "drop_frequency": "every 15 frames",
+          "drop_size": "2x3 pixels",
+          "drop_color": "#8888ff",
+          "breathing_intensity": "visible torso expansion increases",
+          "knee_buckle": "slight squat when extremely tired"
+        },
+        "bleeding": {
+          "effect": "blood drip from cuts with flow variation",
+          "drip_positions": ["above eye", "nose", "mouth", "brow"],
+          "drip_size": "2x4 pixels",
+          "drip_color": ["#aa0000", "#880000", "#660000 for dried"],
+          "frequency": "every 30 frames, increases with damage",
+          "blood_pool": "accumulates on canvas under fighter"
+        },
+        "cut_status": {
+          "minor_cut": "small trickle, treatable between rounds",
+          "major_cut": "steady flow, referee may check",
+          "severe_cut": "heavy bleeding, fight may be stopped"
+        },
+        "knocked_out": {
+          "effect": "swirling birds/stars, X eyes, limp body",
+          "duration": "until count of 10",
+          "final_pose": "unique KO poses (sprawled, against ropes, etc.)"
+        },
+        "momentum": {
+          "positive": "fighter glows slightly gold, movements sharper",
+          "negative": "fighter slightly desaturated, movements heavier"
+        }
+      }
+    },
+    
+    "special_move_visuals": {
+      "charge_indicators": {
+        "glove_glow": {
+          "type": "pulsing aura around gloves",
+          "colors": ["#ffff00", "#ffaa00", "#ff5500"],
+          "pulse_rate": "30 frames",
+          "intensity_levels": ["dim", "medium", "bright", "ready"],
+          "final_ready": "constant bright glow with particle trail"
+        },
+        "energy_gathering": {
+          "type": "particles drawn to fists",
+          "particle_count": "15-20",
+          "particle_colors": "based on fighter theme",
+          "gather_speed": "accelerates as charge completes"
+        }
+      },
+      "activation_effects": {
+        "screen_flash": {
+          "type": "radial flash from fighter",
+          "color": "#ffffff",
+          "duration": "4 frames",
+          "fade": "exponential with screen shake",
+          "intensity": "scales with move power"
+        },
+        "time_slow": {
+          "type": "bullet time effect",
+          "duration": "1-3 seconds",
+          "visual": "background blurs, fighter moves normal speed",
+          "sound_effect": "low pass filter on ambient sound"
+        }
+      },
+      "attack_effects": {
+        "punch_trail": {
+          "type": "motion blur + energy trail with afterimages",
+          "colors": ["#ff0000", "#ff8800", "#ffff00", "#ffffff"],
+          "length": "24-36 pixels depending on speed",
+          "persistence": "8 frames with fade",
+          "afterimages": "3-4 ghost frames at 30% opacity"
+        },
+        "shockwave": {
+          "type": "expanding ring from impact",
+          "width": "2-4 pixels",
+          "speed": "8 pixels per frame",
+          "color": "#ffffff at center fading to transparency",
+          "duration": "15 frames"
+        }
+      },
+      "impact_effects": {
+        "radial_burst": {
+          "type": "multi-layered particle explosion",
+          "layers": [
+            {
+              "particles": 12,
+              "size": "4x4 to 8x8 pixels",
+              "colors": ["#ffffff", "#ffff00"],
+              "speed": "4 pixels per frame"
+            },
+            {
+              "particles": 20,
+              "size": "2x2 to 4x4 pixels",
+              "colors": ["#ff8800", "#ff0000"],
+              "speed": "6 pixels per frame"
+            }
+          ],
+          "duration": "12-18 frames"
+        },
+        "screen_distortion": {
+          "type": "warp effect around impact",
+          "radius": "32 pixels",
+          "intensity": "wave distortion of background",
+          "duration": "8 frames"
+        }
+      },
+      "screen_effects": {
+        "screen_shake": {
+          "magnitude": "4-12 pixels based on impact",
+          "duration": "8-20 frames",
+          "pattern": "random direction per frame with decay",
+          "frequency": "high frequency for rapid hits, low for heavy"
+        },
+        "color_grading": {
+          "successful_special": "brief saturation increase",
+          "critical_hit": "brief desaturation then color pop",
+          "finishing_move": "dramatic color shift (monochrome with highlight color)"
+        }
+      }
+    },
+    
+    "particle_effects": {
+      "sweat_effects": {
+        "sweat_spray": {
+          "trigger": "medium-heavy punch impact to head",
+          "particle_count": "6-12",
+          "particle_size": "2x2 pixels to 3x3 pixels",
+          "color": "#aaccff with 80% opacity",
+          "velocity": "opposing punch direction, 3-6 pixels per frame",
+          "gravity": "0.2 pixels per frame squared",
+          "lifetime": "15-25 frames",
+          "light_reflection": "some particles have highlight spots"
+        },
+        "sweat_drip": {
+          "trigger": "continuous during exertion",
+          "drip_path": "down face/body with slight sway",
+          "impact_splash": "tiny splash when hits canvas",
+          "absorption": "into trunks, darkens fabric"
+        }
+      },
+      "blood_effects": {
+        "blood_spray": {
+          "trigger": "heavy punch to damaged area",
+          "particle_count": "4-8 with variation based on damage",
+          "particle_size": "2x3 pixels with some 4x4 chunks",
+          "color": ["#cc0000", "#aa0000", "#880000"],
+          "velocity": "opposing punch direction, 2-5 pixels per frame",
+          "gravity": "0.3 pixels per frame squared",
+          "lifetime": "20-30 frames",
+          "canvas_stain": "persistent blood pools with spreading"
+        },
+        "blood_drip": {
+          "trigger": "cut status",
+          "drip_speed": "varies with cut severity",
+          "splatter_pattern": "when drip hits canvas or fighter moves"
+        },
+        "blood_mist": {
+          "trigger": "severe head trauma",
+          "particle_count": "20-30",
+          "size": "1x1 to 2x2 pixels",
+          "color": "#990000 with 60% opacity",
+          "spread": "cloud formation that dissipates"
+        }
+      },
+      "impact_effects": {
+        "impact_spark": {
+          "trigger": "glove-on-glove contact (blocked punch)",
+          "particle_count": "8-10",
+          "particle_size": "2x2 pixels",
+          "color": "#ffffff with yellow/orange highlights",
+          "velocity": "radial, 4-8 pixels per frame",
+          "lifetime": "8-12 frames",
+          "light_emission": "briefly illuminates nearby area"
+        },
+        "cloth_flutter": {
+          "trigger": "near misses or air displacement",
+          "particle_count": "3-5",
+          "size": "4x2 to 6x3 pixels",
+          "color": "trunk/short color",
+          "movement": "fluttering downward with rotation"
+        }
+      },
+      "environmental_effects": {
+        "dust_puff": {
+          "trigger": "heavy footwork, knockdown, slides",
+          "particle_count": "10-15",
+          "particle_size": "3x3 to 6x6 pixels",
+          "color": ["#666666", "#888888", "#aaaaaa"],
+          "velocity": "horizontal spread, 2-4 pixels per frame",
+          "fade": "linear over 20 frames",
+          "position": "canvas level at feet with upward drift"
+        },
+        "canvas_fiber": {
+          "trigger": "extreme foot drag or slide",
+          "particle_count": "4-6",
+          "size": "1x3 to 2x5 pixels",
+          "color": "#2a4a6b (canvas color)",
+          "movement": "cling to boots briefly then fall"
+        }
+      },
+      "body_effects": {
+        "spit_spray": {
+          "trigger": "critical body blow",
+          "particle_count": "3-5",
+          "particle_size": "2x2 pixels",
+          "color": "#dddddd with possible blood tint",
+          "velocity": "downward arc, 3-5 pixels per frame",
+          "gravity": "0.4 pixels per frame squared",
+          "lifetime": "15-20 frames"
+        },
+        "mouthguard_eject": {
+          "trigger": "heavy clean chin shot",
+          "animation": "arc trajectory with rotation",
+          "impact": "bounce on canvas with sound",
+          "retrieval": "corner man picks up between rounds"
+        },
+        "tooth_spark": {
+          "trigger": "extremely rare critical hit",
+          "effect": "glinting tooth with trail",
+          "rarity": "1% chance on maximum damage shot"
+        }
+      },
+      "special_particles": {
+        "energy_trail": {
+          "trigger": "special moves",
+          "particles": "continuous stream",
+          "colors": "fighter-specific palette",
+          "behavior": "follows glove path with delay"
+        },
+        "aura_effects": {
+          "trigger": "fighter has momentum/advantage",
+          "type": "subtle colored outline",
+          "intensity": "pulses with fighter's movements"
+        }
+      }
+    },
+    
+    "ui_overlays": {
+      "hud_layout": {
+        "minimal_mode": "optional for purists",
+        "detailed_mode": "full information display",
+        "dynamic_hud": "elements grow/shrink based on importance"
+      },
+      "round_timer": {
+        "position": "top center",
+        "size": "80x20 pixels",
+        "font": "digital LCD style, 12pt with glow",
+        "color": "#ffffff",
+        "background": "#00000080 with border",
+        "format": "MM:SS",
+        "warning_effects": {
+          "under_30_seconds": "color changes to #ff0000",
+          "under_10_seconds": "pulsing effect + tick sound",
+          "last_minute": "digital colon blinks"
+        },
+        "round_number": "displayed above timer"
+      },
+      "fighter_nameplates": {
+        "position": "top corners with slight inward angle",
+        "size": "120x32 pixels",
+        "dynamic_positioning": "moves slightly during camera shifts",
+        "components": {
+          "name": {
+            "font": "8pt bold with outline",
+            "color": "fighter's theme color",
+            "nationality_flag": "small icon next to name"
+          },
+          "health_bar": {
+            "size": "100x8 pixels",
+            "gradient": "green (#00ff00) to yellow (#ffff00) to red (#ff0000)",
+            "damage_effect": "white flash on hit, gradual depletion",
+            "critical_warning": "pulsing red when below 20%",
+            "segment_divisions": "visible round-by-round recovery marks"
+          },
+          "stamina_bar": {
+            "size": "100x6 pixels",
+            "gradient": "yellow (#ffff00) to orange (#ff8800)",
+            "depletion_rate": "based on activity",
+            "recovery_rate": "faster when not attacking",
+            "exhaustion_warning": "flashing when critically low"
+          },
+          "special_meter": {
+            "size": "100x4 pixels",
+            "fill_color": "gradient white to gold (#ffdd00)",
+            "segments": "divided into 3-4 special move charges",
+            "flash_effect": "when a segment is filled",
+            "full_meter_effect": "continuous glow"
+          }
+        },
+        "corner_assignment": "red/blue matching gloves/trunks"
+      },
+      "fight_info_display": {
+        "momentum_indicator": {
+          "position": "top center, below timer",
+          "type": "horizontal sliding bar",
+          "size": "200x12 pixels",
+          "colors": ["#2222aa (player advantage)", "#aaaaaa (neutral)", "#aa2222 (opponent advantage)"],
+          "behavior": "slides left/right based on recent exchanges",
+          "needle_marker": "shows current momentum value"
+        },
+        "punch_stats": {
+          "position": "bottom corners (optional)",
+          "display": "jabs/ power/ total",
+          "font": "6pt condensed",
+          "color": "#888888",
+          "update_frequency": "per round"
+        },
+        "knockdown_counter": {
+          "position": "near nameplates",
+          "display": "KD icons (X) for each knockdown",
+          "size": "8x8 pixels per icon"
+        }
+      },
+      "announcements": {
+        "round_announcement": {
+          "position": "center screen",
+          "size": "320x64 pixels",
+          "animation": "slide in from sides, scale up, hold 90 frames, fade out",
+          "text": "ROUND [X]",
+          "font": "bold arcade, 24pt with thick outline",
+          "color": "#ffff00",
+          "border": "4px, #000000",
+          "background_effect": "ring mat texture behind text",
+          "sound_effect": "bell ring + crowd cheer"
+        },
+        "fight_result": {
+          "position": "center screen",
+          "size": "400x120 pixels",
+          "types": [
+            "KNOCKOUT!",
+            "TECHNICAL KNOCKOUT!",
+            "WINNER BY DECISION",
+            "DRAW",
+            "NO CONTEST"
+          ],
+          "animation": "explosive entrance with screen shake, pulse effect",
+          "font": "bold arcade, 32pt with animated outline",
+          "color": "#ffff00 with #ff0000 outline",
+          "subtext": "fighter name below result",
+          "background": "dynamic particle celebration"
+        },
+        "knockdown_announcement": {
+          "position": "center top",
+          "text": "KNOCKDOWN!",
+          "animation": "falling letters that bounce",
+          "duration": "60 frames"
+        }
+      },
+      "combat_feedback": {
+        "damage_numbers": {
+          "display": "floating damage values (optional)",
+          "size": "16x16 pixels",
+          "font": "8pt bold with shadow",
+          "color": "#ffffff for normal, #ffff00 for critical, #ff0000 for devastating",
+          "animation": "rise 16-24 pixels, fade over 30 frames, slight drift",
+          "position": "at impact point with random horizontal offset",
+          "cumulative_combo": "numbers stack for rapid hits"
+        },
+        "combo_counter": {
+          "position": "above attacking fighter",
+          "size": "40x20 pixels",
+          "display": "HIT x[NUMBER]",
+          "font": "8pt with increasing size",
+          "color": "#ffffff, increases to #ff0000 at 5+ hits, gold at 10+",
+          "animation": "pulse with each hit, scale up on milestone (5, 10)",
+          "combo_timer": "visual decay indicator around counter"
+        },
+        "counter_hit_indicator": {
+          "position": "impact point",
+          "text": "COUNTER!",
+          "color": "#ffaa00",
+          "animation": "rapid spin + fade",
+          "effect": "brief slow-motion on successful counter"
+        }
+      },
+      "instructional_ui": {
+        "button_prompts": {
+          "position": "bottom center",
+          "context_sensitive": "changes based on situation",
+          "style": "controller button icons + action text",
+          "fade": "appears when inactive, fades when used"
+        },
+        "tutorial_arrows": {
+          "position": "directional indicators for new players",
+          "color": "#00ffff",
+          "pulse_rate": "60 frames"
+        }
+      },
+      "post_round_summary": {
+        "position": "center screen after round ends",
+        "display": "round stats comparison",
+        "duration": "8 seconds",
+        "animation": "slide up scorecards"
+      }
+    },
+    
+    "lighting_and_effects": {
+      "ring_lighting": {
+        "primary_light": {
+          "type": "overhead spotlight cluster",
+          "center": "ring center",
+          "falloff": "radial gradient with sharp edges",
+          "color": "#ffffff warm to cool (#ffffcc to #ccccff)",
+          "intensity": "100% during action, dims between rounds"
+        },
+        "secondary_lights": {
+          "corner_spotlights": "highlight fighters in corners",
+          "crowd_wash": "ambient light from crowd area",
+          "emergency_lights": "strobe on knockout"
+        },
+        "dynamic_lighting": {
+          "punch_impact": "brief increase in brightness at impact point",
+          "camera_flash": "temporary overexposure from crowd",
+          "special_move": "colored gels on lights during specials"
+        },
+        "shadows": {
+          "fighter_shadows": "dynamic based on light position",
+          "rope_shadows": "cast on canvas",
+          "shadow_behavior": "lengthen/shorten based on fighter height"
+        }
+      },
+      "impact_visuals": {
+        "impact_flash": {
+          "trigger": "any punch connect",
+          "type": "white flash with radial gradient",
+          "size": "16x16 pixels scaling with impact force",
+          "duration": "2 frames",
+          "color": "#ffffff",
+          "opacity": "80% decreasing with distance",
+          "light_emission": "briefly lights nearby sprites"
+        },
+        "hit_stop": {
+          "trigger": "heavy punches",
+          "duration": "2-4 frames freeze",
+          "effect": "emphasis on impact moment"
+        }
+      },
+      "screen_effects": {
+        "screen_tint": {
+          "critical_hit": {
+            "color": "#ff0000",
+            "opacity": "20%",
+            "duration": "6 frames",
+            "fade": "linear with screen shake"
+          },
+          "knockdown": {
+            "color": "#000000",
+            "opacity": "fade to 40% then back",
+            "duration": "30 frames",
+            "effect": "slow-motion + vignette"
+          },
+          "health_critical": {
+            "color": "#ff0000",
+            "opacity": "10% persistent with pulse",
+            "effect": "increases vision impairment"
+          }
+        },
+        "vignette_effect": {
+          "intensity": "increases during fatigue",
+          "color": "#000000",
+          "size": "scales with fighter stamina"
+        }
+      },
+      "motion_effects": {
+        "motion_blur": {
+          "fast_punches": {
+            "length": "8-12 pixels",
+            "opacity": "40%",
+            "color": "sprite colors desaturated",
+            "direction": "along punch path"
+          },
+          "head_movement": {
+            "length": "6 pixels",
+            "opacity": "30%",
+            "triggers": "slips, weaves, snaps"
+          },
+          "footwork": {
+            "length": "4 pixels",
+            "opacity": "20%",
+            "triggers": "rapid lateral movement"
+          }
+        },
+        "depth_of_field": {
+          "focus_on_fighters": "background slightly blurred",
+          "knockdown_focus": "focus on downed fighter",
+          "between_rounds": "focus on corner activity"
+        }
+      },
+      "camera_effects": {
+        "camera_movement": {
+          "follow_action": "subtle pan to keep both fighters in frame",
+          "dramatic_angles": "on knockdowns or special moves",
+          "zoom_levels": ["wide (normal)", "medium (clinch)", "close (knockdown)"]
+        },
+        "camera_shake": {
+          "intensity": "scales with impact force",
+          "pattern": "perlin noise for natural feel",
+          "recoil": "camera pushes back on heavy hits"
+        }
+      }
+    },
+    
+    "referee_sprite": {
+      "size": "56x88 pixels",
+      "detail_level": "high - visible facial features, uniform details",
+      "position": {
+        "normal": "ring center, steps back during action",
+        "breaking": "between fighters",
+        "counting": "kneeling near downed fighter",
+        "pointing": "at winner after fight"
+      },
+      "animations": {
+        "idle_watching": {
+          "frames": 6,
+          "details": "hands behind back, head tracking fighters, slight stance shifts"
+        },
+        "break_command": {
+          "frames": 8,
+          "details": "arms extended, push fighters apart, verbal command mouth movement"
+        },
+        "count_sequence": {
+          "frames_per_count": 10,
+          "note": "per count",
+          "details": "arm raising with each count, finger display, leaning over downed fighter",
+          "mouth_animation": "shouting numbers"
+        },
+        "stop_fight": {
+          "frames": 6,
+          "details": "arms waving, jumping between fighters, urgent movement"
+        },
+        "point_to_winner": {
+          "frames": 8,
+          "details": "grab winner's arm, raise it high, announce victory"
+        },
+        "warning_fighter": {
+          "frames": 6,
+          "details": "pointing finger, stern expression"
+        },
+        "check_cut": {
+          "frames": 12,
+          "details": "examine fighter's face, consult doctor"
+        },
+        "final_announcement": {
+          "frames": 15,
+          "details": "center ring, announce decision, hand gestures"
+        }
+      },
+      "clothing": {
+        "shirt": "#ffffff or #000000 with stripe pattern",
+        "pants": "#000000 with crease lines",
+        "bow_tie": "#ff0000 or #0000ff",
+        "shoes": "#333333 shiny leather",
+        "details": "referee badge, watch, possibly name on back"
+      },
+      "interactions": {
+        "fighter_instructions": "points to corners before round",
+        "equipment_check": "checks gloves/mouthguard",
+        "doctor_consultation": "brings doctor in to check cut"
+      }
+    },
+    
+    "between_rounds_view": {
+      "camera_angle": "dynamic - starts wide, zooms to corner",
+      "transition_effect": "fade to corner view with camera move",
+      "fighter_on_stool": {
+        "size": "96x128 pixels (larger, detailed)",
+        "detail_enhancement": "visible sweat, blood, breathing, facial expressions",
+        "animations": {
+          "breathing_heavy": "12 frame cycle, visible chest movement, shoulder heaving",
+          "water_sip": "cutman offers bottle, fighter drinks with gulping animation",
+          "treatment_sequence": {
+            "ice_application": "16 frames, ice pack visible with condensation",
+            "cut_treatment": "20 frames, swab movements, blood wiping",
+            "vaseline_application": "12 frames, finger application to face",
+            "nose_clearance": "8 frames, fighter blows nose"
+          },
+          "pep_talk": {
+            "coach_talking": "12 frame mouth animation",
+            "fighter_response": "nodding, verbal responses",
+            "strategy_discussion": "coach gestures, fighter watches"
+          },
+          "stool_rest": {
+            "slump": "fighter leans back exhausted",
+            "recovery": "gradual return to alertness",
+            "stand_up": "rises for next round"
+          }
+        },
+        "damage_display": "visible cuts/bruises highlighted",
+        "fatigue_indicator": "breathing rate visible"
+      },
+      "cutman_working": {
+        "size": "64x96 pixels",
+        "animations": {
+          "examining_face": "8 frames, leaning in, turning fighter's head",
+          "applying_ice": "12 frames, ice pack with frost effect",
+          "treating_cut": "16 frames, swab movements with blood on swab",
+          "vaseline_application": "10 frames, finger application motion",
+          "motivating": "gesture animations, 12 frames, pat on shoulder",
+          "equipment_prep": "getting tools ready, opening gel"
+        },
+        "tools_visible": {
+          "primary": ["ice pack", "enswell", "swabs", "vaseline", "water bottle"],
+          "secondary": ["adrenaline chloride", "cut gel", "cotton balls", "scissors"]
+        },
+        "dynamic_stains": "blood appears on gloves, apron during treatment"
+      },
+      "corner_team": {
+        "coach_sprite": {
+          "size": "48x64 pixels",
+          "animations": ["talking", "gesturing", "watching ring", "shouting instructions"]
+        },
+        "assistant_sprite": {
+          "size": "40x56 pixels",
+          "animations": ["handing tools", "holding towel", "fanning fighter"]
+        }
+      },
+      "ui_overlay": {
+        "round_timer": {
+          "position": "top center, large",
+          "size": "120x40 pixels",
+          "format": "60 second countdown prominent",
+          "warning": "last 10 seconds flash red"
+        },
+        "treatment_options": {
+          "position": "bottom center",
+          "type": "button prompts for cutman actions",
+          "feedback": "visual effect when treatment applied"
+        },
+        "fighter_status": {
+          "position": "sides of screen",
+          "display": "detailed damage report with icons",
+          "recovery_prediction": "visual indicators of recovery rate"
+        },
+        "strategy_advice": {
+          "position": "text above coach",
+          "content": "contextual advice based on fight progress",
+          "animation": "text typing effect"
+        }
+      },
+      "audio_visual_feedback": {
+        "treatment_effectiveness": "visual meter shows recovery",
+        "crowd_reaction": "cheers/boos based on fighter's performance",
+        "commentary_overlay": "text commentary on round analysis"
+      },
+      "next_round_prep": {
+        "bell_anticipation": "last 5 seconds highlight",
+        "fighter_ready_pose": "stand up, gloves touch, final instructions",
+        "stool_removal": "assistant pulls stool from ring"
+      }
+    },
+    
+    "dynamic_scaling": {
+      "graphics_presets": ["low", "medium", "high", "ultra"],
+      "scalable_features": {
+        "particle_effects": "count and complexity scale",
+        "background_detail": "layers and animation frames",
+        "fighter_detail": "sprite resolution and animation frames",
+        "lighting_effects": "dynamic lights and shadows"
+      },
+      "performance_optimization": {
+        "culling": "off-screen effects reduced",
+        "lod_system": "lower detail at distance",
+        "effect_pooling": "reuse particle systems"
+      }
+    },
+    
+    "special_modes": {
+      "replay_system": {
+        "trigger": "knockdowns, round endings, special moves",
+        "camera_angles": ["wide", "close-up", "fighter perspective"],
+        "slow_motion": "variable speed control",
+        "effects_overlay": "motion lines, impact highlights"
+      },
+      "photo_mode": {
+        "pause_game": "freeze action",
+        "camera_control": "free movement around ring",
+        "filters": ["black & white", "sepia", "vintage", "noir"],
+        "effects": ["depth of field", "vignette", "film grain"]
+      },
+      "highlight_reel": {
+        "automatic_capture": "significant moments",
+        "edit_tools": "trim, add effects, slow motion",
+        "share_function": "export short clips"
+      }
+    },
+    
+    "visual_consistency": {
+      "art_style": "pixel art with modern effects",
+      "color_palette": "consistent across all elements",
+      "lighting_unified": "single light source simulated",
+      "perspective_lock": "consistent isometric/2.5D view"
+    }
+  }
+}
