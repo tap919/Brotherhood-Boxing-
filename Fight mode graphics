@@ -119,7 +119,8 @@
         "corner_stools": {
           "size": "32x24 pixels",
           "color": "#aa2222 or #2222aa",
-          "visible": "between rounds only",
+          "visible": true,
+          "visibility_condition": "between_rounds",
           "detail": "team logos, towel draped on corner",
           "animation": "subtle wobble when fighter sits"
         },
@@ -1116,7 +1117,8 @@
           "details": "arms extended, push fighters apart, verbal command mouth movement"
         },
         "count_sequence": {
-          "frames": 10 per count,
+          "frames_per_count": 10,
+          "note": "per count",
           "details": "arm raising with each count, finger display, leaning over downed fighter",
           "mouth_animation": "shouting numbers"
         },
