@@ -236,22 +236,11 @@ function applyCRTMode(enabled) {
 
 function startCustomBout(options = {}) {
     const name = options.name || 'Custom Bruiser';
-    const palette = punchoutPalettes[options.paletteKey || 'crimson'];
+    const palette = punchoutPalettes[options.paletteKey] || punchoutPalettes.crimson;
     const power = options.power ?? 82;
     const speed = options.speed ?? 88;
     const defense = options.defense ?? 80;
     const styleStats = buildStyleStats(options.style || 'balanced', power, speed, defense);
-
-    const fighter1Config = {
-        name,
-        health: 100, maxHealth: 100,
-        stamina: 100, maxStamina: 100,
-        ...styleStats,
-        trunkColor: hexToInt(palette.trunk),
-        skinColor: hexToInt(palette.skin),
-        gloveColor: hexToInt(palette.glove),
-        hairColor: hexToInt(palette.hair)
-    };
 
     const tysonPalette = punchoutPalettes.sunset;
     const fighter2Config = {
@@ -264,6 +253,17 @@ function startCustomBout(options = {}) {
         skinColor: hexToInt(tysonPalette.skin),
         gloveColor: hexToInt(tysonPalette.glove),
         hairColor: hexToInt(tysonPalette.hair)
+    };
+
+    const fighter1Config = options.mirrorTyson ? { ...fighter2Config } : {
+        name,
+        health: 100, maxHealth: 100,
+        stamina: 100, maxStamina: 100,
+        ...styleStats,
+        trunkColor: hexToInt(palette.trunk),
+        skinColor: hexToInt(palette.skin),
+        gloveColor: hexToInt(palette.glove),
+        hairColor: hexToInt(palette.hair)
     };
 
     applyCRTMode(options.crt !== 'off');
@@ -288,12 +288,13 @@ document.getElementById('create-boxer-form').addEventListener('submit', (e) => {
 
 document.getElementById('mirror-match').addEventListener('click', () => {
     startCustomBout({
-        name: 'Iron Mirror',
-        paletteKey: 'neon',
+        name: 'Mike Tyson',
+        paletteKey: 'sunset',
         style: 'slugger',
-        power: 95,
-        speed: 90,
-        defense: 86,
+        power: 98,
+        speed: 98,
+        defense: 88,
+        mirrorTyson: true,
         crt: document.getElementById('crt-toggle').value
     });
 });
