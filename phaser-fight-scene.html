@@ -31,6 +31,89 @@
             text-align: center;
         }
         .controls-info span { color: #ffdd00; }
+        .creator-panel {
+            width: 800px;
+            max-width: 95vw;
+            background: rgba(0, 0, 0, 0.65);
+            border: 3px solid #e94560;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 0 18px rgba(233, 69, 96, 0.3);
+            font-size: 10px;
+            line-height: 1.6;
+        }
+        .creator-panel h2 {
+            color: #ffdd00;
+            font-size: 14px;
+            margin-bottom: 8px;
+            text-shadow: 2px 2px 0 #000;
+        }
+        .creator-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px;
+            align-items: end;
+        }
+        .creator-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .creator-field label {
+            color: #ccc;
+            font-size: 9px;
+            letter-spacing: 0.5px;
+        }
+        .creator-field input,
+        .creator-field select {
+            background: #0f0f1f;
+            color: #fff;
+            border: 2px solid #333;
+            padding: 6px 8px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 9px;
+        }
+        .creator-field input[type="range"] {
+            padding: 0;
+        }
+        .creator-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .creator-actions button {
+            font-family: 'Press Start 2P', monospace;
+            background: linear-gradient(180deg, #4da6ff 0%, #0066cc 100%);
+            color: #fff;
+            border: 3px solid #fff;
+            padding: 10px 16px;
+            cursor: pointer;
+            text-shadow: 1px 1px 0 #000;
+            box-shadow: 0 0 12px rgba(0, 102, 204, 0.5);
+        }
+        .creator-actions .secondary {
+            background: linear-gradient(180deg, #e94560 0%, #b83250 100%);
+        }
+        #game-container.crt {
+            position: relative;
+            overflow: hidden;
+        }
+        #game-container.crt::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                to bottom,
+                rgba(255, 255, 255, 0.05),
+                rgba(255, 255, 255, 0.05) 2px,
+                rgba(0, 0, 0, 0.05) 2px,
+                rgba(0, 0, 0, 0.05) 4px
+            );
+            mix-blend-mode: overlay;
+        }
         h1 {
             font-size: 24px;
             color: #e94560;
@@ -41,12 +124,201 @@
 </head>
 <body>
     <h1>🥊 BROTHERHOOD BOXING 🥊</h1>
+    <div class="creator-panel">
+        <h2>RETRO PUNCH-OUT! SIM + CREATE-A-BOXER</h2>
+        <form id="create-boxer-form">
+            <div class="creator-grid">
+                <div class="creator-field">
+                    <label for="boxer-name">Boxer Name</label>
+                    <input id="boxer-name" type="text" placeholder="Custom Bruiser" maxlength="18" aria-label="Custom boxer name">
+                </div>
+                <div class="creator-field">
+                    <label for="boxer-style">Fighting Style</label>
+                    <select id="boxer-style">
+                        <option value="balanced">Balanced (Tyson vs. Holyfield ready)</option>
+                        <option value="slugger">Slugger (power)</option>
+                        <option value="outboxer">Out-Boxer (speed)</option>
+                        <option value="counter">Counter (defense)</option>
+                    </select>
+                </div>
+                <div class="creator-field">
+                    <label for="palette-select">Palette</label>
+                    <select id="palette-select">
+                        <option value="crimson">Crimson Rush</option>
+                        <option value="neon">Neon Blitz</option>
+                        <option value="mint">Mint Guard</option>
+                        <option value="sunset">Sunset Southpaw</option>
+                    </select>
+                </div>
+                <div class="creator-field">
+                    <label for="power-range">Power <span id="power-value" aria-live="polite">82</span></label>
+                    <input id="power-range" type="range" min="50" max="99" step="1" value="82" aria-valuemin="50" aria-valuemax="99" aria-valuenow="82">
+                </div>
+                <div class="creator-field">
+                    <label for="speed-range">Speed <span id="speed-value" aria-live="polite">88</span></label>
+                    <input id="speed-range" type="range" min="50" max="99" step="1" value="88" aria-valuemin="50" aria-valuemax="99" aria-valuenow="88">
+                </div>
+                <div class="creator-field">
+                    <label for="defense-range">Defense <span id="defense-value" aria-live="polite">80</span></label>
+                    <input id="defense-range" type="range" min="50" max="99" step="1" value="80" aria-valuemin="50" aria-valuemax="99" aria-valuenow="80">
+                </div>
+                <div class="creator-field">
+                    <label for="crt-toggle">Punch-Out! CRT Mode</label>
+                    <select id="crt-toggle">
+                        <option value="on">On (scanlines)</option>
+                        <option value="off">Off</option>
+                    </select>
+                </div>
+            </div>
+            <div class="creator-actions" style="margin-top:10px;">
+                <button type="submit">START RETRO BOUT</button>
+                <button type="button" class="secondary" id="mirror-match">Mirror Match Tyson</button>
+            </div>
+        </form>
+    </div>
     <div id="game-container"></div>
     <div class="controls-info">
         <span>SPACE</span> - Pause/Resume | <span>N</span> - Next Round | <span>R</span> - Restart | <span>Q</span> - Queue Corner Action
     </div>
 
 <script>
+// === RETRO PALETTE + CREATE-A-BOXER ===
+const punchoutPalettes = {
+    crimson: { trunk: '#e94560', glove: '#ffdd00', skin: '#d4a574', hair: '#1a1a1a' },
+    neon: { trunk: '#00c2ff', glove: '#ff3df2', skin: '#c58c6a', hair: '#0b1d4d' },
+    mint: { trunk: '#64f4ac', glove: '#1aaf5d', skin: '#e1b382', hair: '#2f1b10' },
+    sunset: { trunk: '#ff9f1c', glove: '#ff004e', skin: '#b57b57', hair: '#3b2c35' }
+};
+
+function hexToInt(hex) {
+    return parseInt(hex.replace('#', ''), 16);
+}
+
+// Style modifier baselines (tuned to evoke classic Punch-Out archetypes)
+// Modifier scale: small adjustments in the range of -6 to +8 keep fighters within believable 50–99 stat bounds.
+// Each style adds tradeoffs instead of hard advantages, preserving a “pick your flavor” feel.
+// Slugger: big power, slower hands, iron chin
+const STYLE_MODS = {
+    slugger: { strength: 8, speed: -5, agility: -2, chin: 4, heart: 92 },
+    // Out-boxer: fleet footwork, lower power, lighter chin
+    outboxer: { strength: -6, speed: 8, agility: 6, chin: -2, heart: 94 },
+    // Counter: slick defense, solid chin, bonus defense
+    counter: { strength: -2, speed: 0, agility: 4, chin: 6, defense: 8, heart: 96 },
+    // Balanced: neutral, no penalties
+    balanced: { strength: 0, speed: 0, agility: 0, chin: 0, heart: 95 }
+};
+
+// Clamp core fighter stats to the intended 50–99 bounds
+function clampStat(value) {
+    return Math.max(50, Math.min(99, value));
+}
+
+function buildStyleStats(style, power, speed, defense) {
+    const mod = STYLE_MODS[style] || STYLE_MODS.balanced;
+    return {
+        strength: clampStat(power + (mod.strength || 0)),
+        speed: clampStat(speed + (mod.speed || 0)),
+        agility: clampStat(speed + (mod.agility || 0)),
+        defense: clampStat(defense + (mod.defense || 0)),
+        chin: clampStat(defense + (mod.chin || 0)),
+        heart: mod.heart || 95
+    };
+}
+
+function applyCRTMode(enabled) {
+    const container = document.getElementById('game-container');
+    if (enabled) {
+        container.classList.add('crt');
+    } else {
+        container.classList.remove('crt');
+    }
+}
+
+function startCustomBout(options = {}) {
+    const name = options.name || 'Custom Bruiser';
+    const palette = punchoutPalettes[options.paletteKey] || punchoutPalettes.crimson;
+    const power = options.power ?? 82;
+    const speed = options.speed ?? 88;
+    const defense = options.defense ?? 80;
+    const styleStats = buildStyleStats(options.style || 'balanced', power, speed, defense);
+
+    const tysonPalette = punchoutPalettes.sunset;
+    const fighter2Config = {
+        name: 'Mike Tyson',
+        health: 100, maxHealth: 100,
+        stamina: 100, maxStamina: 100,
+        strength: 98, agility: 88, speed: 98,
+        defense: 88, chin: 92, heart: 94,
+        trunkColor: hexToInt(tysonPalette.trunk),
+        skinColor: hexToInt(tysonPalette.skin),
+        gloveColor: hexToInt(tysonPalette.glove),
+        hairColor: hexToInt(tysonPalette.hair)
+    };
+
+    const fighter1Config = options.mirrorTyson ? { ...fighter2Config } : {
+        name,
+        health: 100, maxHealth: 100,
+        stamina: 100, maxStamina: 100,
+        ...styleStats,
+        trunkColor: hexToInt(palette.trunk),
+        skinColor: hexToInt(palette.skin),
+        gloveColor: hexToInt(palette.glove),
+        hairColor: hexToInt(palette.hair)
+    };
+
+    applyCRTMode(options.crt !== 'off');
+
+    if (window.BrotherhoodBoxing?.startFight) {
+        window.BrotherhoodBoxing.startFight(fighter1Config, fighter2Config);
+    }
+}
+
+document.getElementById('create-boxer-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    startCustomBout({
+        name: document.getElementById('boxer-name').value || 'Custom Bruiser',
+        paletteKey: document.getElementById('palette-select').value,
+        style: document.getElementById('boxer-style').value,
+        power: Number(document.getElementById('power-range').value),
+        speed: Number(document.getElementById('speed-range').value),
+        defense: Number(document.getElementById('defense-range').value),
+        crt: document.getElementById('crt-toggle').value
+    });
+});
+
+document.getElementById('mirror-match').addEventListener('click', () => {
+    startCustomBout({
+        name: 'Mike Tyson',
+        paletteKey: 'sunset',
+        style: 'slugger',
+        power: 98,
+        speed: 98,
+        defense: 88,
+        mirrorTyson: true,
+        crt: document.getElementById('crt-toggle').value
+    });
+});
+
+// Live range value display for accessibility
+const powerRangeEl = document.getElementById('power-range');
+const speedRangeEl = document.getElementById('speed-range');
+const defenseRangeEl = document.getElementById('defense-range');
+const powerValueEl = document.getElementById('power-value');
+const speedValueEl = document.getElementById('speed-value');
+const defenseValueEl = document.getElementById('defense-value');
+
+function bindRange(rangeEl, valueEl) {
+    if (!rangeEl || !valueEl) return;
+    rangeEl.addEventListener('input', () => {
+        valueEl.textContent = rangeEl.value;
+        rangeEl.setAttribute('aria-valuenow', rangeEl.value);
+    });
+}
+
+bindRange(powerRangeEl, powerValueEl);
+bindRange(speedRangeEl, speedValueEl);
+bindRange(defenseRangeEl, defenseValueEl);
+
 /**
  * FighterRenderer Class - Exportable module for procedural pixel sprite rendering
  * Renders 64x128px boxing fighters with orthodox stance
