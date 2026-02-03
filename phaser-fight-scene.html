@@ -1577,10 +1577,6 @@ class FightScene extends Phaser.Scene {
      * Update camera flash effects (per spec: random positions, 3-5 per second)
      */
     updateCameraFlashes(delta) {
-        if (this.cameraFlashCooldown > 0) {
-            this.cameraFlashCooldown -= delta;
-        }
-        
         // Random camera flash in crowd (per spec: 3-5 per second, frame-rate independent)
         if (Math.random() < (delta / 1000) * 3) {
             this.triggerCameraFlash();
