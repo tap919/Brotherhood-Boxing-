@@ -1154,8 +1154,7 @@
         document.getElementById('corner-p2-cuts').textContent = f2.cuts > 0 ? 'Level ' + Math.ceil(f2.cuts / 25) : 'None';
         document.getElementById('corner-p2-swelling').textContent = f2.swelling > 0 ? 'Level ' + Math.ceil(f2.swelling / 25) : 'None';
         
-        // Reset button states
-        document.querySelectorAll('.strategy-btn').forEach(btn => btn.classList.remove('selected'));
+        // Reset button states (keep corner action buttons enabled, preserve strategy selections)
         document.querySelectorAll('.corner-btn').forEach(btn => btn.disabled = false);
         
         showScreen('corner-screen');
