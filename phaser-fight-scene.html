@@ -1075,17 +1075,7 @@ class FightScene extends Phaser.Scene {
         const ropeHighlights = [0xff5555, 0xffffff, 0x5555ff];
         const ropeYOffsets = [-45, -30, -15];
         
-        // Store rope positions for animation
-        this.ropePositions = [];
-        
         ropeYOffsets.forEach((yOff, i) => {
-            this.ropePositions.push({
-                y: 310 + yOff,
-                baseY: 310 + yOff,
-                amplitude: 2,
-                phase: i * 60
-            });
-            
             // Main rope (4px thickness per spec)
             g.lineStyle(4, ropeColors[i]);
             // Front rope
