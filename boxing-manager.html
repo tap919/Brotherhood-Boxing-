@@ -289,9 +289,94 @@
         @keyframes punch { 0% { transform: translateX(0); } 50% { transform: translateX(20px); } 100% { transform: translateX(0); } }
         @keyframes punchRight { 0% { transform: translateX(0); } 50% { transform: translateX(-20px); } 100% { transform: translateX(0); } }
         @keyframes hit { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(2) hue-rotate(180deg); } }
+        @keyframes screenShake { 
+            0%, 100% { transform: translateX(0); } 
+            10% { transform: translateX(-5px) translateY(-3px); } 
+            20% { transform: translateX(5px) translateY(2px); } 
+            30% { transform: translateX(-4px) translateY(-2px); } 
+            40% { transform: translateX(4px) translateY(3px); } 
+            50% { transform: translateX(-3px) translateY(-1px); } 
+            60% { transform: translateX(3px) translateY(1px); } 
+            70% { transform: translateX(-2px); } 
+            80% { transform: translateX(2px); } 
+            90% { transform: translateX(-1px); } 
+        }
+        @keyframes knockdownFlash { 
+            0% { background-color: rgba(255, 0, 0, 0.5); } 
+            100% { background-color: transparent; } 
+        }
+        @keyframes powerPunch { 
+            0% { transform: translateX(0) scale(1); } 
+            25% { transform: translateX(-10px) scale(1.1); } 
+            50% { transform: translateX(30px) scale(1.15); } 
+            100% { transform: translateX(0) scale(1); } 
+        }
+        @keyframes powerPunchRight { 
+            0% { transform: translateX(0) scale(1); } 
+            25% { transform: translateX(10px) scale(1.1); } 
+            50% { transform: translateX(-30px) scale(1.15); } 
+            100% { transform: translateX(0) scale(1); } 
+        }
+        @keyframes stagger { 
+            0%, 100% { transform: translateX(0); } 
+            25% { transform: translateX(-15px) rotate(-5deg); } 
+            75% { transform: translateX(15px) rotate(5deg); } 
+        }
         .punching { animation: punch 0.3s ease-out; }
         .punching-right { animation: punchRight 0.3s ease-out; }
+        .power-punching { animation: powerPunch 0.4s ease-out; }
+        .power-punching-right { animation: powerPunchRight 0.4s ease-out; }
         .hit-effect { animation: hit 0.2s; }
+        .staggered { animation: stagger 0.6s ease-out; }
+        .screen-shake { animation: screenShake 0.4s ease-out; }
+        .knockdown-flash { animation: knockdownFlash 0.5s ease-out; }
+        .momentum-indicator { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            margin: 5px 0; 
+            padding: 5px; 
+            background: rgba(0,0,0,0.5); 
+            border-radius: 4px; 
+        }
+        .momentum-bar { 
+            width: 200px; 
+            height: 8px; 
+            background: linear-gradient(90deg, #e94560 0%, #e94560 50%, #4da6ff 50%, #4da6ff 100%); 
+            border-radius: 4px; 
+            position: relative; 
+            border: 1px solid #fff; 
+        }
+        .momentum-marker { 
+            position: absolute; 
+            top: -4px; 
+            width: 4px; 
+            height: 16px; 
+            background: #ffdd00; 
+            border-radius: 2px; 
+            transition: left 0.3s ease; 
+            box-shadow: 0 0 8px #ffdd00; 
+        }
+        .punch-stats { 
+            display: flex; 
+            justify-content: space-between; 
+            font-size: 7px; 
+            padding: 5px 10px; 
+            background: rgba(0,0,0,0.7); 
+            border-radius: 4px; 
+            margin: 5px 0; 
+        }
+        .distance-indicator { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            font-size: 7px; 
+            color: #888; 
+            margin: 3px 0; 
+        }
+        .distance-close { color: #e94560; }
+        .distance-mid { color: #ffdd00; }
+        .distance-far { color: #4da6ff; }
         .divider { height: 4px; background: repeating-linear-gradient(90deg, #e94560 0px, #e94560 8px, transparent 8px, transparent 16px); margin: 15px 0; }
         .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; }
         .modal.active { display: flex; }
@@ -418,8 +503,32 @@
                 <div class="round-num">ROUND <span id="fight-round">1</span></div>
                 <div class="round-timer" id="fight-timer">3:00</div>
             </div>
-            <div class="ring-container">
-                <div class="ring-canvas">
+            <!-- Momentum Indicator -->
+            <div class="momentum-indicator">
+                <span style="font-size: 7px; color: #e94560; margin-right: 10px;">🔴</span>
+                <div class="momentum-bar">
+                    <div class="momentum-marker" id="momentum-marker" style="left: 50%;"></div>
+                </div>
+                <span style="font-size: 7px; color: #4da6ff; margin-left: 10px;">🔵</span>
+            </div>
+            <!-- Live Punch Stats -->
+            <div class="punch-stats">
+                <div style="color: #e94560;">
+                    <span id="p1-landed">0</span>/<span id="p1-thrown">0</span> 
+                    (<span id="p1-accuracy">0</span>%)
+                </div>
+                <div style="color: #888;">PUNCHES LANDED/THROWN</div>
+                <div style="color: #4da6ff;">
+                    <span id="p2-landed">0</span>/<span id="p2-thrown">0</span>
+                    (<span id="p2-accuracy">0</span>%)
+                </div>
+            </div>
+            <!-- Distance Indicator -->
+            <div class="distance-indicator">
+                <span>RANGE: </span><span id="fight-distance" class="distance-mid">MID-RANGE</span>
+            </div>
+            <div class="ring-container" id="ring-container">
+                <div class="ring-canvas" id="ring-canvas">
                     <div class="fighter-hud left">
                         <div class="hud-name" id="hud-p1-name">FIGHTER 1</div>
                         <div class="hud-bar"><div class="hud-fill health" id="hud-p1-health" style="width: 100%"></div></div>
@@ -616,17 +725,175 @@
         ]
     };
 
-    // Commentary lines
+    // Commentary lines - Enhanced with more variety and boxing-accurate descriptions
     const commentary = {
-        jab: ['{attacker} lands a sharp jab!', '{attacker} pops the jab!', 'Quick jab from {attacker}!'],
-        hook: ['{attacker} connects with a devastating hook!', 'HUGE hook by {attacker}!', '{attacker} lands the hook!'],
-        uppercut: ['{attacker} lands an uppercut!', 'BIG uppercut from {attacker}!', '{attacker} finds the chin with an uppercut!'],
-        miss: ['{attacker} misses!', '{defender} dodges!', '{attacker} swings and misses!'],
-        block: ['{defender} blocks the shot!', 'Good defense by {defender}!', '{defender} covers up!'],
-        bodyShot: ['{attacker} digs to the body!', 'Body shot from {attacker}!', '{attacker} goes downstairs!'],
-        bigHit: ['WHAT A SHOT! {defender} is hurt!', '{defender} is ROCKED!', 'DEVASTATING blow by {attacker}!'],
-        clinch: ['The fighters clinch...', 'They tie up in the center.', 'Break it up!'],
-        tired: ['{fighter} is showing signs of fatigue.', '{fighter} is breathing heavy.', '{fighter} needs to pace themselves.']
+        jab: [
+            '{attacker} lands a sharp jab!', 
+            '{attacker} pops the jab!', 
+            'Quick jab from {attacker}!',
+            '{attacker} sticks the jab right down the pipe!',
+            'Textbook jab from {attacker}!',
+            '{attacker} measures with the jab!',
+            'The jab finds its mark!',
+            '{attacker}\'s jab snaps {defender}\'s head back!'
+        ],
+        cross: [
+            '{attacker} throws a straight right!',
+            'The cross lands flush for {attacker}!',
+            '{attacker} uncorks a straight!',
+            'Power shot from {attacker}!',
+            '{attacker} steps in with the right hand!',
+            'That cross had some mustard on it!'
+        ],
+        hook: [
+            '{attacker} connects with a devastating hook!', 
+            'HUGE hook by {attacker}!', 
+            '{attacker} lands the hook!',
+            'Left hook from {attacker} lands clean!',
+            '{attacker} throws a sweeping hook!',
+            'The hook catches {defender} on the temple!',
+            'What a check hook from {attacker}!',
+            '{attacker}\'s hook comes around the guard!'
+        ],
+        uppercut: [
+            '{attacker} lands an uppercut!', 
+            'BIG uppercut from {attacker}!', 
+            '{attacker} finds the chin with an uppercut!',
+            '{attacker} rips the uppercut through the middle!',
+            'Vicious uppercut by {attacker}!',
+            'The uppercut rises and lands!',
+            '{attacker} comes up with the shovel shot!'
+        ],
+        miss: [
+            '{attacker} misses!', 
+            '{defender} dodges!', 
+            '{attacker} swings and misses!',
+            '{defender} slips the punch beautifully!',
+            '{defender} makes {attacker} miss badly!',
+            'Nothing but air on that one!',
+            '{defender}\'s head movement is on point!',
+            '{attacker} falls short!',
+            '{defender} pulls back just in time!'
+        ],
+        block: [
+            '{defender} blocks the shot!', 
+            'Good defense by {defender}!', 
+            '{defender} covers up!',
+            '{defender} catches it on the gloves!',
+            'That one lands on the arms!',
+            '{defender} shows good guard work!',
+            'Blocked by the high guard!',
+            '{defender} absorbs it on the shell!'
+        ],
+        bodyShot: [
+            '{attacker} digs to the body!', 
+            'Body shot from {attacker}!', 
+            '{attacker} goes downstairs!',
+            '{attacker} targets the ribs!',
+            'Liver shot from {attacker}!',
+            '{attacker} buries one in the midsection!',
+            'That body shot made {defender} wince!',
+            '{attacker} is investing to the body!',
+            'Punishing body work from {attacker}!'
+        ],
+        bigHit: [
+            'WHAT A SHOT! {defender} is hurt!', 
+            '{defender} is ROCKED!', 
+            'DEVASTATING blow by {attacker}!',
+            'OH! {defender} felt that one!',
+            '{defender}\'s legs are gone!',
+            'THUNDEROUS shot from {attacker}!',
+            '{defender} is in serious trouble!',
+            'That one buckled {defender}\'s knees!',
+            'HUGE SHOT! The crowd is on their feet!'
+        ],
+        clinch: [
+            'The fighters clinch...', 
+            'They tie up in the center.', 
+            'Break it up!',
+            '{defender} holds on to recover...',
+            'Smart clinch work to survive the moment.',
+            'The referee separates them.'
+        ],
+        tired: [
+            '{fighter} is showing signs of fatigue.', 
+            '{fighter} is breathing heavy.', 
+            '{fighter} needs to pace themselves.',
+            '{fighter}\'s punch output is dropping.',
+            '{fighter} looks gassed!',
+            'The tank is running low for {fighter}.',
+            '{fighter}\'s corner is screaming for more energy!'
+        ],
+        combo: [
+            '{attacker} lands a combination!',
+            '{attacker} goes 1-2!',
+            'Nice combo from {attacker}!',
+            '{attacker} strings together multiple shots!',
+            '{attacker} lets their hands go!',
+            'Flurry of punches from {attacker}!'
+        ],
+        counter: [
+            '{defender} fires back with a counter!',
+            'Beautiful counter by {defender}!',
+            '{defender} makes them pay for that!',
+            'Counter shot from {defender}!',
+            '{defender} times it perfectly!'
+        ],
+        knockdown: [
+            'DOWN GOES {defender}!',
+            '{defender} IS DOWN!',
+            'KNOCKDOWN! {defender} hits the canvas!',
+            '{attacker} drops {defender}!',
+            'THE CANVAS CATCHES {defender}!',
+            '{defender} is on the deck!'
+        ],
+        recovery: [
+            '{fighter} beats the count!',
+            '{fighter} shows that heart!',
+            '{fighter} is back on their feet!',
+            '{fighter} survives!'
+        ],
+        ringControl: [
+            '{fighter} is cutting off the ring!',
+            '{fighter} has {defender} against the ropes!',
+            '{fighter} is controlling the center!',
+            '{fighter} is dictating the pace!'
+        ],
+        crowdReaction: [
+            'The crowd erupts!',
+            'Listen to this crowd!',
+            'The arena is electric!',
+            'The fans are loving this!'
+        ]
+    };
+
+    // Punch types with realistic boxing mechanics
+    const PUNCH_TYPES = {
+        jab: { damage: 3, stamina: 2, speed: 1.2, accuracy: 1.15, name: 'JAB' },
+        cross: { damage: 7, stamina: 4, speed: 0.9, accuracy: 0.95, name: 'CROSS' },
+        hook: { damage: 9, stamina: 5, speed: 0.85, accuracy: 0.85, name: 'HOOK' },
+        uppercut: { damage: 10, stamina: 6, speed: 0.75, accuracy: 0.80, name: 'UPPERCUT' },
+        bodyJab: { damage: 4, stamina: 3, speed: 1.0, accuracy: 1.1, name: 'BODY JAB' },
+        bodyHook: { damage: 8, stamina: 5, speed: 0.8, accuracy: 0.9, name: 'BODY HOOK' }
+    };
+
+    // Ring distance mechanics
+    const RING_DISTANCES = {
+        close: { 
+            name: 'CLOSE RANGE', 
+            class: 'distance-close',
+            modifiers: { hook: 1.2, uppercut: 1.3, jab: 0.7, cross: 0.8 }
+        },
+        mid: { 
+            name: 'MID-RANGE', 
+            class: 'distance-mid',
+            modifiers: { hook: 1.0, uppercut: 0.9, jab: 1.1, cross: 1.2 }
+        },
+        far: { 
+            name: 'OUTSIDE', 
+            class: 'distance-far',
+            modifiers: { hook: 0.7, uppercut: 0.6, jab: 1.3, cross: 1.0 }
+        }
     };
 
     // Utility Functions
@@ -925,13 +1192,15 @@
 
     // Fight System
     function beginFight() {
-        // Initialize fight state
+        // Initialize fight state with enhanced mechanics
         GameState.fightState = {
             round: 1,
             maxRounds: 12,
             exchangesThisRound: 0,
             maxExchangesPerRound: 8,
             isSimulating: false, // Flag to prevent concurrent exchanges
+            distance: 'mid', // Ring control: 'close', 'mid', 'far'
+            momentum: 50, // 0-100, 50 is neutral, <50 favors P1, >50 favors P2
             fighters: [
                 {
                     ...selectedP1Fighter,
@@ -940,10 +1209,18 @@
                     cuts: 0,
                     swelling: 0,
                     knockdowns: 0,
+                    knockdownsThisRound: 0,
                     punchesLanded: 0,
+                    punchesThrown: 0,
                     punchesMissed: 0,
+                    powerPunchesLanded: 0,
+                    bodyPunchesLanded: 0,
+                    combosLanded: 0,
+                    damageDealtThisRound: 0,
                     strategy: 'normal',
-                    cutmanAction: null
+                    cutmanAction: null,
+                    isHurt: false,
+                    hurtTimer: 0
                 },
                 {
                     ...selectedP2Fighter,
@@ -952,10 +1229,18 @@
                     cuts: 0,
                     swelling: 0,
                     knockdowns: 0,
+                    knockdownsThisRound: 0,
                     punchesLanded: 0,
+                    punchesThrown: 0,
                     punchesMissed: 0,
+                    powerPunchesLanded: 0,
+                    bodyPunchesLanded: 0,
+                    combosLanded: 0,
+                    damageDealtThisRound: 0,
                     strategy: 'normal',
-                    cutmanAction: null
+                    cutmanAction: null,
+                    isHurt: false,
+                    hurtTimer: 0
                 }
             ],
             scorecard: [],
@@ -972,8 +1257,134 @@
         document.getElementById('fight-round').textContent = '1';
         document.getElementById('fight-commentary').innerHTML = '<p class="action">The fighters touch gloves and we\'re underway!</p>';
         
+        // Reset punch stats display
+        updatePunchStats();
+        updateMomentum();
+        updateDistance();
+        
         updateFightHUD();
         showScreen('fight-screen');
+        
+        // Play bell sound
+        playSound('bell');
+    }
+
+    // Sound system
+    function playSound(type) {
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            switch(type) {
+                case 'bell':
+                    oscillator.frequency.value = 800;
+                    oscillator.type = 'sine';
+                    gainNode.gain.value = 0.3;
+                    oscillator.start();
+                    setTimeout(() => {
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
+                    }, 100);
+                    oscillator.stop(audioContext.currentTime + 0.6);
+                    break;
+                case 'jab':
+                    oscillator.frequency.value = 150;
+                    oscillator.type = 'square';
+                    gainNode.gain.value = 0.15;
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.05);
+                    break;
+                case 'power':
+                    oscillator.frequency.value = 80;
+                    oscillator.type = 'sawtooth';
+                    gainNode.gain.value = 0.25;
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.12);
+                    break;
+                case 'bigHit':
+                    oscillator.frequency.value = 60;
+                    oscillator.type = 'sawtooth';
+                    gainNode.gain.value = 0.35;
+                    oscillator.start();
+                    // Create impact effect
+                    setTimeout(() => {
+                        oscillator.frequency.value = 40;
+                    }, 50);
+                    oscillator.stop(audioContext.currentTime + 0.2);
+                    break;
+                case 'miss':
+                    oscillator.frequency.value = 400;
+                    oscillator.type = 'sine';
+                    gainNode.gain.value = 0.08;
+                    oscillator.start();
+                    oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.1);
+                    oscillator.stop(audioContext.currentTime + 0.1);
+                    break;
+                case 'crowd':
+                    // White noise for crowd
+                    const bufferSize = audioContext.sampleRate * 0.5;
+                    const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = Math.random() * 2 - 1;
+                    }
+                    const noise = audioContext.createBufferSource();
+                    noise.buffer = buffer;
+                    const noiseGain = audioContext.createGain();
+                    noiseGain.gain.value = 0.1;
+                    noise.connect(noiseGain);
+                    noiseGain.connect(audioContext.destination);
+                    noise.start();
+                    noiseGain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
+                    return;
+            }
+        } catch (e) {
+            // Audio not supported or blocked, silently continue
+        }
+    }
+
+    // Update punch statistics display
+    function updatePunchStats() {
+        const state = GameState.fightState;
+        if (!state) return;
+        
+        const f1 = state.fighters[0];
+        const f2 = state.fighters[1];
+        
+        document.getElementById('p1-landed').textContent = f1.punchesLanded;
+        document.getElementById('p1-thrown').textContent = f1.punchesThrown;
+        document.getElementById('p1-accuracy').textContent = f1.punchesThrown > 0 ? Math.round((f1.punchesLanded / f1.punchesThrown) * 100) : 0;
+        
+        document.getElementById('p2-landed').textContent = f2.punchesLanded;
+        document.getElementById('p2-thrown').textContent = f2.punchesThrown;
+        document.getElementById('p2-accuracy').textContent = f2.punchesThrown > 0 ? Math.round((f2.punchesLanded / f2.punchesThrown) * 100) : 0;
+    }
+
+    // Update momentum indicator
+    function updateMomentum() {
+        const state = GameState.fightState;
+        if (!state) return;
+        
+        const marker = document.getElementById('momentum-marker');
+        if (marker) {
+            marker.style.left = state.momentum + '%';
+        }
+    }
+
+    // Update distance indicator
+    function updateDistance() {
+        const state = GameState.fightState;
+        if (!state) return;
+        
+        const distanceEl = document.getElementById('fight-distance');
+        if (distanceEl) {
+            const distanceInfo = RING_DISTANCES[state.distance];
+            distanceEl.textContent = distanceInfo.name;
+            distanceEl.className = distanceInfo.class;
+        }
     }
 
     function updateFightHUD() {
@@ -1020,78 +1431,287 @@
         const f1 = state.fighters[0];
         const f2 = state.fighters[1];
         
-        // Simulate an exchange (both fighters take actions)
-        simulatePunch(f1, f2, 0);
+        // Update ring distance based on fighter styles and strategies
+        updateRingDistance(f1, f2, state);
         
-        setTimeout(() => {
-            simulatePunch(f2, f1, 1);
+        // Determine who attacks first based on speed and aggression
+        const f1Initiative = f1.speed + (f1.aggression || 70) + rand(-10, 10);
+        const f2Initiative = f2.speed + (f2.aggression || 70) + rand(-10, 10);
+        
+        // Check for combo opportunities
+        const comboChance1 = calculateComboChance(f1, f2, state);
+        const comboChance2 = calculateComboChance(f2, f1, state);
+        
+        if (f1Initiative >= f2Initiative) {
+            // Fighter 1 attacks first
+            simulateEnhancedPunch(f1, f2, 0, state);
             
-            // Check for knockdown/KO
-            if (f1.health <= 0 || f2.health <= 0) {
-                state.isSimulating = false;
-                endFight(f1.health <= 0 ? 1 : 0, 'KO');
-                return;
-            }
+            setTimeout(() => {
+                // Check if defender can counter
+                if (f2.health > 0 && !f2.isHurt) {
+                    if (rand(1, 100) <= 20 + (f2.speed - f1.defense) / 3) {
+                        fightLog(pick(commentary.counter).replace('{attacker}', f2.name).replace('{defender}', f2.name), 'action');
+                    }
+                    simulateEnhancedPunch(f2, f1, 1, state);
+                }
+                finishExchange(state, simBtn);
+            }, 400);
+        } else {
+            // Fighter 2 attacks first
+            simulateEnhancedPunch(f2, f1, 1, state);
             
-            // Stamina drain:
-            // - Each exchange costs 2–5 stamina (% of max).
-            // - With 8 exchanges per round, ~16–40 stamina lost per round.
-            // - Between rounds, fighters regain 15 stamina + any water boost.
-            f1.stamina = Math.max(0, f1.stamina - rand(2, 5));
-            f2.stamina = Math.max(0, f2.stamina - rand(2, 5));
-            
-            state.exchangesThisRound++;
-            updateFightHUD();
-            
-            // Re-enable button and flag
-            state.isSimulating = false;
-            if (simBtn) simBtn.disabled = false;
-            
-            // Check if round is over
-            if (state.exchangesThisRound >= state.maxExchangesPerRound) {
-                endRound();
-            }
-        }, 500);
+            setTimeout(() => {
+                if (f1.health > 0 && !f1.isHurt) {
+                    if (rand(1, 100) <= 20 + (f1.speed - f2.defense) / 3) {
+                        fightLog(pick(commentary.counter).replace('{attacker}', f1.name).replace('{defender}', f1.name), 'action');
+                    }
+                    simulateEnhancedPunch(f1, f2, 0, state);
+                }
+                finishExchange(state, simBtn);
+            }, 400);
+        }
+        
+        // Chance for combo punches
+        if (rand(1, 100) <= comboChance1 && f1.stamina > 20) {
+            setTimeout(() => {
+                if (f2.health > 0 && f1.stamina > 15) {
+                    fightLog(pick(commentary.combo).replace('{attacker}', f1.name), 'action');
+                    simulateEnhancedPunch(f1, f2, 0, state);
+                    f1.combosLanded++;
+                }
+            }, 600);
+        }
+        
+        if (rand(1, 100) <= comboChance2 && f2.stamina > 20) {
+            setTimeout(() => {
+                if (f1.health > 0 && f2.stamina > 15) {
+                    fightLog(pick(commentary.combo).replace('{attacker}', f2.name), 'action');
+                    simulateEnhancedPunch(f2, f1, 1, state);
+                    f2.combosLanded++;
+                }
+            }, 700);
+        }
     }
 
-    function simulatePunch(attacker, defender, attackerIndex) {
-        // Calculate hit chance based on stats and strategy
-        let hitChance = 40 + (attacker.speed - defender.defense) / 2;
+    function finishExchange(state, simBtn) {
+        const f1 = state.fighters[0];
+        const f2 = state.fighters[1];
+        
+        // Check for knockdown/KO
+        if (f1.health <= 0 || f2.health <= 0) {
+            state.isSimulating = false;
+            playSound('bigHit');
+            triggerScreenShake(true);
+            endFight(f1.health <= 0 ? 1 : 0, 'KO');
+            return;
+        }
+        
+        // Base stamina drain based on activity
+        const staminaDrain1 = rand(2, 4) + (f1.strategy === 'aggressive' ? 2 : 0);
+        const staminaDrain2 = rand(2, 4) + (f2.strategy === 'aggressive' ? 2 : 0);
+        
+        f1.stamina = Math.max(0, f1.stamina - staminaDrain1);
+        f2.stamina = Math.max(0, f2.stamina - staminaDrain2);
+        
+        // Update hurt status decay
+        if (f1.isHurt) {
+            f1.hurtTimer--;
+            if (f1.hurtTimer <= 0) f1.isHurt = false;
+        }
+        if (f2.isHurt) {
+            f2.hurtTimer--;
+            if (f2.hurtTimer <= 0) f2.isHurt = false;
+        }
+        
+        // Update momentum based on damage dealt this exchange
+        const momentumShift = (f1.damageDealtThisRound - f2.damageDealtThisRound) / 5;
+        state.momentum = Math.max(5, Math.min(95, state.momentum - momentumShift));
+        
+        // Check for fatigue commentary
+        if (f1.stamina < 30 && rand(1, 100) <= 30) {
+            fightLog(pick(commentary.tired).replace('{fighter}', f1.name), 'info');
+        }
+        if (f2.stamina < 30 && rand(1, 100) <= 30) {
+            fightLog(pick(commentary.tired).replace('{fighter}', f2.name), 'info');
+        }
+        
+        state.exchangesThisRound++;
+        updateFightHUD();
+        updatePunchStats();
+        updateMomentum();
+        updateDistance();
+        
+        // Re-enable button and flag
+        state.isSimulating = false;
+        if (simBtn) simBtn.disabled = false;
+        
+        // Check if round is over
+        if (state.exchangesThisRound >= state.maxExchangesPerRound) {
+            endRound();
+        }
+    }
+
+    function updateRingDistance(f1, f2, state) {
+        // Distance changes based on styles and strategies
+        let distanceChange = 0;
+        
+        // Swarmers and aggressive fighters close distance
+        if (f1.style === 'Swarmer' || f1.strategy === 'aggressive') distanceChange -= 1;
+        if (f2.style === 'Swarmer' || f2.strategy === 'aggressive') distanceChange += 1;
+        
+        // Outboxers try to keep distance
+        if (f1.style === 'Outboxer' || f1.strategy === 'defensive') distanceChange += 1;
+        if (f2.style === 'Outboxer' || f2.strategy === 'defensive') distanceChange -= 1;
+        
+        // Random movement factor
+        distanceChange += rand(-1, 1);
+        
+        // Apply distance changes
+        const distances = ['close', 'mid', 'far'];
+        let currentIdx = distances.indexOf(state.distance);
+        currentIdx = Math.max(0, Math.min(2, currentIdx + Math.sign(distanceChange)));
+        state.distance = distances[currentIdx];
+        
+        // Ring control commentary
+        if (rand(1, 100) <= 10) {
+            const controller = state.momentum < 50 ? f1 : f2;
+            fightLog(pick(commentary.ringControl).replace('{fighter}', controller.name).replace('{defender}', controller === f1 ? f2.name : f1.name), 'info');
+        }
+    }
+
+    function calculateComboChance(attacker, defender, state) {
+        let chance = 15; // Base combo chance
+        
+        // Speed increases combo chance
+        chance += (attacker.speed - 70) / 3;
+        
+        // Hurt opponents are easier to combo
+        if (defender.isHurt) chance += 20;
+        
+        // Aggressive strategy increases combo chance
+        if (attacker.strategy === 'aggressive') chance += 10;
+        
+        // Low stamina reduces combo chance
+        chance *= (attacker.stamina / 100);
+        
+        // Style bonuses
+        if (attacker.style === 'Swarmer') chance += 15;
+        
+        return Math.max(5, Math.min(40, chance));
+    }
+
+    function simulateEnhancedPunch(attacker, defender, attackerIndex, state) {
+        // Select punch type based on distance, style, and strategy
+        const punchType = selectPunchType(attacker, defender, state);
+        const punchData = PUNCH_TYPES[punchType];
+        
+        attacker.punchesThrown++;
+        
+        // Calculate hit chance with all factors
+        let hitChance = 40 + (attacker.speed * punchData.speed - defender.defense) / 2;
+        hitChance *= punchData.accuracy;
+        
+        // Distance modifiers
+        const distanceModifiers = RING_DISTANCES[state.distance].modifiers;
+        const distanceMod = distanceModifiers[punchType] || distanceModifiers[punchType.replace('body', '')] || 1.0;
+        hitChance *= distanceMod;
         
         // Strategy modifiers
-        if (attacker.strategy === 'aggressive') hitChance += 10;
-        if (attacker.strategy === 'defensive') hitChance -= 10;
+        if (attacker.strategy === 'aggressive') hitChance += 8;
+        if (attacker.strategy === 'defensive') hitChance -= 12;
         if (defender.strategy === 'defensive') hitChance -= 15;
         
-        // Stamina affects accuracy
-        hitChance = hitChance * (attacker.stamina / 100);
+        // Stamina affects accuracy significantly
+        const staminaFactor = 0.5 + (attacker.stamina / 200);
+        hitChance *= staminaFactor;
+        
+        // Hurt fighters are easier to hit
+        if (defender.isHurt) hitChance += 20;
         
         // Swelling affects defense
-        if (defender.swelling > 20) hitChance += 10;
+        if (defender.swelling > 20) hitChance += Math.floor(defender.swelling / 10);
         
-        // Clamp hit chance to ensure both fighters always have a chance
+        // Clamp hit chance
         hitChance = Math.max(10, Math.min(90, hitChance));
         
         const roll = rand(1, 100);
         
         if (roll <= hitChance) {
             // Hit!
-            let damage = rand(3, 8) + Math.floor(attacker.power / 10);
+            let damage = punchData.damage + Math.floor(attacker.power / 10);
+            
+            // Apply distance modifier to damage
+            damage = Math.floor(damage * distanceMod);
             
             // Strategy damage modifiers
-            if (attacker.strategy === 'aggressive') damage = Math.floor(damage * 1.2);
+            if (attacker.strategy === 'aggressive') damage = Math.floor(damage * 1.15);
             if (attacker.strategy === 'body') damage = Math.floor(damage * 0.9);
-            if (attacker.strategy === 'head') damage = Math.floor(damage * 1.3);
+            if (attacker.strategy === 'head') damage = Math.floor(damage * 1.25);
             if (defender.strategy === 'defensive') damage = Math.floor(damage * 0.7);
             
-            // Chin reduces damage; ensure chin contribution is an integer step
+            // Chin reduces damage
             damage = Math.floor(damage * (100 - Math.floor(defender.chin / 2)) / 100);
             
+            // Critical hit chance (power punches)
+            const isCritical = rand(1, 100) <= 5 + (attacker.power - 70) / 5;
+            if (isCritical && punchType !== 'jab' && punchType !== 'bodyJab') {
+                damage = Math.floor(damage * 1.5);
+            }
+            
+            // Apply damage
             defender.health = Math.max(0, defender.health - damage);
             attacker.punchesLanded++;
+            attacker.damageDealtThisRound += damage;
             
-            // Chance for cut/swelling
-            if (attacker.strategy === 'head' && rand(1, 100) <= 15) {
+            // Track punch types
+            if (punchType !== 'jab' && punchType !== 'bodyJab') {
+                attacker.powerPunchesLanded++;
+            }
+            if (punchType === 'bodyJab' || punchType === 'bodyHook') {
+                attacker.bodyPunchesLanded++;
+                // Body shots drain stamina
+                defender.stamina = Math.max(0, defender.stamina - rand(2, 5));
+            }
+            
+            // Drain attacker stamina for punch
+            attacker.stamina = Math.max(0, attacker.stamina - punchData.stamina);
+            
+            // Check for big hit / hurt status
+            const isBigHit = damage > 12 || isCritical;
+            if (isBigHit) {
+                defender.isHurt = true;
+                defender.hurtTimer = 2;
+                
+                // Knockdown check
+                const knockdownChance = (damage - 10) * 2 + (100 - defender.chin) / 3 + (100 - defender.heart) / 5;
+                if (rand(1, 100) <= knockdownChance) {
+                    defender.knockdowns++;
+                    defender.knockdownsThisRound++;
+                    fightLog(pick(commentary.knockdown).replace('{attacker}', attacker.name).replace('{defender}', defender.name), 'hit');
+                    playSound('bigHit');
+                    triggerScreenShake(true);
+                    triggerKnockdownEffect();
+                    
+                    // Recovery based on heart and health
+                    const recoveryChance = defender.heart + defender.health / 2;
+                    if (rand(1, 100) <= recoveryChance && defender.knockdownsThisRound < 3) {
+                        fightLog(pick(commentary.recovery).replace('{fighter}', defender.name), 'action');
+                        defender.health = Math.max(10, defender.health - 5); // Standing 8 count damage
+                    } else {
+                        defender.health = 0; // TKO
+                    }
+                    
+                    // Three knockdown rule
+                    if (defender.knockdownsThisRound >= 3) {
+                        fightLog('THREE KNOCKDOWN RULE! The fight is stopped!', 'hit');
+                        defender.health = 0;
+                    }
+                    return;
+                }
+            }
+            
+            // Cut/swelling chance on head shots
+            if ((attacker.strategy === 'head' || punchType === 'hook' || punchType === 'uppercut') && rand(1, 100) <= 12) {
                 if (rand(1, 2) === 1) {
                     defender.cuts = Math.min(100, defender.cuts + rand(10, 25));
                     fightLog(`${defender.name} has been CUT!`, 'hit');
@@ -1099,91 +1719,240 @@
                     defender.swelling = Math.min(100, defender.swelling + rand(10, 20));
                     fightLog(`${defender.name}'s eye is swelling!`, 'hit');
                 }
-
-                // Doctor stoppage check: if injuries are too severe, stop the fight via health-based TKO
+                
+                // Doctor stoppage check
                 if (defender.cuts >= 75 || defender.swelling >= 75) {
-                    fightLog(`The doctor stops the fight due to ${defender.name}'s severe injuries!`, 'event');
-                    // Force a stoppage using existing health-based end-of-fight logic
+                    fightLog(`The doctor stops the fight due to ${defender.name}'s severe injuries!`, 'hit');
                     defender.health = 0;
+                    return;
                 }
             }
             
-            // Commentary
-            const punchTypes = ['jab', 'hook', 'uppercut', 'bodyShot'];
-            const punchType = attacker.strategy === 'body' ? 'bodyShot' : pick(punchTypes);
-            let line = pick(commentary[punchType]).replace('{attacker}', attacker.name).replace('{defender}', defender.name);
+            // Commentary based on punch type and impact
+            let commentaryType = punchType;
+            if (punchType === 'bodyJab' || punchType === 'bodyHook') commentaryType = 'bodyShot';
+            if (isBigHit) commentaryType = 'bigHit';
             
-            if (damage > 10) {
-                line = pick(commentary.bigHit).replace('{attacker}', attacker.name).replace('{defender}', defender.name);
-            }
-            
+            let line = pick(commentary[commentaryType] || commentary.jab).replace('{attacker}', attacker.name).replace('{defender}', defender.name);
             fightLog(line, 'hit');
             
-            // Animate
-            const fighterEl = document.getElementById(attackerIndex === 0 ? 'fighter-1' : 'fighter-2');
-            const defenderEl = document.getElementById(attackerIndex === 0 ? 'fighter-2' : 'fighter-1');
-            fighterEl.classList.add(attackerIndex === 0 ? 'punching' : 'punching-right');
-            defenderEl.classList.add('hit-effect');
+            // Sound and visual effects
+            if (isBigHit) {
+                playSound('bigHit');
+                triggerScreenShake(false);
+            } else if (punchType === 'jab' || punchType === 'bodyJab') {
+                playSound('jab');
+            } else {
+                playSound('power');
+            }
             
-            setTimeout(() => {
-                fighterEl.classList.remove('punching', 'punching-right');
-                defenderEl.classList.remove('hit-effect');
-            }, 300);
+            // Animate
+            animatePunch(attackerIndex, isBigHit);
+            
+            // Crowd reaction for big moments
+            if (isBigHit && rand(1, 100) <= 50) {
+                setTimeout(() => {
+                    fightLog(pick(commentary.crowdReaction), 'info');
+                    playSound('crowd');
+                }, 300);
+            }
             
         } else {
             // Miss
             attacker.punchesMissed++;
+            attacker.stamina = Math.max(0, attacker.stamina - Math.floor(punchData.stamina / 2));
+            
             const line = pick(commentary.miss).replace('{attacker}', attacker.name).replace('{defender}', defender.name);
             fightLog(line, 'info');
+            playSound('miss');
+        }
+    }
+
+    function selectPunchType(attacker, defender, state) {
+        const distance = state.distance;
+        const strategy = attacker.strategy;
+        const style = attacker.style;
+        
+        // Weight punch selection based on distance and strategy
+        let punchWeights = {
+            jab: 40,
+            cross: 20,
+            hook: 15,
+            uppercut: 10,
+            bodyJab: 10,
+            bodyHook: 5
+        };
+        
+        // Distance adjustments
+        if (distance === 'close') {
+            punchWeights.hook += 15;
+            punchWeights.uppercut += 15;
+            punchWeights.jab -= 15;
+            punchWeights.cross -= 10;
+        } else if (distance === 'far') {
+            punchWeights.jab += 20;
+            punchWeights.cross += 10;
+            punchWeights.hook -= 10;
+            punchWeights.uppercut -= 10;
+        }
+        
+        // Strategy adjustments
+        if (strategy === 'body') {
+            punchWeights.bodyJab += 25;
+            punchWeights.bodyHook += 20;
+        } else if (strategy === 'head') {
+            punchWeights.hook += 10;
+            punchWeights.uppercut += 15;
+            punchWeights.bodyJab -= 10;
+            punchWeights.bodyHook -= 5;
+        } else if (strategy === 'aggressive') {
+            punchWeights.hook += 10;
+            punchWeights.cross += 10;
+        }
+        
+        // Style adjustments
+        if (style === 'Slugger') {
+            punchWeights.hook += 15;
+            punchWeights.cross += 10;
+            punchWeights.jab -= 10;
+        } else if (style === 'Outboxer') {
+            punchWeights.jab += 20;
+            punchWeights.cross += 5;
+            punchWeights.hook -= 5;
+        } else if (style === 'Swarmer') {
+            punchWeights.jab += 10;
+            punchWeights.bodyJab += 15;
+            punchWeights.bodyHook += 10;
+        }
+        
+        // Normalize and select
+        const total = Object.values(punchWeights).reduce((a, b) => a + Math.max(0, b), 0);
+        let roll = rand(1, total);
+        
+        for (const [punch, weight] of Object.entries(punchWeights)) {
+            if (weight > 0) {
+                roll -= weight;
+                if (roll <= 0) return punch;
+            }
+        }
+        
+        return 'jab'; // Default
+    }
+
+    function animatePunch(attackerIndex, isBigHit) {
+        const fighterEl = document.getElementById(attackerIndex === 0 ? 'fighter-1' : 'fighter-2');
+        const defenderEl = document.getElementById(attackerIndex === 0 ? 'fighter-2' : 'fighter-1');
+        
+        if (isBigHit) {
+            fighterEl.classList.add(attackerIndex === 0 ? 'power-punching' : 'power-punching-right');
+            defenderEl.classList.add('staggered');
+        } else {
+            fighterEl.classList.add(attackerIndex === 0 ? 'punching' : 'punching-right');
+            defenderEl.classList.add('hit-effect');
+        }
+        
+        setTimeout(() => {
+            fighterEl.classList.remove('punching', 'punching-right', 'power-punching', 'power-punching-right');
+            defenderEl.classList.remove('hit-effect', 'staggered');
+        }, isBigHit ? 500 : 300);
+    }
+
+    function triggerScreenShake(isKnockdown) {
+        const ringContainer = document.getElementById('ring-container');
+        if (ringContainer) {
+            ringContainer.classList.add('screen-shake');
+            setTimeout(() => {
+                ringContainer.classList.remove('screen-shake');
+            }, isKnockdown ? 600 : 400);
+        }
+    }
+
+    function triggerKnockdownEffect() {
+        const ringCanvas = document.getElementById('ring-canvas');
+        if (ringCanvas) {
+            ringCanvas.classList.add('knockdown-flash');
+            setTimeout(() => {
+                ringCanvas.classList.remove('knockdown-flash');
+            }, 500);
         }
     }
 
     function endRound() {
         const state = GameState.fightState;
         
-        // Score the round (10-point must system)
+        // Score the round using enhanced 10-point must system
         const f1 = state.fighters[0];
         const f2 = state.fighters[1];
         
         let p1Score = 10;
         let p2Score = 10;
         
-        // Compare damage dealt THIS round (using tracked start-of-round health)
-        // If start-of-round health is unavailable, fall back to current health so
-        // that damage for this round is treated as zero (keeps scoring fair in round 1).
-        const f1StartHealth = (state.roundStartHealth && typeof state.roundStartHealth.f2 === 'number')
-            ? state.roundStartHealth.f2
-            : f2.health;
-        const f2StartHealth = (state.roundStartHealth && typeof state.roundStartHealth.f1 === 'number')
-            ? state.roundStartHealth.f1
-            : f1.health;
-
-        const f1DamageDealt = f1StartHealth - f2.health;
-        const f2DamageDealt = f2StartHealth - f1.health;
+        // Calculate round effectiveness for each fighter
+        const f1Effectiveness = calculateRoundEffectiveness(f1, f2, state);
+        const f2Effectiveness = calculateRoundEffectiveness(f2, f1, state);
         
-        if (f1DamageDealt > f2DamageDealt + 3) {
+        // Determine round winner and margin
+        const scoreDiff = f1Effectiveness - f2Effectiveness;
+        
+        if (scoreDiff > 15) {
+            // Dominant round for F1
+            p2Score = 8;
+            fightLog(`Dominant round for ${f1.name}!`, 'action');
+        } else if (scoreDiff > 5) {
+            // Clear round for F1
             p2Score = 9;
-        } else if (f2DamageDealt > f1DamageDealt + 3) {
+        } else if (scoreDiff < -15) {
+            // Dominant round for F2
+            p1Score = 8;
+            fightLog(`Dominant round for ${f2.name}!`, 'action');
+        } else if (scoreDiff < -5) {
+            // Clear round for F2
             p1Score = 9;
         }
+        // else: Even round, 10-10
         
-        state.scorecard.push({ round: state.round, p1: p1Score, p2: p2Score });
+        // Knockdown scoring - each knockdown is worth additional -1 point
+        if (f1.knockdownsThisRound > 0) {
+            p1Score = Math.max(7, p1Score - f1.knockdownsThisRound);
+        }
+        if (f2.knockdownsThisRound > 0) {
+            p2Score = Math.max(7, p2Score - f2.knockdownsThisRound);
+        }
         
-        fightLog(`END OF ROUND ${state.round}! Scores: ${p1Score}-${p2Score}`, 'info');
+        state.scorecard.push({ 
+            round: state.round, 
+            p1: p1Score, 
+            p2: p2Score,
+            f1Landed: f1.damageDealtThisRound,
+            f2Landed: f2.damageDealtThisRound
+        });
+        
+        // Calculate running totals
+        let p1Total = 0, p2Total = 0;
+        state.scorecard.forEach(r => {
+            p1Total += r.p1;
+            p2Total += r.p2;
+        });
+        
+        // Announce round scores
+        fightLog(`═══ END OF ROUND ${state.round} ═══`, 'info');
+        fightLog(`Round Score: ${p1Score}-${p2Score}`, 'info');
+        fightLog(`Total: ${p1.name} ${p1Total} - ${p2Total} ${f2.name}`, 'info');
+        
+        // Play bell sound
+        playSound('bell');
         
         // Check if fight is over
         if (state.round >= state.maxRounds) {
             // Go to decision
-            let p1Total = 0, p2Total = 0;
-            state.scorecard.forEach(r => {
-                p1Total += r.p1;
-                p2Total += r.p2;
-            });
-            
             if (p1Total > p2Total) {
-                endFight(0, 'DECISION');
+                const margin = p1Total - p2Total;
+                const method = margin > 10 ? 'UNANIMOUS DECISION' : margin > 5 ? 'SPLIT DECISION' : 'MAJORITY DECISION';
+                endFight(0, method);
             } else if (p2Total > p1Total) {
-                endFight(1, 'DECISION');
+                const margin = p2Total - p1Total;
+                const method = margin > 10 ? 'UNANIMOUS DECISION' : margin > 5 ? 'SPLIT DECISION' : 'MAJORITY DECISION';
+                endFight(1, method);
             } else {
                 endFight(-1, 'DRAW');
             }
@@ -1194,16 +1963,57 @@
         state.round++;
         state.exchangesThisRound = 0;
         
-        // Reset for corner
+        // Reset round-specific stats
         state.fighters[0].cutmanAction = null;
         state.fighters[1].cutmanAction = null;
+        state.fighters[0].damageDealtThisRound = 0;
+        state.fighters[1].damageDealtThisRound = 0;
+        state.fighters[0].knockdownsThisRound = 0;
+        state.fighters[1].knockdownsThisRound = 0;
+        
+        // Clear hurt status between rounds
+        state.fighters[0].isHurt = false;
+        state.fighters[1].isHurt = false;
+        state.fighters[0].hurtTimer = 0;
+        state.fighters[1].hurtTimer = 0;
         
         showCornerScreen();
     }
 
+    function calculateRoundEffectiveness(fighter, opponent, state) {
+        let effectiveness = 0;
+        
+        // Damage dealt is primary factor
+        effectiveness += fighter.damageDealtThisRound * 2;
+        
+        // Punches landed (adjusted by accuracy)
+        const thrown = fighter.punchesThrown || 1;
+        const accuracy = fighter.punchesLanded / thrown;
+        effectiveness += fighter.punchesLanded * accuracy * 0.5;
+        
+        // Power punches count more
+        effectiveness += (fighter.powerPunchesLanded || 0) * 1.5;
+        
+        // Ring control (momentum advantage)
+        if (state.momentum < 50) {
+            effectiveness += (50 - state.momentum) * 0.3;
+        }
+        
+        // Knockdowns are huge
+        effectiveness += (fighter.knockdownsThisRound || 0) * 20;
+        
+        // Penalty for being hurt
+        if (opponent.knockdownsThisRound > 0) {
+            effectiveness -= 10;
+        }
+        
+        return effectiveness;
+    }
+
     function showCornerScreen() {
-        const f1 = GameState.fightState.fighters[0];
-        const f2 = GameState.fightState.fighters[1];
+        const state = GameState.fightState;
+        const f1 = state.fighters[0];
+        const f2 = state.fighters[1];
         
         document.getElementById('corner-p1-name').textContent = f1.name;
         document.getElementById('corner-p2-name').textContent = f2.name;
@@ -1218,10 +2028,119 @@
         document.getElementById('corner-p2-cuts').textContent = f2.cuts > 0 ? 'Level ' + Math.ceil(f2.cuts / 25) : 'None';
         document.getElementById('corner-p2-swelling').textContent = f2.swelling > 0 ? 'Level ' + Math.ceil(f2.swelling / 25) : 'None';
         
+        // Generate and display coach advice
+        const advice1 = generateCoachAdvice(f1, f2, state, 0);
+        const advice2 = generateCoachAdvice(f2, f1, state, 1);
+        
+        // Add coach advice elements if they don't exist
+        let adviceEl1 = document.getElementById('coach-advice-1');
+        let adviceEl2 = document.getElementById('coach-advice-2');
+        
+        if (!adviceEl1) {
+            const panel1 = document.getElementById('corner-p1-panel');
+            if (panel1) {
+                adviceEl1 = document.createElement('div');
+                adviceEl1.id = 'coach-advice-1';
+                adviceEl1.style.cssText = 'margin-top: 10px; padding: 8px; background: rgba(0,0,0,0.5); border-radius: 4px; font-size: 7px; color: #ffdd00;';
+                panel1.appendChild(adviceEl1);
+            }
+        }
+        
+        if (!adviceEl2) {
+            const panel2 = document.getElementById('corner-p2-panel');
+            if (panel2) {
+                adviceEl2 = document.createElement('div');
+                adviceEl2.id = 'coach-advice-2';
+                adviceEl2.style.cssText = 'margin-top: 10px; padding: 8px; background: rgba(0,0,0,0.5); border-radius: 4px; font-size: 7px; color: #ffdd00;';
+                panel2.appendChild(adviceEl2);
+            }
+        }
+        
+        if (adviceEl1) adviceEl1.innerHTML = `<strong>🎤 COACH:</strong> ${advice1}`;
+        if (adviceEl2) adviceEl2.innerHTML = `<strong>🎤 COACH:</strong> ${advice2}`;
+        
         // Reset button states (keep corner action buttons enabled, preserve strategy selections)
         document.querySelectorAll('.corner-btn').forEach(btn => btn.disabled = false);
         
         showScreen('corner-screen');
+    }
+
+    function generateCoachAdvice(fighter, opponent, state, fighterIndex) {
+        const adviceOptions = [];
+        
+        // Calculate current scorecard totals
+        let fighterTotal = 0, opponentTotal = 0;
+        state.scorecard.forEach(r => {
+            fighterTotal += fighterIndex === 0 ? r.p1 : r.p2;
+            opponentTotal += fighterIndex === 0 ? r.p2 : r.p1;
+        });
+        
+        const scoreDiff = fighterTotal - opponentTotal;
+        const roundsRemaining = state.maxRounds - state.round + 1;
+        
+        // Stamina-based advice
+        if (fighter.stamina < 40) {
+            adviceOptions.push("You need to pace yourself! Conserve energy and pick your shots.");
+            adviceOptions.push("Take a breather out there. Use the jab to control distance.");
+        }
+        
+        if (opponent.stamina < 40) {
+            adviceOptions.push("They're gassing! Now's the time to pour it on!");
+            adviceOptions.push("Push the pace! They can't keep up much longer!");
+        }
+        
+        // Health-based advice
+        if (fighter.health < 50) {
+            adviceOptions.push("Stay smart! Don't trade with them. Box from the outside.");
+            adviceOptions.push("Protect yourself! Use your jab and keep moving.");
+        }
+        
+        if (opponent.health < 50) {
+            adviceOptions.push("They're hurt! Go for the finish! This is your moment!");
+            adviceOptions.push("One big shot could end this! Look for the knockout!");
+        }
+        
+        // Scoring-based advice
+        if (scoreDiff > 6) {
+            adviceOptions.push("You're ahead on the cards. Don't do anything stupid - box smart.");
+            adviceOptions.push("Keep doing what you're doing. The fight is yours to lose.");
+        } else if (scoreDiff < -6) {
+            adviceOptions.push("You need a knockout to win this! Throw caution to the wind!");
+            adviceOptions.push("You're behind! Time to take some risks!");
+        }
+        
+        // Injury-based advice
+        if (fighter.cuts > 30) {
+            adviceOptions.push("Watch that cut! Don't let them target it.");
+        }
+        if (opponent.cuts > 30) {
+            adviceOptions.push("Target that cut! A doctor stoppage is within reach!");
+        }
+        
+        if (fighter.swelling > 30) {
+            adviceOptions.push("That eye is closing up. Keep your guard high!");
+        }
+        if (opponent.swelling > 30) {
+            adviceOptions.push("Their vision is impaired! Attack from their blind side!");
+        }
+        
+        // Style-specific advice
+        if (fighter.style === 'Slugger') {
+            adviceOptions.push("Let your hands go! You've got the power to end this!");
+        } else if (fighter.style === 'Outboxer') {
+            adviceOptions.push("Stick to your jab. Control the range and pick them apart.");
+        } else if (fighter.style === 'Swarmer') {
+            adviceOptions.push("Get inside and work! Don't give them room to breathe!");
+        }
+        
+        // Default advice
+        if (adviceOptions.length === 0) {
+            adviceOptions.push("Stay focused! Stick to the game plan!");
+            adviceOptions.push("Good work! Keep that intensity up!");
+            adviceOptions.push("Listen to your body. Make every punch count!");
+        }
+        
+        return pick(adviceOptions);
     }
 
     // Corner Actions
@@ -1245,8 +2164,9 @@
                 f.stamina = Math.min(100, f.stamina + 25);
                 break;
             case 'salts':
-                // Smelling salts boost alertness, modeled as stamina boost
-                f.stamina = Math.min(100, f.stamina + 15);
+                // Smelling salts boost alertness, modeled as health recovery
+                f.health = Math.min(100, f.health + 5);
+                f.stamina = Math.min(100, f.stamina + 10);
                 break;
         }
         
@@ -1273,9 +2193,15 @@
     function nextRound() {
         const state = GameState.fightState;
         
-        // Apply natural recovery (stamina only - health doesn't recover in boxing)
+        // Apply natural recovery based on fighter conditioning
         state.fighters.forEach(f => {
-            f.stamina = Math.min(100, f.stamina + 15); // Base stamina recovery
+            // Base stamina recovery
+            let staminaRecovery = 15;
+            
+            // Better conditioned fighters recover more
+            staminaRecovery += Math.floor((f.stamina_base || f.stamina) / 20);
+            
+            f.stamina = Math.min(100, f.stamina + staminaRecovery);
         });
         
         // Track health at start of round for scoring
@@ -1284,11 +2210,20 @@
             f2: state.fighters[1].health
         };
         
+        // Reset distance to mid-range at start of each round
+        state.distance = 'mid';
+        
+        // Play bell sound
+        playSound('bell');
+        
         // Update UI
         document.getElementById('fight-round').textContent = state.round;
-        fightLog(`ROUND ${state.round} - FIGHT!`, 'action');
+        fightLog(`═══ ROUND ${state.round} - FIGHT! ═══`, 'action');
         
         updateFightHUD();
+        updatePunchStats();
+        updateMomentum();
+        updateDistance();
         showScreen('fight-screen');
     }
 
@@ -1296,6 +2231,9 @@
         const state = GameState.fightState;
         const f1 = state.fighters[0];
         const f2 = state.fighters[1];
+        
+        // Play final bell
+        playSound('bell');
         
         let winnerName, loserName;
         let winnerIndex = winner;
@@ -1312,46 +2250,70 @@
             loserName = state.fighters[winner === 0 ? 1 : 0].name;
             
             document.getElementById('result-winner').textContent = winnerName + ' WINS!';
-            document.getElementById('result-method').textContent = 'BY ' + method + ' - ROUND ' + state.round;
+            document.getElementById('result-method').textContent = 'BY ' + method + (method.includes('KO') || method.includes('TKO') ? ' - ROUND ' + state.round : '');
             
             // Update records
             GameState.players[winner].wins++;
             GameState.players[winner === 0 ? 1 : 0].losses++;
             
-            // Prize money - only winner gets paid (creates economic pressure)
-            const prize = 10000 + (state.round * 1000);
-            GameState.players[winner].money += prize;
+            // Prize money - winner gets more, loser gets show money
+            const basePrize = 10000;
+            const roundBonus = state.round * 500;
+            const koBonus = (method.includes('KO') || method.includes('TKO')) ? 5000 : 0;
+            
+            const winnerPrize = basePrize + roundBonus + koBonus;
+            const loserPrize = Math.floor(basePrize * 0.3); // Show money
+            
+            GameState.players[winner].money += winnerPrize;
+            GameState.players[winner === 0 ? 1 : 0].money += loserPrize;
         }
         
-        // Build scorecard
+        // Build enhanced scorecard
         let scorecardHTML = '<div class="scorecard-row" style="border-bottom: 1px solid #333; padding-bottom: 8px; margin-bottom: 8px;"><span class="score-left">' + f1.name + '</span><span class="score-center">RND</span><span class="score-right">' + f2.name + '</span></div>';
         
         let p1Total = 0, p2Total = 0;
         state.scorecard.forEach(r => {
-            scorecardHTML += `<div class="scorecard-row"><span class="score-left">${r.p1}</span><span class="score-center">${r.round}</span><span class="score-right">${r.p2}</span></div>`;
+            const p1Style = r.p1 > r.p2 ? 'color: #00ff88; font-weight: bold;' : r.p1 < r.p2 ? 'color: #888;' : '';
+            const p2Style = r.p2 > r.p1 ? 'color: #00ff88; font-weight: bold;' : r.p2 < r.p1 ? 'color: #888;' : '';
+            scorecardHTML += `<div class="scorecard-row"><span class="score-left" style="${p1Style}">${r.p1}</span><span class="score-center">${r.round}</span><span class="score-right" style="${p2Style}">${r.p2}</span></div>`;
             p1Total += r.p1;
             p2Total += r.p2;
         });
         
-        scorecardHTML += `<div class="scorecard-row" style="border-top: 1px solid #333; padding-top: 8px; margin-top: 8px;"><span class="score-left" style="font-size: 12px;">${p1Total}</span><span class="score-center">TOTAL</span><span class="score-right" style="font-size: 12px;">${p2Total}</span></div>`;
+        scorecardHTML += `<div class="scorecard-row" style="border-top: 2px solid #ffdd00; padding-top: 8px; margin-top: 8px;"><span class="score-left" style="font-size: 14px; color: ${p1Total > p2Total ? '#00ff88' : p1Total < p2Total ? '#e94560' : '#fff'};">${p1Total}</span><span class="score-center" style="font-size: 10px;">FINAL</span><span class="score-right" style="font-size: 14px; color: ${p2Total > p1Total ? '#00ff88' : p2Total < p1Total ? '#e94560' : '#fff'};">${p2Total}</span></div>`;
         
         document.getElementById('scorecard').innerHTML = scorecardHTML;
         
-        // Stats
+        // Calculate accuracy percentages
+        const f1Accuracy = f1.punchesThrown > 0 ? Math.round((f1.punchesLanded / f1.punchesThrown) * 100) : 0;
+        const f2Accuracy = f2.punchesThrown > 0 ? Math.round((f2.punchesLanded / f2.punchesThrown) * 100) : 0;
+        
+        // Enhanced stats display
         document.getElementById('result-stats').innerHTML = `
             <div class="panel">
-                <p class="subtitle">${f1.name}</p>
-                <div class="stat-row"><span>Punches Landed:</span><span>${f1.punchesLanded}</span></div>
-                <div class="stat-row"><span>Punches Missed:</span><span>${f1.punchesMissed}</span></div>
-                <div class="stat-row"><span>Final Health:</span><span>${Math.round(f1.health)}%</span></div>
+                <p class="subtitle" style="text-align: center; margin-bottom: 10px;">${f1.name}</p>
+                <div class="stat-row"><span>Total Punches:</span><span>${f1.punchesLanded}/${f1.punchesThrown} (${f1Accuracy}%)</span></div>
+                <div class="stat-row"><span>Power Punches:</span><span>${f1.powerPunchesLanded || 0}</span></div>
+                <div class="stat-row"><span>Body Shots:</span><span>${f1.bodyPunchesLanded || 0}</span></div>
+                <div class="stat-row"><span>Combos Landed:</span><span>${f1.combosLanded || 0}</span></div>
+                <div class="stat-row"><span>Knockdowns:</span><span style="color: ${f1.knockdowns > 0 ? '#e94560' : '#888'};">${f1.knockdowns}</span></div>
+                <div class="stat-row"><span>Final Health:</span><span style="color: ${f1.health > 50 ? '#00ff88' : f1.health > 25 ? '#ffdd00' : '#e94560'};">${Math.round(f1.health)}%</span></div>
+                <div class="stat-row"><span>Final Stamina:</span><span>${Math.round(f1.stamina)}%</span></div>
             </div>
             <div class="panel blue">
-                <p class="subtitle" style="color: #4da6ff;">${f2.name}</p>
-                <div class="stat-row"><span>Punches Landed:</span><span>${f2.punchesLanded}</span></div>
-                <div class="stat-row"><span>Punches Missed:</span><span>${f2.punchesMissed}</span></div>
-                <div class="stat-row"><span>Final Health:</span><span>${Math.round(f2.health)}%</span></div>
+                <p class="subtitle" style="color: #4da6ff; text-align: center; margin-bottom: 10px;">${f2.name}</p>
+                <div class="stat-row"><span>Total Punches:</span><span>${f2.punchesLanded}/${f2.punchesThrown} (${f2Accuracy}%)</span></div>
+                <div class="stat-row"><span>Power Punches:</span><span>${f2.powerPunchesLanded || 0}</span></div>
+                <div class="stat-row"><span>Body Shots:</span><span>${f2.bodyPunchesLanded || 0}</span></div>
+                <div class="stat-row"><span>Combos Landed:</span><span>${f2.combosLanded || 0}</span></div>
+                <div class="stat-row"><span>Knockdowns:</span><span style="color: ${f2.knockdowns > 0 ? '#e94560' : '#888'};">${f2.knockdowns}</span></div>
+                <div class="stat-row"><span>Final Health:</span><span style="color: ${f2.health > 50 ? '#00ff88' : f2.health > 25 ? '#ffdd00' : '#e94560'};">${Math.round(f2.health)}%</span></div>
+                <div class="stat-row"><span>Final Stamina:</span><span>${Math.round(f2.stamina)}%</span></div>
             </div>
         `;
+        
+        // Play crowd reaction
+        setTimeout(() => playSound('crowd'), 500);
         
         showScreen('result-screen');
     }
