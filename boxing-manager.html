@@ -592,16 +592,27 @@
     };
 
     // Fighter Database - Starter Rosters
+    function generateFighterId(playerKey) {
+        // Prefer cryptographically strong UUIDs when available
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+            return playerKey + '-' + window.crypto.randomUUID();
+        }
+        // Fallback: timestamp + random string to reduce collision risk
+        const timestamp = Date.now().toString(36);
+        const random = Math.random().toString(36).substring(2, 8);
+        return playerKey + '-' + timestamp + '-' + random;
+    }
+
     const starterFighters = {
         player1: [
-            { id: 'p1f1', name: 'IRON MIKE', style: 'Slugger', power: 88, speed: 75, stamina: 70, defense: 65, chin: 80, heart: 85, emoji: '👊' },
-            { id: 'p1f2', name: 'QUICK HANDS', style: 'Outboxer', power: 70, speed: 90, stamina: 80, defense: 85, chin: 65, heart: 75, emoji: '🥊' },
-            { id: 'p1f3', name: 'THE TANK', style: 'Swarmer', power: 75, speed: 70, stamina: 95, defense: 70, chin: 90, heart: 95, emoji: '🔥' }
+            { id: generateFighterId('player1'), name: 'IRON MIKE', style: 'Slugger', power: 88, speed: 75, stamina: 70, defense: 65, chin: 80, heart: 85, emoji: '👊' },
+            { id: generateFighterId('player1'), name: 'QUICK HANDS', style: 'Outboxer', power: 70, speed: 90, stamina: 80, defense: 85, chin: 65, heart: 75, emoji: '🥊' },
+            { id: generateFighterId('player1'), name: 'THE TANK', style: 'Swarmer', power: 75, speed: 70, stamina: 95, defense: 70, chin: 90, heart: 95, emoji: '🔥' }
         ],
         player2: [
-            { id: 'p2f1', name: 'THUNDER', style: 'Slugger', power: 85, speed: 72, stamina: 75, defense: 68, chin: 82, heart: 80, emoji: '⚡' },
-            { id: 'p2f2', name: 'THE GHOST', style: 'Outboxer', power: 68, speed: 92, stamina: 78, defense: 88, chin: 62, heart: 78, emoji: '👻' },
-            { id: 'p2f3', name: 'WARRIOR', style: 'Swarmer', power: 78, speed: 68, stamina: 92, defense: 72, chin: 88, heart: 92, emoji: '⚔️' }
+            { id: generateFighterId('player2'), name: 'THUNDER', style: 'Slugger', power: 85, speed: 72, stamina: 75, defense: 68, chin: 82, heart: 80, emoji: '⚡' },
+            { id: generateFighterId('player2'), name: 'THE GHOST', style: 'Outboxer', power: 68, speed: 92, stamina: 78, defense: 88, chin: 62, heart: 78, emoji: '👻' },
+            { id: generateFighterId('player2'), name: 'WARRIOR', style: 'Swarmer', power: 78, speed: 68, stamina: 92, defense: 72, chin: 88, heart: 92, emoji: '⚔️' }
         ]
     };
 
