@@ -130,7 +130,7 @@
             <div class="creator-grid">
                 <div class="creator-field">
                     <label for="boxer-name">Boxer Name</label>
-                    <input id="boxer-name" type="text" placeholder="Custom Bruiser" maxlength="18">
+                    <input id="boxer-name" type="text" placeholder="Custom Bruiser" maxlength="18" aria-label="Custom boxer name">
                 </div>
                 <div class="creator-field">
                     <label for="boxer-style">Fighting Style</label>
@@ -151,16 +151,16 @@
                     </select>
                 </div>
                 <div class="creator-field">
-                    <label for="power-range">Power</label>
-                    <input id="power-range" type="range" min="50" max="99" step="1" value="82">
+                    <label for="power-range">Power <span id="power-value" aria-live="polite">82</span></label>
+                    <input id="power-range" type="range" min="50" max="99" step="1" value="82" aria-valuemin="50" aria-valuemax="99" aria-valuenow="82">
                 </div>
                 <div class="creator-field">
-                    <label for="speed-range">Speed</label>
-                    <input id="speed-range" type="range" min="50" max="99" step="1" value="88">
+                    <label for="speed-range">Speed <span id="speed-value" aria-live="polite">88</span></label>
+                    <input id="speed-range" type="range" min="50" max="99" step="1" value="88" aria-valuemin="50" aria-valuemax="99" aria-valuenow="88">
                 </div>
                 <div class="creator-field">
-                    <label for="defense-range">Defense</label>
-                    <input id="defense-range" type="range" min="50" max="99" step="1" value="80">
+                    <label for="defense-range">Defense <span id="defense-value" aria-live="polite">80</span></label>
+                    <input id="defense-range" type="range" min="50" max="99" step="1" value="80" aria-valuemin="50" aria-valuemax="99" aria-valuenow="80">
                 </div>
                 <div class="creator-field">
                     <label for="crt-toggle">Punch-Out! CRT Mode</label>
@@ -194,17 +194,23 @@ function hexToInt(hex) {
     return parseInt(hex.replace('#', ''), 16);
 }
 
+const STYLE_MODS = {
+    slugger: { strength: 8, speed: -5, agility: -2, chin: 4, heart: 92 },
+    outboxer: { strength: -6, speed: 8, agility: 6, chin: -2, heart: 94 },
+    counter: { strength: -2, speed: 0, agility: 4, chin: 6, defense: 8, heart: 96 },
+    balanced: { strength: 0, speed: 0, agility: -2, chin: 2, heart: 95 }
+};
+
 function buildStyleStats(style, power, speed, defense) {
-    switch (style) {
-        case 'slugger':
-            return { strength: power + 8, speed: speed - 5, agility: speed - 2, defense, chin: defense + 4, heart: 92 };
-        case 'outboxer':
-            return { strength: power - 6, speed: speed + 8, agility: speed + 6, defense, chin: defense - 2, heart: 94 };
-        case 'counter':
-            return { strength: power - 2, speed: speed, agility: speed + 4, defense: defense + 8, chin: defense + 6, heart: 96 };
-        default:
-            return { strength: power, speed, agility: speed - 2, defense, chin: defense + 2, heart: 95 };
-    }
+    const mod = STYLE_MODS[style] || STYLE_MODS.balanced;
+    return {
+        strength: power + (mod.strength || 0),
+        speed: speed + (mod.speed || 0),
+        agility: speed + (mod.agility || 0),
+        defense: defense + (mod.defense || 0),
+        chin: defense + (mod.chin || 0),
+        heart: mod.heart || 95
+    };
 }
 
 function applyCRTMode(enabled) {
@@ -257,13 +263,19 @@ function startCustomBout(options = {}) {
 
 document.getElementById('create-boxer-form').addEventListener('submit', (e) => {
     e.preventDefault();
+    const powerRange = document.getElementById('power-range');
+    const speedRange = document.getElementById('speed-range');
+    const defenseRange = document.getElementById('defense-range');
+    powerRange.setAttribute('aria-valuenow', powerRange.value);
+    speedRange.setAttribute('aria-valuenow', speedRange.value);
+    defenseRange.setAttribute('aria-valuenow', defenseRange.value);
     startCustomBout({
         name: document.getElementById('boxer-name').value || 'Custom Bruiser',
         paletteKey: document.getElementById('palette-select').value,
         style: document.getElementById('boxer-style').value,
-        power: Number(document.getElementById('power-range').value),
-        speed: Number(document.getElementById('speed-range').value),
-        defense: Number(document.getElementById('defense-range').value),
+        power: Number(powerRange.value),
+        speed: Number(speedRange.value),
+        defense: Number(defenseRange.value),
         crt: document.getElementById('crt-toggle').value
     });
 });
@@ -279,6 +291,26 @@ document.getElementById('mirror-match').addEventListener('click', () => {
         crt: document.getElementById('crt-toggle').value
     });
 });
+
+// Live range value display for accessibility
+const powerRangeEl = document.getElementById('power-range');
+const speedRangeEl = document.getElementById('speed-range');
+const defenseRangeEl = document.getElementById('defense-range');
+const powerValueEl = document.getElementById('power-value');
+const speedValueEl = document.getElementById('speed-value');
+const defenseValueEl = document.getElementById('defense-value');
+
+function bindRange(rangeEl, valueEl) {
+    if (!rangeEl || !valueEl) return;
+    rangeEl.addEventListener('input', () => {
+        valueEl.textContent = rangeEl.value;
+        rangeEl.setAttribute('aria-valuenow', rangeEl.value);
+    });
+}
+
+bindRange(powerRangeEl, powerValueEl);
+bindRange(speedRangeEl, speedValueEl);
+bindRange(defenseRangeEl, defenseValueEl);
 
 /**
  * FighterRenderer Class - Exportable module for procedural pixel sprite rendering
