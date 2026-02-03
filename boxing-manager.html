@@ -491,10 +491,10 @@
                     </div>
                     <p class="label">TRAINER STRATEGY:</p>
                     <div class="corner-actions" id="p1-strategy-btns">
-                        <button class="btn strategy-btn" onclick="setStrategy(1,'aggressive')">👊 AGGRESSIVE</button>
-                        <button class="btn strategy-btn" onclick="setStrategy(1,'defensive')">🛡️ DEFENSIVE</button>
-                        <button class="btn strategy-btn" onclick="setStrategy(1,'body')">💪 BODY WORK</button>
-                        <button class="btn strategy-btn" onclick="setStrategy(1,'head')">🎯 HEAD HUNTER</button>
+                        <button class="btn strategy-btn" data-strategy="aggressive" onclick="setStrategy(1,'aggressive')">👊 AGGRESSIVE</button>
+                        <button class="btn strategy-btn" data-strategy="defensive" onclick="setStrategy(1,'defensive')">🛡️ DEFENSIVE</button>
+                        <button class="btn strategy-btn" data-strategy="body" onclick="setStrategy(1,'body')">💪 BODY WORK</button>
+                        <button class="btn strategy-btn" data-strategy="head" onclick="setStrategy(1,'head')">🎯 HEAD HUNTER</button>
                     </div>
                 </div>
                 <div class="panel blue" id="corner-p2-panel">
@@ -515,10 +515,10 @@
                     </div>
                     <p class="label">TRAINER STRATEGY:</p>
                     <div class="corner-actions" id="p2-strategy-btns">
-                        <button class="btn strategy-btn blue" onclick="setStrategy(2,'aggressive')">👊 AGGRESSIVE</button>
-                        <button class="btn strategy-btn blue" onclick="setStrategy(2,'defensive')">🛡️ DEFENSIVE</button>
-                        <button class="btn strategy-btn blue" onclick="setStrategy(2,'body')">💪 BODY WORK</button>
-                        <button class="btn strategy-btn blue" onclick="setStrategy(2,'head')">🎯 HEAD HUNTER</button>
+                        <button class="btn strategy-btn blue" data-strategy="aggressive" onclick="setStrategy(2,'aggressive')">👊 AGGRESSIVE</button>
+                        <button class="btn strategy-btn blue" data-strategy="defensive" onclick="setStrategy(2,'defensive')">🛡️ DEFENSIVE</button>
+                        <button class="btn strategy-btn blue" data-strategy="body" onclick="setStrategy(2,'body')">💪 BODY WORK</button>
+                        <button class="btn strategy-btn blue" data-strategy="head" onclick="setStrategy(2,'head')">🎯 HEAD HUNTER</button>
                     </div>
                 </div>
             </div>
@@ -695,13 +695,26 @@
     }
 
     function saveGame() {
-        localStorage.setItem('brotherhood_boxing_save', JSON.stringify(GameState));
-        log('Game saved!', 'action');
+        try {
+            localStorage.setItem('brotherhood_boxing_save', JSON.stringify(GameState));
+            log('Game saved!', 'action');
+        } catch (e) {
+            log('Failed to save game. Storage may be full or unavailable.', 'hit');
+            alert('Could not save game. Please check if you have storage space available.');
+        }
+    }
+
+    function validatePlayerName(name) {
+        // Allow alphanumeric characters, spaces, and common punctuation
+        const sanitized = name.replace(/[^a-zA-Z0-9\s\-_.]/g, '').trim();
+        if (sanitized.length === 0) return null;
+        if (sanitized.length > 12) return sanitized.substring(0, 12);
+        return sanitized;
     }
 
     function confirmSetup() {
-        const p1Name = document.getElementById('p1-name-input').value.trim() || 'PLAYER 1';
-        const p2Name = document.getElementById('p2-name-input').value.trim() || 'PLAYER 2';
+        let p1Name = validatePlayerName(document.getElementById('p1-name-input').value) || 'PLAYER 1';
+        let p2Name = validatePlayerName(document.getElementById('p2-name-input').value) || 'PLAYER 2';
         
         GameState.players[0].name = p1Name.toUpperCase();
         GameState.players[1].name = p2Name.toUpperCase();
@@ -795,21 +808,47 @@
     // Training
     function trainFighter() {
         const player = GameState.players[GameState.currentTurn];
-        if (player.money < 5000) {
-            log('Not enough money for training! Need $5,000.', 'hit');
+        
+        // Ensure there is at least one fighter to train
+        if (!player || !player.fighters || player.fighters.length === 0) {
+            log('No fighters available to train.', 'hit');
+            return;
+        }
+
+        // Select a random fighter to train
+        const fighter = player.fighters[rand(0, player.fighters.length - 1)];
+
+        // Initialize and enforce per-fighter training limits
+        if (typeof fighter.trainingSessions !== 'number') {
+            fighter.trainingSessions = 0;
+        }
+
+        const MAX_TRAINING_SESSIONS = 50;
+        if (fighter.trainingSessions >= MAX_TRAINING_SESSIONS) {
+            log(`${fighter.name} has reached their training limit. Focus on another fighter.`, 'hit');
+            return;
+        }
+
+        // Dynamic training cost: starts at $5,000 and increases with each session
+        const BASE_TRAINING_COST = 5000;
+        const INCREMENTAL_COST = 500;
+        const trainingCost = BASE_TRAINING_COST + (fighter.trainingSessions * INCREMENTAL_COST);
+
+        if (player.money < trainingCost) {
+            log(`Not enough money for training! Need $${trainingCost.toLocaleString()}.`, 'hit');
             return;
         }
         
-        // Simple training - random stat boost
-        const fighter = player.fighters[rand(0, player.fighters.length - 1)];
+        // Random stat boost
         const stats = ['power', 'speed', 'stamina', 'defense', 'chin', 'heart'];
         const stat = pick(stats);
         const boost = rand(1, 3);
         
         fighter[stat] = Math.min(99, fighter[stat] + boost);
-        player.money -= 5000;
+        fighter.trainingSessions += 1;
+        player.money -= trainingCost;
         
-        log(`${fighter.name} trained ${stat.toUpperCase()} +${boost}! (-$5,000)`, 'action');
+        log(`${fighter.name} trained ${stat.toUpperCase()} +${boost}! (-$${trainingCost.toLocaleString()})`, 'action');
         updateHubUI();
     }
 
@@ -892,6 +931,7 @@
             maxRounds: 12,
             exchangesThisRound: 0,
             maxExchangesPerRound: 8,
+            isSimulating: false, // Flag to prevent concurrent exchanges
             fighters: [
                 {
                     ...selectedP1Fighter,
@@ -918,7 +958,12 @@
                     cutmanAction: null
                 }
             ],
-            scorecard: []
+            scorecard: [],
+            // Initialize round start health for round 1 scoring
+            roundStartHealth: {
+                f1: 100,
+                f2: 100
+            }
         };
         
         // Update HUD
@@ -964,6 +1009,14 @@
         const state = GameState.fightState;
         if (!state) return;
         
+        // Prevent concurrent exchanges from rapid clicking
+        if (state.isSimulating) return;
+        state.isSimulating = true;
+        
+        // Disable button during exchange
+        const simBtn = document.getElementById('sim-btn');
+        if (simBtn) simBtn.disabled = true;
+        
         const f1 = state.fighters[0];
         const f2 = state.fighters[1];
         
@@ -975,16 +1028,24 @@
             
             // Check for knockdown/KO
             if (f1.health <= 0 || f2.health <= 0) {
+                state.isSimulating = false;
                 endFight(f1.health <= 0 ? 1 : 0, 'KO');
                 return;
             }
             
-            // Stamina drain
+            // Stamina drain:
+            // - Each exchange costs 2–5 stamina (% of max).
+            // - With 8 exchanges per round, ~16–40 stamina lost per round.
+            // - Between rounds, fighters regain 15 stamina + any water boost.
             f1.stamina = Math.max(0, f1.stamina - rand(2, 5));
             f2.stamina = Math.max(0, f2.stamina - rand(2, 5));
             
             state.exchangesThisRound++;
             updateFightHUD();
+            
+            // Re-enable button and flag
+            state.isSimulating = false;
+            if (simBtn) simBtn.disabled = false;
             
             // Check if round is over
             if (state.exchangesThisRound >= state.maxExchangesPerRound) {
@@ -1007,6 +1068,9 @@
         
         // Swelling affects defense
         if (defender.swelling > 20) hitChance += 10;
+        
+        // Clamp hit chance to ensure both fighters always have a chance
+        hitChance = Math.max(10, Math.min(90, hitChance));
         
         const roll = rand(1, 100);
         
@@ -1181,7 +1245,8 @@
                 f.stamina = Math.min(100, f.stamina + 25);
                 break;
             case 'salts':
-                f.health = Math.min(100, f.health + 5);
+                // Smelling salts boost alertness, modeled as stamina boost
+                f.stamina = Math.min(100, f.stamina + 15);
                 break;
         }
         
@@ -1195,14 +1260,11 @@
         const f = GameState.fightState.fighters[player - 1];
         f.strategy = strategy;
         
-        // Update button states
-        document.querySelectorAll(`#p${player}-strategy-btns .strategy-btn`).forEach(btn => {
-            btn.classList.remove('selected');
-        });
-        // Find the clicked button by matching strategy name
+        // Update button states using data-strategy attribute
         const btns = document.querySelectorAll(`#p${player}-strategy-btns .strategy-btn`);
         btns.forEach(btn => {
-            if (btn.textContent.toLowerCase().includes(strategy)) {
+            btn.classList.remove('selected');
+            if (btn.dataset.strategy === strategy) {
                 btn.classList.add('selected');
             }
         });
@@ -1239,9 +1301,12 @@
         let winnerIndex = winner;
         
         if (winner === -1) {
-            // Draw
+            // Draw - small purse split for both
             document.getElementById('result-winner').textContent = 'IT\'S A DRAW!';
             document.getElementById('result-method').textContent = 'SPLIT DECISION';
+            const drawPurse = 5000;
+            GameState.players[0].money += drawPurse;
+            GameState.players[1].money += drawPurse;
         } else {
             winnerName = state.fighters[winner].name;
             loserName = state.fighters[winner === 0 ? 1 : 0].name;
@@ -1253,10 +1318,9 @@
             GameState.players[winner].wins++;
             GameState.players[winner === 0 ? 1 : 0].losses++;
             
-            // Prize money
+            // Prize money - only winner gets paid (creates economic pressure)
             const prize = 10000 + (state.round * 1000);
             GameState.players[winner].money += prize;
-            GameState.players[winner === 0 ? 1 : 0].money += Math.floor(prize / 3);
         }
         
         // Build scorecard
