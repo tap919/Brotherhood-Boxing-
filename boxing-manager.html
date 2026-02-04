@@ -218,6 +218,102 @@
             gap: 4px;
         }
         .boxer-leg { width: 8px; height: 16px; background: #daa520; border: 2px solid #8B4513; }
+        
+        /* Enhanced Fighter Animations */
+        @keyframes fighterIdle {
+            0%, 100% { transform: translateY(0) scaleY(1); }
+            25% { transform: translateY(-1px) scaleY(0.98); }
+            50% { transform: translateY(-2px) scaleY(0.97); }
+            75% { transform: translateY(-1px) scaleY(0.98); }
+        }
+        @keyframes fighterBreathe {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        @keyframes gloveReady {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-2px); }
+        }
+        .pixel-boxer { animation: fighterIdle 1.5s ease-in-out infinite; }
+        .pixel-boxer .boxer-body { animation: fighterBreathe 2s ease-in-out infinite; }
+        .pixel-boxer .boxer-glove { animation: gloveReady 0.8s ease-in-out infinite alternate; }
+        
+        /* Pause idle animations while boxer is actively fighting/engaged */
+        .pixel-boxer.fighting,
+        .pixel-boxer.engaged {
+            animation-play-state: paused;
+        }
+        .pixel-boxer.fighting .boxer-body,
+        .pixel-boxer.engaged .boxer-body,
+        .pixel-boxer.fighting .boxer-glove,
+        .pixel-boxer.engaged .boxer-glove {
+            animation-play-state: paused;
+        }
+        
+        /* Damage visualization */
+        .boxer-head.cut::after {
+            content: '';
+            position: absolute;
+            top: 8px; left: 50%;
+            width: 6px; height: 2px;
+            background: linear-gradient(90deg, #8B0000, #FF0000);
+            border-radius: 1px;
+            animation: cutBleed 1s ease-in-out infinite;
+        }
+        @keyframes cutBleed { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        .boxer-head.swelling { 
+            border-radius: 6px 4px 4px 6px; 
+            background: linear-gradient(90deg, #daa520 60%, #9932CC 100%);
+        }
+        .boxer-body.fatigued { animation: fighterBreathe 1s ease-in-out infinite !important; }
+        
+        /* Rankings badge styles */
+        .rank-badge { 
+            display: inline-block; 
+            padding: 2px 6px; 
+            border-radius: 3px; 
+            font-size: 8px; 
+            font-weight: bold;
+            margin-top: 4px;
+        }
+        .rank-badge.champion { background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; }
+        .rank-badge.contender { background: linear-gradient(135deg, #C0C0C0, #808080); color: #000; }
+        .rank-badge.prospect { background: linear-gradient(135deg, #4da6ff, #0066cc); color: #fff; }
+        
+        /* Training panel styles */
+        .training-option {
+            background: linear-gradient(135deg, #1a2a4a 0%, #0f1a2e 100%);
+            border: 2px solid #444;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 5px 0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .training-option:hover { border-color: #00ff88; transform: translateY(-2px); }
+        .training-option.selected { border-color: #ffdd00; box-shadow: 0 0 10px rgba(255, 221, 0, 0.3); }
+        
+        /* Purse display */
+        .purse-display {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 170, 85, 0.1));
+            border: 2px solid #00ff88;
+            border-radius: 4px;
+            padding: 8px;
+            text-align: center;
+            margin: 8px 0;
+        }
+        .purse-amount { font-size: 14px; color: #00ff88; text-shadow: 0 0 10px rgba(0, 255, 136, 0.5); }
+        
+        /* AI Coach panel */
+        .ai-coach-panel {
+            background: linear-gradient(135deg, rgba(255, 221, 0, 0.1), rgba(204, 153, 0, 0.1));
+            border: 2px solid #ffdd00;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .ai-coach-panel .coach-icon { font-size: 20px; margin-right: 8px; }
+        .ai-recommendation { font-size: 9px; color: #ffdd00; line-height: 1.6; }
         .fighter-hud {
             position: absolute;
             width: 120px;
@@ -435,12 +531,14 @@
                 <div class="panel" id="hub-p1-panel">
                     <p class="subtitle">🔴 <span id="hub-p1-name">PLAYER 1</span></p>
                     <p class="value success" id="hub-p1-money">$50,000</p>
-                    <p class="label">Record: <span id="hub-p1-record">0-0</span></p>
+                    <p class="label">Record: <span id="hub-p1-record">0-0</span> | ELO: <span id="hub-p1-elo">1000</span></p>
+                    <p class="label">Gym Level: <span id="hub-p1-gym" class="highlight">1</span></p>
                 </div>
                 <div class="panel blue" id="hub-p2-panel">
                     <p class="subtitle" style="color: #4da6ff;">🔵 <span id="hub-p2-name">PLAYER 2</span></p>
                     <p class="value success" id="hub-p2-money">$50,000</p>
-                    <p class="label">Record: <span id="hub-p2-record">0-0</span></p>
+                    <p class="label">Record: <span id="hub-p2-record">0-0</span> | ELO: <span id="hub-p2-elo">1000</span></p>
+                    <p class="label">Gym Level: <span id="hub-p2-gym" class="highlight">1</span></p>
                 </div>
             </div>
             <div class="round-display">
@@ -450,8 +548,8 @@
             <div class="grid-3">
                 <button class="btn" onclick="viewRoster()">📋 ROSTER</button>
                 <button class="btn blue" onclick="scheduleFight()">🥊 FIGHT</button>
-                <button class="btn gold" onclick="trainFighter()">💪 TRAIN</button>
-                <button class="btn green" onclick="viewStandings()">🏆 STANDINGS</button>
+                <button class="btn gold" onclick="openTrainingScreen()">💪 GYM</button>
+                <button class="btn green" onclick="viewStandings()">🏆 RANKINGS</button>
                 <button class="btn" onclick="endTurn()">⏭️ END TURN</button>
                 <button class="btn" onclick="saveGame()">💾 SAVE</button>
             </div>
@@ -649,9 +747,74 @@
         </div>
         
         <div id="standings-screen" class="screen">
-            <h2 class="title">🏆 RANKINGS</h2>
+            <h2 class="title">🏆 RANKINGS & STANDINGS</h2>
             <div class="panel" id="standings-content"></div>
+            <div class="panel gold" style="margin-top: 10px;">
+                <p class="subtitle" style="color: #ffdd00; margin-bottom: 10px;">📊 WEIGHT CLASS RANKINGS</p>
+                <div id="weight-class-rankings"></div>
+            </div>
             <div style="text-align: center; margin-top: 15px;"><button class="btn" onclick="showScreen('hub-screen')">BACK</button></div>
+        </div>
+        
+        <div id="training-screen" class="screen">
+            <h2 class="title">💪 GYM TRAINING</h2>
+            <div class="grid-2">
+                <div class="panel">
+                    <p class="subtitle">SELECT FIGHTER TO TRAIN</p>
+                    <div id="training-fighter-select"></div>
+                </div>
+                <div class="panel green">
+                    <p class="subtitle" style="color: #00ff88;">TRAINING OPTIONS</p>
+                    <div class="ai-coach-panel">
+                        <span class="coach-icon">🤖</span>
+                        <strong style="font-size: 8px; color: #ffdd00;">AI COACH RECOMMENDATION</strong>
+                        <p class="ai-recommendation" id="ai-training-recommendation">Select a fighter to receive AI training recommendations.</p>
+                    </div>
+                    <div id="training-options">
+                        <div class="training-option" data-stat="power" onclick="selectTraining('power')">
+                            <span style="font-size: 16px;">👊</span>
+                            <span style="font-size: 8px; margin-left: 8px;">POWER TRAINING</span>
+                            <span style="font-size: 7px; color: #888; display: block; margin-left: 26px;">Heavy bag, strength exercises</span>
+                        </div>
+                        <div class="training-option" data-stat="speed" onclick="selectTraining('speed')">
+                            <span style="font-size: 16px;">⚡</span>
+                            <span style="font-size: 8px; margin-left: 8px;">SPEED TRAINING</span>
+                            <span style="font-size: 7px; color: #888; display: block; margin-left: 26px;">Speed bag, footwork drills</span>
+                        </div>
+                        <div class="training-option" data-stat="stamina" onclick="selectTraining('stamina')">
+                            <span style="font-size: 16px;">🏃</span>
+                            <span style="font-size: 8px; margin-left: 8px;">CARDIO TRAINING</span>
+                            <span style="font-size: 7px; color: #888; display: block; margin-left: 26px;">Running, endurance exercises</span>
+                        </div>
+                        <div class="training-option" data-stat="defense" onclick="selectTraining('defense')">
+                            <span style="font-size: 16px;">🛡️</span>
+                            <span style="font-size: 8px; margin-left: 8px;">DEFENSE TRAINING</span>
+                            <span style="font-size: 7px; color: #888; display: block; margin-left: 26px;">Sparring, slip drills</span>
+                        </div>
+                        <div class="training-option" data-stat="chin" onclick="selectTraining('chin')">
+                            <span style="font-size: 16px;">💎</span>
+                            <span style="font-size: 8px; margin-left: 8px;">CHIN CONDITIONING</span>
+                            <span style="font-size: 7px; color: #888; display: block; margin-left: 26px;">Neck exercises, sparring</span>
+                        </div>
+                        <div class="training-option" data-stat="heart" onclick="selectTraining('heart')">
+                            <span style="font-size: 16px;">❤️</span>
+                            <span style="font-size: 8px; margin-left: 8px;">MENTAL TRAINING</span>
+                            <span style="font-size: 7px; color: #888; display: block; margin-left: 26px;">Pressure sparring, visualization</span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 4px;">
+                        <p class="label">GYM LEVEL: <span id="gym-level-display" class="highlight">1</span></p>
+                        <p class="label">TRAINING COST: <span id="training-cost-display" class="success">$5,000</span></p>
+                        <p class="label">BONUS: <span id="training-bonus-display" style="color: #4da6ff;">+0% (Upgrade gym for bonus)</span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="divider"></div>
+            <div style="text-align: center;">
+                <button class="btn gold" onclick="upgradeGym()">🏋️ UPGRADE GYM ($10,000)</button>
+                <button class="btn green large" onclick="confirmTraining()">START TRAINING</button>
+                <button class="btn" onclick="showScreen('hub-screen')">BACK</button>
+            </div>
         </div>
         
         <div class="modal" id="rules-modal">
@@ -690,14 +853,265 @@
     // Game State
     const GameState = {
         players: [
-            { name: 'Player 1', money: 50000, wins: 0, losses: 0, fighters: [] },
-            { name: 'Player 2', money: 50000, wins: 0, losses: 0, fighters: [] }
+            { name: 'Player 1', money: 50000, wins: 0, losses: 0, fighters: [], gymLevel: 1, elo: 1000, totalEarnings: 0 },
+            { name: 'Player 2', money: 50000, wins: 0, losses: 0, fighters: [], gymLevel: 1, elo: 1000, totalEarnings: 0 }
         ],
         currentTurn: 0,
         season: 1,
         week: 1,
         activeFight: null,
-        fightState: null
+        fightState: null,
+        // Rankings system
+        weightClassRankings: {
+            'Heavyweight': [],
+            'Light Heavyweight': [],
+            'Middleweight': [],
+            'Welterweight': [],
+            'Lightweight': []
+        },
+        // Training system
+        selectedTrainingFighter: null,
+        selectedTrainingStat: null
+    };
+
+    // ============================================
+    // RANKING SYSTEM - ELO & Weight Class Rankings
+    // ============================================
+    const RankingSystem = {
+        K_FACTOR: 32,
+        
+        calculateElo: function(winnerElo, loserElo, isKO = false) {
+            const expectedWinner = 1 / (1 + Math.pow(10, (loserElo - winnerElo) / 400));
+            const expectedLoser = 1 / (1 + Math.pow(10, (winnerElo - loserElo) / 400));
+            
+            // Use separate K-factors so that KO bonus only applies to the winner
+            let winnerKFactor = this.K_FACTOR;
+            let loserKFactor = this.K_FACTOR;
+            if (isKO) {
+                winnerKFactor *= 1.2; // Bonus for KO wins applies only to winner
+            }
+            
+            const winnerNewElo = Math.round(winnerElo + winnerKFactor * (1 - expectedWinner));
+            const loserNewElo = Math.round(loserElo + loserKFactor * (0 - expectedLoser));
+            
+            return {
+                winner: Math.max(100, winnerNewElo),
+                loser: Math.max(100, loserNewElo)
+            };
+        },
+        
+        getRankTier: function(elo) {
+            if (elo >= 1800) return { tier: 'CHAMPION', color: '#FFD700', badge: 'champion' };
+            if (elo >= 1500) return { tier: 'CONTENDER', color: '#C0C0C0', badge: 'contender' };
+            if (elo >= 1200) return { tier: 'GATEKEEPER', color: '#CD7F32', badge: 'prospect' };
+            if (elo >= 1000) return { tier: 'PROSPECT', color: '#4da6ff', badge: 'prospect' };
+            return { tier: 'JOURNEYMAN', color: '#888', badge: 'prospect' };
+        },
+        
+        updateRankings: function() {
+            // Collect all fighters
+            const allFighters = [...GameState.players[0].fighters, ...GameState.players[1].fighters];
+            
+            // Reset rankings
+            Object.keys(GameState.weightClassRankings).forEach(wc => {
+                GameState.weightClassRankings[wc] = [];
+            });
+            
+            // Sort fighters into weight classes
+            allFighters.forEach(fighter => {
+                const weightClass = fighter.weightClass || 'Welterweight';
+                if (GameState.weightClassRankings[weightClass]) {
+                    GameState.weightClassRankings[weightClass].push({
+                        name: fighter.name,
+                        elo: fighter.elo || 1000,
+                        record: fighter.record || { wins: 0, losses: 0 },
+                        style: fighter.style,
+                        owner: GameState.players[0].fighters.includes(fighter) ? 0 : 1
+                    });
+                }
+            });
+            
+            // Sort each weight class by ELO
+            Object.keys(GameState.weightClassRankings).forEach(wc => {
+                GameState.weightClassRankings[wc].sort((a, b) => b.elo - a.elo);
+            });
+        }
+    };
+
+    // ============================================
+    // TRAINING SYSTEM CONSTANTS
+    // ============================================
+    const TrainingConstants = {
+        BASE_TRAINING_COST: 5000,
+        INCREMENTAL_COST: 500,
+        MAX_TRAINING_COST: 15000,
+        MAX_TRAINING_SESSIONS: 50,
+        
+        calculateTrainingCost: function(fighter) {
+            const sessions = fighter.trainingSessions || 0;
+            const rawCost = this.BASE_TRAINING_COST + (sessions * this.INCREMENTAL_COST);
+            return Math.min(rawCost, this.MAX_TRAINING_COST);
+        }
+    };
+
+    // ============================================
+    // MONEY PER FIGHT SYSTEM - Purse Calculations
+    // ============================================
+    const PurseSystem = {
+        BASE_PURSE: 5000,
+        
+        calculateFightPurse: function(fighter, opponent, isChampionshipFight = false) {
+            let basePurse = this.BASE_PURSE;
+            
+            // ELO-based purse multiplier - ensure minimum of 1.0 so low-ELO fighters earn at least base purse
+            const avgElo = ((fighter.elo || 1000) + (opponent.elo || 1000)) / 2;
+            let eloMultiplier = 1 + (avgElo - 1000) / 500;
+            eloMultiplier = Math.max(1.0, eloMultiplier);
+            
+            // Fight type bonuses
+            let fightBonus = 1.0;
+            if (isChampionshipFight) fightBonus = 2.5;
+            
+            // Calculate total purse
+            const totalPurse = Math.round(basePurse * eloMultiplier * fightBonus);
+            
+            return {
+                basePurse: totalPurse,
+                winnerShare: Math.round(totalPurse * 0.65),
+                loserShare: Math.round(totalPurse * 0.35),
+                koBonus: Math.round(totalPurse * 0.25)
+            };
+        },
+        
+        calculateExpenses: function(player, fighter) {
+            const gymFee = 500 * (player.gymLevel || 1);
+            const cornerCrew = 1000;
+            const trainingCamp = (fighter.trainingSessions || 0) * 200;
+            
+            return {
+                gymFee,
+                cornerCrew,
+                trainingCamp,
+                total: gymFee + cornerCrew + trainingCamp
+            };
+        }
+    };
+
+    // ============================================
+    // AI ENHANCEMENT SYSTEM
+    // ============================================
+    const AICoach = {
+        analyzeStyle: function(fighter) {
+            const stats = {
+                power: fighter.power,
+                speed: fighter.speed,
+                stamina: fighter.stamina,
+                defense: fighter.defense,
+                chin: fighter.chin,
+                heart: fighter.heart
+            };
+            
+            // Determine weakness
+            const minStat = Object.entries(stats).reduce((a, b) => a[1] < b[1] ? a : b);
+            const maxStat = Object.entries(stats).reduce((a, b) => a[1] > b[1] ? a : b);
+            
+            return {
+                strength: maxStat[0],
+                weakness: minStat[0],
+                recommendedTraining: minStat[0]
+            };
+        },
+        
+        getTrainingRecommendation: function(fighter) {
+            const analysis = this.analyzeStyle(fighter);
+            const ovr = Math.round((fighter.power + fighter.speed + fighter.stamina + fighter.defense + fighter.chin + fighter.heart) / 6);
+            
+            const recommendations = {
+                power: `${fighter.name}'s power (${fighter.power}) could use work. Focus on heavy bag and strength training to increase knockout potential.`,
+                speed: `${fighter.name}'s speed (${fighter.speed}) is a weak point. Speed bag drills and footwork exercises will help.`,
+                stamina: `${fighter.name} gasses out easily with stamina at ${fighter.stamina}. Cardio and roadwork are essential.`,
+                defense: `${fighter.name}'s defense (${fighter.defense}) needs improvement. Sparring and slip drills recommended.`,
+                chin: `${fighter.name}'s chin (${fighter.chin}) is vulnerable. Neck exercises and controlled sparring will help.`,
+                heart: `${fighter.name}'s mental toughness (${fighter.heart}) could be better. Pressure sparring and visualization training advised.`
+            };
+            
+            return {
+                overall: `OVR ${ovr} - ${analysis.strength.toUpperCase()} fighter with ${analysis.weakness} as weakness.`,
+                recommendation: recommendations[analysis.weakness] || 'All-around training recommended.',
+                suggestedStat: analysis.recommendedTraining
+            };
+        },
+        
+        predictFightOutcome: function(fighter1, fighter2) {
+            // Adjust stat weights based on fighter style while preserving original base weights
+            function getStyleWeights(style) {
+                const weights = {
+                    power: 1.2,
+                    speed: 1.1,
+                    stamina: 1.0,
+                    defense: 0.9,
+                    chin: 0.8,
+                    heart: 0.7
+                };
+
+                if (!style || typeof style !== 'string') {
+                    return weights;
+                }
+
+                switch (style.toLowerCase()) {
+                    case 'slugger':
+                        // Sluggers rely more on power and toughness
+                        weights.power += 0.3;
+                        weights.chin += 0.1;
+                        break;
+                    case 'outboxer':
+                        // Outboxers emphasize speed and defense
+                        weights.speed += 0.2;
+                        weights.defense += 0.2;
+                        break;
+                    case 'swarmer':
+                        // Swarmers typically have great stamina and heart
+                        weights.stamina += 0.2;
+                        weights.heart += 0.2;
+                        break;
+                    case 'boxer-puncher':
+                        // Balanced offensive style: slight boosts to power and speed
+                        weights.power += 0.15;
+                        weights.speed += 0.15;
+                        break;
+                    default:
+                        // Unknown style: use base weights
+                        break;
+                }
+
+                return weights;
+            }
+
+            function calculateScore(fighter) {
+                const w = getStyleWeights(fighter.style);
+                return (
+                    fighter.power * w.power +
+                    fighter.speed * w.speed +
+                    fighter.stamina * w.stamina +
+                    fighter.defense * w.defense +
+                    fighter.chin * w.chin +
+                    fighter.heart * w.heart
+                );
+            }
+
+            const f1Score = calculateScore(fighter1);
+            const f2Score = calculateScore(fighter2);
+            
+            const total = f1Score + f2Score;
+            const f1Chance = Math.round((f1Score / total) * 100);
+            
+            return {
+                fighter1Chance: f1Chance,
+                fighter2Chance: 100 - f1Chance,
+                prediction: f1Score > f2Score ? fighter1.name : fighter2.name,
+                confidence: Math.abs(f1Chance - 50) + 50
+            };
+        }
     };
 
     // Fighter Database - Starter Rosters
@@ -714,14 +1128,14 @@
 
     const starterFighters = {
         player1: [
-            { id: generateFighterId('player1'), name: 'IRON MIKE', style: 'Slugger', power: 88, speed: 75, stamina: 70, defense: 65, chin: 80, heart: 85, emoji: '👊' },
-            { id: generateFighterId('player1'), name: 'QUICK HANDS', style: 'Outboxer', power: 70, speed: 90, stamina: 80, defense: 85, chin: 65, heart: 75, emoji: '🥊' },
-            { id: generateFighterId('player1'), name: 'THE TANK', style: 'Swarmer', power: 75, speed: 70, stamina: 95, defense: 70, chin: 90, heart: 95, emoji: '🔥' }
+            { id: generateFighterId('player1'), name: 'IRON MIKE', style: 'Slugger', power: 88, speed: 75, stamina: 70, defense: 65, chin: 80, heart: 85, emoji: '👊', elo: 1150, weightClass: 'Heavyweight', record: { wins: 5, losses: 1 }, trainingSessions: 0 },
+            { id: generateFighterId('player1'), name: 'QUICK HANDS', style: 'Outboxer', power: 70, speed: 90, stamina: 80, defense: 85, chin: 65, heart: 75, emoji: '🥊', elo: 1100, weightClass: 'Welterweight', record: { wins: 3, losses: 0 }, trainingSessions: 0 },
+            { id: generateFighterId('player1'), name: 'THE TANK', style: 'Swarmer', power: 75, speed: 70, stamina: 95, defense: 70, chin: 90, heart: 95, emoji: '🔥', elo: 1080, weightClass: 'Middleweight', record: { wins: 4, losses: 2 }, trainingSessions: 0 }
         ],
         player2: [
-            { id: generateFighterId('player2'), name: 'THUNDER', style: 'Slugger', power: 85, speed: 72, stamina: 75, defense: 68, chin: 82, heart: 80, emoji: '⚡' },
-            { id: generateFighterId('player2'), name: 'THE GHOST', style: 'Outboxer', power: 68, speed: 92, stamina: 78, defense: 88, chin: 62, heart: 78, emoji: '👻' },
-            { id: generateFighterId('player2'), name: 'WARRIOR', style: 'Swarmer', power: 78, speed: 68, stamina: 92, defense: 72, chin: 88, heart: 92, emoji: '⚔️' }
+            { id: generateFighterId('player2'), name: 'THUNDER', style: 'Slugger', power: 85, speed: 72, stamina: 75, defense: 68, chin: 82, heart: 80, emoji: '⚡', elo: 1120, weightClass: 'Heavyweight', record: { wins: 4, losses: 1 }, trainingSessions: 0 },
+            { id: generateFighterId('player2'), name: 'THE GHOST', style: 'Outboxer', power: 68, speed: 92, stamina: 78, defense: 88, chin: 62, heart: 78, emoji: '👻', elo: 1090, weightClass: 'Welterweight', record: { wins: 2, losses: 1 }, trainingSessions: 0 },
+            { id: generateFighterId('player2'), name: 'WARRIOR', style: 'Swarmer', power: 78, speed: 68, stamina: 92, defense: 72, chin: 88, heart: 92, emoji: '⚔️', elo: 1070, weightClass: 'Middleweight', record: { wins: 3, losses: 2 }, trainingSessions: 0 }
         ]
     };
 
@@ -1009,6 +1423,17 @@
         document.getElementById('hub-season').textContent = GameState.season;
         document.getElementById('hub-week').textContent = GameState.week;
         
+        // Update ELO and Gym Level displays
+        const p1Elo = document.getElementById('hub-p1-elo');
+        const p2Elo = document.getElementById('hub-p2-elo');
+        const p1Gym = document.getElementById('hub-p1-gym');
+        const p2Gym = document.getElementById('hub-p2-gym');
+        
+        if (p1Elo) p1Elo.textContent = p1.elo || 1000;
+        if (p2Elo) p2Elo.textContent = p2.elo || 1000;
+        if (p1Gym) p1Gym.textContent = p1.gymLevel || 1;
+        if (p2Gym) p2Gym.textContent = p2.gymLevel || 1;
+        
         const turnBanner = document.getElementById('turn-banner');
         const currentPlayer = GameState.players[GameState.currentTurn];
         turnBanner.textContent = currentPlayer.name + "'S TURN";
@@ -1019,6 +1444,9 @@
         // Highlight active player panel
         document.getElementById('hub-p1-panel').style.boxShadow = GameState.currentTurn === 0 ? '0 0 15px rgba(233, 69, 96, 0.5)' : 'none';
         document.getElementById('hub-p2-panel').style.boxShadow = GameState.currentTurn === 1 ? '0 0 15px rgba(77, 166, 255, 0.5)' : 'none';
+        
+        // Update rankings
+        RankingSystem.updateRankings();
     }
 
     function endTurn() {
@@ -1055,13 +1483,21 @@
 
     function createFighterCard(fighter, selectable = false, selected = false) {
         const ovr = Math.round((fighter.power + fighter.speed + fighter.stamina + fighter.defense + fighter.chin + fighter.heart) / 6);
+        const rankTier = RankingSystem.getRankTier(fighter.elo || 1000);
+        const record = fighter.record || { wins: 0, losses: 0 };
+        
         return `
             <div class="fighter-card ${selected ? 'selected' : ''}" 
                  ${selectable ? `onclick="selectFighter('${fighter.id}')"` : ''} 
                  data-id="${fighter.id}">
                 <div class="fighter-sprite">${fighter.emoji}</div>
                 <div class="fighter-name">${fighter.name}</div>
-                <div class="label" style="text-align:center; margin-bottom: 8px;">${fighter.style} • OVR ${ovr}</div>
+                <div class="label" style="text-align:center; margin-bottom: 4px;">${fighter.style} • OVR ${ovr}</div>
+                <div class="label" style="text-align:center; margin-bottom: 4px; color: #888;">${fighter.weightClass || 'Welterweight'}</div>
+                <div class="rank-badge ${rankTier.badge}" style="display: block; text-align: center; margin: 4px auto;">
+                    ${rankTier.tier} • ELO ${fighter.elo || 1000}
+                </div>
+                <div class="label" style="text-align:center; margin: 4px 0; color: #00ff88;">Record: ${record.wins}-${record.losses}</div>
                 <div class="stat-row"><span>PWR</span><div class="stat-bar"><div class="stat-fill" style="width:${fighter.power}%"></div></div></div>
                 <div class="stat-row"><span>SPD</span><div class="stat-bar"><div class="stat-fill blue" style="width:${fighter.speed}%"></div></div></div>
                 <div class="stat-row"><span>STA</span><div class="stat-bar"><div class="stat-fill green" style="width:${fighter.stamina}%"></div></div></div>
@@ -1072,50 +1508,175 @@
         `;
     }
 
-    // Training
+    // Training System - Enhanced with Gym UI
     function trainFighter() {
+        // Legacy function - redirects to new training screen
+        openTrainingScreen();
+    }
+    
+    function openTrainingScreen() {
         const player = GameState.players[GameState.currentTurn];
         
-        // Ensure there is at least one fighter to train
         if (!player || !player.fighters || player.fighters.length === 0) {
             log('No fighters available to train.', 'hit');
             return;
         }
-
-        // Select a random fighter to train
-        const fighter = player.fighters[rand(0, player.fighters.length - 1)];
-
-        // Initialize and enforce per-fighter training limits
-        if (typeof fighter.trainingSessions !== 'number') {
-            fighter.trainingSessions = 0;
+        
+        // Reset selections
+        GameState.selectedTrainingFighter = null;
+        GameState.selectedTrainingStat = null;
+        
+        // Populate fighter selection
+        const fighterSelect = document.getElementById('training-fighter-select');
+        if (fighterSelect) {
+            fighterSelect.innerHTML = '';
+            player.fighters.forEach((f, idx) => {
+                const ovr = Math.round((f.power + f.speed + f.stamina + f.defense + f.chin + f.heart) / 6);
+                fighterSelect.innerHTML += `
+                    <div class="training-option" data-fighter-idx="${idx}" onclick="selectTrainingFighter(${idx})">
+                        <span style="font-size: 20px;">${f.emoji}</span>
+                        <span style="font-size: 9px; margin-left: 8px;">${f.name}</span>
+                        <span style="font-size: 7px; color: #888; display: block; margin-left: 28px;">OVR ${ovr} • ${f.style} • Sessions: ${f.trainingSessions || 0}/50</span>
+                    </div>
+                `;
+            });
         }
-
-        const MAX_TRAINING_SESSIONS = 50;
-        if (fighter.trainingSessions >= MAX_TRAINING_SESSIONS) {
-            log(`${fighter.name} has reached their training limit. Focus on another fighter.`, 'hit');
-            return;
+        
+        // Update gym level display
+        const gymLevelDisplay = document.getElementById('gym-level-display');
+        const trainingBonusDisplay = document.getElementById('training-bonus-display');
+        
+        if (gymLevelDisplay) gymLevelDisplay.textContent = player.gymLevel || 1;
+        if (trainingBonusDisplay) {
+            const bonus = ((player.gymLevel || 1) - 1) * 10;
+            trainingBonusDisplay.textContent = `+${bonus}% (${bonus > 0 ? 'Great!' : 'Upgrade gym for bonus'})`;
+            trainingBonusDisplay.style.color = bonus > 0 ? '#00ff88' : '#4da6ff';
         }
-
-        // Dynamic training cost: starts at $5,000 and increases with each session
-        const BASE_TRAINING_COST = 5000;
-        const INCREMENTAL_COST = 500;
-        const trainingCost = BASE_TRAINING_COST + (fighter.trainingSessions * INCREMENTAL_COST);
-
-        if (player.money < trainingCost) {
-            log(`Not enough money for training! Need $${trainingCost.toLocaleString()}.`, 'hit');
+        
+        // Clear AI recommendation
+        const aiRec = document.getElementById('ai-training-recommendation');
+        if (aiRec) aiRec.textContent = 'Select a fighter to receive AI training recommendations.';
+        
+        // Reset training option selections
+        document.querySelectorAll('#training-options .training-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+        
+        showScreen('training-screen');
+    }
+    
+    function selectTrainingFighter(idx) {
+        const player = GameState.players[GameState.currentTurn];
+        const fighter = player.fighters[idx];
+        
+        if (!fighter) return;
+        
+        GameState.selectedTrainingFighter = fighter;
+        // Also store the fighter's id so the selection can be validated later
+        GameState.selectedTrainingFighterId = fighter.id;
+        
+        // Update selection UI
+        document.querySelectorAll('#training-fighter-select .training-option').forEach((opt, i) => {
+            opt.classList.toggle('selected', i === idx);
+        });
+        
+        // Get AI recommendation
+        const recommendation = AICoach.getTrainingRecommendation(fighter);
+        const aiRec = document.getElementById('ai-training-recommendation');
+        if (aiRec) {
+            aiRec.innerHTML = `<strong>${recommendation.overall}</strong><br><br>${recommendation.recommendation}`;
+        }
+        
+        // Auto-select recommended stat
+        selectTraining(recommendation.suggestedStat);
+        
+        // Update training cost display
+        updateTrainingCostDisplay(fighter);
+    }
+    
+    function selectTraining(stat) {
+        GameState.selectedTrainingStat = stat;
+        
+        // Update UI
+        document.querySelectorAll('#training-options .training-option').forEach(opt => {
+            opt.classList.toggle('selected', opt.dataset.stat === stat);
+        });
+    }
+    
+    function updateTrainingCostDisplay(fighter) {
+        const cost = TrainingConstants.calculateTrainingCost(fighter);
+        
+        const costDisplay = document.getElementById('training-cost-display');
+        if (costDisplay) costDisplay.textContent = `$${cost.toLocaleString()}`;
+    }
+    
+    function confirmTraining() {
+        const player = GameState.players[GameState.currentTurn];
+        const fighter = GameState.selectedTrainingFighter;
+        const stat = GameState.selectedTrainingStat;
+        
+        if (!fighter) {
+            alert('Please select a fighter to train!');
             return;
         }
         
-        // Random stat boost
-        const stats = ['power', 'speed', 'stamina', 'defense', 'chin', 'heart'];
-        const stat = pick(stats);
-        const boost = rand(1, 3);
+        if (!stat) {
+            alert('Please select a training type!');
+            return;
+        }
+        
+        // Check training limit
+        if ((fighter.trainingSessions || 0) >= TrainingConstants.MAX_TRAINING_SESSIONS) {
+            alert(`${fighter.name} has reached their training limit!`);
+            return;
+        }
+        
+        // Calculate cost using centralized function
+        const trainingCost = TrainingConstants.calculateTrainingCost(fighter);
+        
+        if (player.money < trainingCost) {
+            alert(`Not enough money! Need $${trainingCost.toLocaleString()}`);
+            return;
+        }
+        
+        // Apply training with gym level bonus
+        const gymBonus = 1 + ((player.gymLevel || 1) - 1) * 0.1;
+        const baseBoost = rand(2, 4);
+        const boost = Math.ceil(baseBoost * gymBonus);
         
         fighter[stat] = Math.min(99, fighter[stat] + boost);
-        fighter.trainingSessions += 1;
+        fighter.trainingSessions = (fighter.trainingSessions || 0) + 1;
         player.money -= trainingCost;
         
         log(`${fighter.name} trained ${stat.toUpperCase()} +${boost}! (-$${trainingCost.toLocaleString()})`, 'action');
+        
+        // Refresh training screen
+        openTrainingScreen();
+        updateHubUI();
+    }
+    
+    function upgradeGym() {
+        const player = GameState.players[GameState.currentTurn];
+        const currentLevel = player.gymLevel || 1;
+        
+        if (currentLevel >= 5) {
+            alert('Gym is already at maximum level!');
+            return;
+        }
+        
+        const upgradeCost = 10000;
+        
+        if (player.money < upgradeCost) {
+            alert(`Not enough money! Need $${upgradeCost.toLocaleString()}`);
+            return;
+        }
+        
+        player.money -= upgradeCost;
+        player.gymLevel = currentLevel + 1;
+        
+        log(`Gym upgraded to Level ${player.gymLevel}! Training bonus: +${(player.gymLevel - 1) * 10}%`, 'action');
+        
+        openTrainingScreen();
         updateHubUI();
     }
 
@@ -1173,10 +1734,21 @@
         const p1Ovr = Math.round((selectedP1Fighter.power + selectedP1Fighter.speed + selectedP1Fighter.stamina + selectedP1Fighter.defense + selectedP1Fighter.chin + selectedP1Fighter.heart) / 6);
         const p2Ovr = Math.round((selectedP2Fighter.power + selectedP2Fighter.speed + selectedP2Fighter.stamina + selectedP2Fighter.defense + selectedP2Fighter.chin + selectedP2Fighter.heart) / 6);
         
+        // Calculate purse and AI prediction
+        const purse = PurseSystem.calculateFightPurse(selectedP1Fighter, selectedP2Fighter);
+        const prediction = AICoach.predictFightOutcome(selectedP1Fighter, selectedP2Fighter);
+        
+        const p1Rank = RankingSystem.getRankTier(selectedP1Fighter.elo || 1000);
+        const p2Rank = RankingSystem.getRankTier(selectedP2Fighter.elo || 1000);
+        const p1Record = selectedP1Fighter.record || { wins: 0, losses: 0 };
+        const p2Record = selectedP2Fighter.record || { wins: 0, losses: 0 };
+        
         document.getElementById('prefight-p1').innerHTML = `
             <div class="fighter-sprite" style="font-size:48px; width:80px; height:100px;">${selectedP1Fighter.emoji}</div>
             <div class="fighter-name" style="font-size:14px; margin: 15px 0;">${selectedP1Fighter.name}</div>
             <div class="label">${selectedP1Fighter.style} • OVR ${p1Ovr}</div>
+            <div class="rank-badge ${p1Rank.badge}" style="display: block; text-align: center; margin: 8px auto;">${p1Rank.tier} • ELO ${selectedP1Fighter.elo || 1000}</div>
+            <div class="label" style="color: #00ff88;">Record: ${p1Record.wins}-${p1Record.losses}</div>
             <div class="label" style="margin-top: 10px;">Managed by ${GameState.players[0].name}</div>
         `;
         
@@ -1184,7 +1756,40 @@
             <div class="fighter-sprite" style="font-size:48px; width:80px; height:100px;">${selectedP2Fighter.emoji}</div>
             <div class="fighter-name" style="font-size:14px; margin: 15px 0;">${selectedP2Fighter.name}</div>
             <div class="label">${selectedP2Fighter.style} • OVR ${p2Ovr}</div>
+            <div class="rank-badge ${p2Rank.badge}" style="display: block; text-align: center; margin: 8px auto;">${p2Rank.tier} • ELO ${selectedP2Fighter.elo || 1000}</div>
+            <div class="label" style="color: #00ff88;">Record: ${p2Record.wins}-${p2Record.losses}</div>
             <div class="label" style="margin-top: 10px;">Managed by ${GameState.players[1].name}</div>
+        `;
+        
+        // Add purse and AI prediction panel
+        let prefightPanel = document.getElementById('prefight-info-panel');
+        if (!prefightPanel) {
+            prefightPanel = document.createElement('div');
+            prefightPanel.id = 'prefight-info-panel';
+            prefightPanel.style.cssText = 'margin-top: 15px; padding: 15px; background: linear-gradient(135deg, rgba(0,0,0,0.5), rgba(0,0,0,0.3)); border: 2px solid #ffdd00; border-radius: 8px;';
+            document.getElementById('prefight-p2').parentNode.insertBefore(prefightPanel, document.getElementById('prefight-p2').nextSibling);
+        }
+        
+        prefightPanel.innerHTML = `
+            <div class="grid-2" style="gap: 15px;">
+                <div class="purse-display">
+                    <p style="font-size: 8px; color: #888; margin-bottom: 4px;">💰 FIGHT PURSE</p>
+                    <p class="purse-amount">$${purse.basePurse.toLocaleString()}</p>
+                    <p style="font-size: 7px; color: #888;">Winner: $${purse.winnerShare.toLocaleString()} | Loser: $${purse.loserShare.toLocaleString()}</p>
+                    <p style="font-size: 7px; color: #ffdd00;">KO Bonus: +$${purse.koBonus.toLocaleString()}</p>
+                    <p style="font-size: 6px; color: #888; margin-top: 3px;">Note: Training, gym, and corner expenses will be deducted after the fight.</p>
+                </div>
+                <div class="ai-coach-panel" style="margin: 0;">
+                    <p style="font-size: 8px; color: #ffdd00; margin-bottom: 6px;">🤖 AI PREDICTION</p>
+                    <p style="font-size: 9px; color: #fff;">Favored: <span style="color: #00ff88; font-weight: bold;">${prediction.prediction}</span></p>
+                    <div style="margin: 8px 0; height: 12px; background: linear-gradient(90deg, #e94560 ${prediction.fighter1Chance}%, #4da6ff ${prediction.fighter1Chance}%); border-radius: 6px; border: 1px solid #fff;"></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 7px;">
+                        <span style="color: #e94560;">${prediction.fighter1Chance}%</span>
+                        <span style="color: #888;">WIN PROBABILITY</span>
+                        <span style="color: #4da6ff;">${prediction.fighter2Chance}%</span>
+                    </div>
+                </div>
+            </div>
         `;
         
         showScreen('prefight-screen');
@@ -1414,6 +2019,45 @@
         
         document.getElementById('hud-p1-injuries').innerHTML = inj1;
         document.getElementById('hud-p2-injuries').innerHTML = inj2;
+        
+        // Update fighter sprite damage visualization
+        updateFighterDamageVisuals(1, f1);
+        updateFighterDamageVisuals(2, f2);
+    }
+    
+    function updateFighterDamageVisuals(fighterNum, fighter) {
+        const fighterEl = document.getElementById(`fighter-${fighterNum}`);
+        if (!fighterEl) return;
+        
+        const headEl = fighterEl.querySelector('.boxer-head');
+        const bodyEl = fighterEl.querySelector('.boxer-body');
+        
+        if (headEl) {
+            // Add cut/swelling visualization
+            headEl.classList.toggle('cut', fighter.cuts > 20);
+            headEl.classList.toggle('swelling', fighter.swelling > 20);
+            
+            // Damage coloring based on health
+            if (fighter.health < 30) {
+                headEl.style.filter = 'brightness(0.7) saturate(1.3)';
+            } else if (fighter.health < 50) {
+                headEl.style.filter = 'brightness(0.85)';
+            } else {
+                headEl.style.filter = '';
+            }
+        }
+        
+        if (bodyEl) {
+            // Fatigue visualization using CSS classes
+            bodyEl.classList.toggle('fatigued', fighter.stamina < 30);
+        }
+        
+        // Hurt state visualization
+        if (fighter.isHurt) {
+            fighterEl.classList.add('staggered');
+        } else {
+            fighterEl.classList.remove('staggered');
+        }
     }
 
     function simulateExchange() {
@@ -2238,16 +2882,65 @@
         // Play final bell
         playSound('bell');
         
+        // Calculate purse based on fighter ELO
+        const isKO = method.includes('KO') || method.includes('TKO');
+        const purse = PurseSystem.calculateFightPurse(f1, f2);
+        
         let winnerName, loserName;
         let winnerIndex = winner;
+        let winnerPurse = 0, loserPurse = 0;
         
         if (winner === -1) {
-            // Draw - small purse split for both
+            // Draw - split purse and handle expenses/ELO
             document.getElementById('result-winner').textContent = 'IT\'S A DRAW!';
             document.getElementById('result-method').textContent = 'SPLIT DECISION';
-            const drawPurse = 5000;
-            GameState.players[0].money += drawPurse;
-            GameState.players[1].money += drawPurse;
+            const drawPurse = Math.round(purse.basePurse / 2);
+            
+            // Calculate expenses for both fighters
+            const p1Expenses = PurseSystem.calculateExpenses(GameState.players[0], state.fighters[0]);
+            const p2Expenses = PurseSystem.calculateExpenses(GameState.players[1], state.fighters[1]);
+            
+            const p1Net = drawPurse - p1Expenses.total;
+            const p2Net = drawPurse - p2Expenses.total;
+            
+            GameState.players[0].money += p1Net;
+            GameState.players[1].money += p2Net;
+            GameState.players[0].totalEarnings = (GameState.players[0].totalEarnings || 0) + p1Net;
+            GameState.players[1].totalEarnings = (GameState.players[1].totalEarnings || 0) + p2Net;
+            
+            winnerPurse = drawPurse;
+            loserPurse = drawPurse;
+            
+            // Update draw records
+            GameState.players[0].draws = (GameState.players[0].draws || 0) + 1;
+            GameState.players[1].draws = (GameState.players[1].draws || 0) + 1;
+            
+            // Update fighter draw records
+            const fighter1 = GameState.players[0].fighters.find(f => f.id === state.fighters[0].id);
+            const fighter2 = GameState.players[1].fighters.find(f => f.id === state.fighters[1].id);
+            
+            if (fighter1) {
+                fighter1.record = fighter1.record || { wins: 0, losses: 0, draws: 0 };
+                fighter1.record.draws = (fighter1.record.draws || 0) + 1;
+            }
+            if (fighter2) {
+                fighter2.record = fighter2.record || { wins: 0, losses: 0, draws: 0 };
+                fighter2.record.draws = (fighter2.record.draws || 0) + 1;
+            }
+            
+            // ELO update for draw: both fighters score 0.5
+            const Ra = f1.elo || 1000;
+            const Rb = f2.elo || 1000;
+            const Qa = Math.pow(10, Ra / 400);
+            const Qb = Math.pow(10, Rb / 400);
+            const Ea = Qa / (Qa + Qb);
+            const Eb = Qb / (Qa + Qb);
+            const K = 16;
+            const newRa = Math.round(Ra + K * (0.5 - Ea));
+            const newRb = Math.round(Rb + K * (0.5 - Eb));
+            
+            if (fighter1) fighter1.elo = newRa;
+            if (fighter2) fighter2.elo = newRb;
         } else {
             winnerName = state.fighters[winner].name;
             loserName = state.fighters[winner === 0 ? 1 : 0].name;
@@ -2259,16 +2952,63 @@
             GameState.players[winner].wins++;
             GameState.players[winner === 0 ? 1 : 0].losses++;
             
-            // Prize money - winner gets more, loser gets show money
-            const basePrize = 10000;
-            const roundBonus = state.round * 500;
-            const koBonus = (method.includes('KO') || method.includes('TKO')) ? 5000 : 0;
+            // Update fighter records with defensive initialization
+            const winningFighter = GameState.players[winner].fighters.find(f => f.id === state.fighters[winner].id);
+            const losingFighter = GameState.players[winner === 0 ? 1 : 0].fighters.find(f => f.id === state.fighters[winner === 0 ? 1 : 0].id);
             
-            const winnerPrize = basePrize + roundBonus + koBonus;
-            const loserPrize = Math.floor(basePrize * 0.3); // Show money
+            if (winningFighter) {
+                if (!winningFighter.record || typeof winningFighter.record !== 'object') {
+                    winningFighter.record = { wins: 0, losses: 0, draws: 0 };
+                }
+                if (typeof winningFighter.record.wins !== 'number') winningFighter.record.wins = 0;
+                winningFighter.record.wins++;
+            }
+            if (losingFighter) {
+                if (!losingFighter.record || typeof losingFighter.record !== 'object') {
+                    losingFighter.record = { wins: 0, losses: 0, draws: 0 };
+                }
+                if (typeof losingFighter.record.losses !== 'number') losingFighter.record.losses = 0;
+                losingFighter.record.losses++;
+            }
             
-            GameState.players[winner].money += winnerPrize;
-            GameState.players[winner === 0 ? 1 : 0].money += loserPrize;
+            // Calculate prize money with purse system
+            winnerPurse = purse.winnerShare + (isKO ? purse.koBonus : 0);
+            loserPurse = purse.loserShare;
+            
+            // Calculate expenses
+            const winnerExpenses = PurseSystem.calculateExpenses(GameState.players[winner], state.fighters[winner]);
+            const loserExpenses = PurseSystem.calculateExpenses(GameState.players[winner === 0 ? 1 : 0], state.fighters[winner === 0 ? 1 : 0]);
+            
+            const winnerNet = winnerPurse - winnerExpenses.total;
+            const loserNet = loserPurse - loserExpenses.total;
+            
+            GameState.players[winner].money += winnerNet;
+            GameState.players[winner === 0 ? 1 : 0].money += loserNet;
+            GameState.players[winner].totalEarnings = (GameState.players[winner].totalEarnings || 0) + winnerNet;
+            GameState.players[winner === 0 ? 1 : 0].totalEarnings = (GameState.players[winner === 0 ? 1 : 0].totalEarnings || 0) + loserNet;
+            
+            // Update ELO ratings
+            const winnerElo = state.fighters[winner].elo || 1000;
+            const loserElo = state.fighters[winner === 0 ? 1 : 0].elo || 1000;
+            const newElos = RankingSystem.calculateElo(winnerElo, loserElo, isKO);
+            
+            if (winningFighter) winningFighter.elo = newElos.winner;
+            if (losingFighter) losingFighter.elo = newElos.loser;
+            
+            // Update manager Elo (average of fighters) - guard against division by zero
+            const winnerFighters = GameState.players[winner].fighters;
+            const loserFighters = GameState.players[winner === 0 ? 1 : 0].fighters;
+            
+            if (winnerFighters.length > 0) {
+                GameState.players[winner].elo = Math.round(
+                    winnerFighters.reduce((sum, f) => sum + (f.elo || 1000), 0) / winnerFighters.length
+                );
+            }
+            if (loserFighters.length > 0) {
+                GameState.players[winner === 0 ? 1 : 0].elo = Math.round(
+                    loserFighters.reduce((sum, f) => sum + (f.elo || 1000), 0) / loserFighters.length
+                );
+            }
         }
         
         // Build enhanced scorecard
@@ -2285,16 +3025,31 @@
         
         scorecardHTML += `<div class="scorecard-row" style="border-top: 2px solid #ffdd00; padding-top: 8px; margin-top: 8px;"><span class="score-left" style="font-size: 14px; color: ${p1Total > p2Total ? '#00ff88' : p1Total < p2Total ? '#e94560' : '#fff'};">${p1Total}</span><span class="score-center" style="font-size: 10px;">FINAL</span><span class="score-right" style="font-size: 14px; color: ${p2Total > p1Total ? '#00ff88' : p2Total < p1Total ? '#e94560' : '#fff'};">${p2Total}</span></div>`;
         
+        // Add purse breakdown
+        scorecardHTML += `<div style="margin-top: 15px; padding: 10px; background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 170, 85, 0.1)); border: 2px solid #00ff88; border-radius: 4px;">`;
+        scorecardHTML += `<p style="font-size: 10px; color: #ffdd00; text-align: center; margin-bottom: 8px;">💰 PURSE BREAKDOWN</p>`;
+        scorecardHTML += `<div class="scorecard-row"><span class="score-left" style="color: #00ff88;">$${winnerPurse.toLocaleString()}</span><span class="score-center">EARNED</span><span class="score-right" style="color: #00ff88;">$${loserPurse.toLocaleString()}</span></div>`;
+        scorecardHTML += `</div>`;
+        
         document.getElementById('scorecard').innerHTML = scorecardHTML;
         
         // Calculate accuracy percentages
         const f1Accuracy = f1.punchesThrown > 0 ? Math.round((f1.punchesLanded / f1.punchesThrown) * 100) : 0;
         const f2Accuracy = f2.punchesThrown > 0 ? Math.round((f2.punchesLanded / f2.punchesThrown) * 100) : 0;
         
-        // Enhanced stats display
+        // Get updated ELO - use baseline ELO for change calculation; if fighter not found, treat change as 0
+        const f1Fighter = GameState.players[0].fighters.find(f => f.id === f1.id);
+        const f2Fighter = GameState.players[1].fighters.find(f => f.id === f2.id);
+        const f1NewElo = f1Fighter ? f1Fighter.elo : (f1.elo || 1000);
+        const f2NewElo = f2Fighter ? f2Fighter.elo : (f2.elo || 1000);
+        const f1BaseElo = f1Fighter ? (f1.elo || 1000) : f1NewElo;
+        const f2BaseElo = f2Fighter ? (f2.elo || 1000) : f2NewElo;
+        
+        // Enhanced stats display with ELO changes
         document.getElementById('result-stats').innerHTML = `
             <div class="panel">
                 <p class="subtitle" style="text-align: center; margin-bottom: 10px;">${f1.name}</p>
+                <div class="stat-row"><span>ELO:</span><span style="color: ${f1NewElo > f1BaseElo ? '#00ff88' : f1NewElo < f1BaseElo ? '#e94560' : '#888'};">${f1NewElo} (${f1NewElo > f1BaseElo ? '+' : ''}${f1NewElo - f1BaseElo})</span></div>
                 <div class="stat-row"><span>Total Punches:</span><span>${f1.punchesLanded}/${f1.punchesThrown} (${f1Accuracy}%)</span></div>
                 <div class="stat-row"><span>Power Punches:</span><span>${f1.powerPunchesLanded || 0}</span></div>
                 <div class="stat-row"><span>Body Shots:</span><span>${f1.bodyPunchesLanded || 0}</span></div>
@@ -2305,6 +3060,7 @@
             </div>
             <div class="panel blue">
                 <p class="subtitle" style="color: #4da6ff; text-align: center; margin-bottom: 10px;">${f2.name}</p>
+                <div class="stat-row"><span>ELO:</span><span style="color: ${f2NewElo > f2BaseElo ? '#00ff88' : f2NewElo < f2BaseElo ? '#e94560' : '#888'};">${f2NewElo} (${f2NewElo > f2BaseElo ? '+' : ''}${f2NewElo - f2BaseElo})</span></div>
                 <div class="stat-row"><span>Total Punches:</span><span>${f2.punchesLanded}/${f2.punchesThrown} (${f2Accuracy}%)</span></div>
                 <div class="stat-row"><span>Power Punches:</span><span>${f2.powerPunchesLanded || 0}</span></div>
                 <div class="stat-row"><span>Body Shots:</span><span>${f2.bodyPunchesLanded || 0}</span></div>
@@ -2335,23 +3091,68 @@
         const p1 = GameState.players[0];
         const p2 = GameState.players[1];
         
+        // Update rankings first
+        RankingSystem.updateRankings();
+        
+        const p1RankTier = RankingSystem.getRankTier(p1.elo || 1000);
+        const p2RankTier = RankingSystem.getRankTier(p2.elo || 1000);
+        
         let content = '<div style="text-align: center;">';
         content += '<p class="subtitle" style="margin-bottom: 15px;">MANAGER STANDINGS</p>';
         content += `<div class="scorecard-row"><span class="score-left">${p1.name}</span><span class="score-center">vs</span><span class="score-right">${p2.name}</span></div>`;
         content += `<div class="scorecard-row"><span class="score-left">${p1.wins} WINS</span><span class="score-center">-</span><span class="score-right">${p2.wins} WINS</span></div>`;
+        content += `<div class="scorecard-row"><span class="score-left" style="color: ${p1RankTier.color};">ELO ${p1.elo || 1000}</span><span class="score-center">RANK</span><span class="score-right" style="color: ${p2RankTier.color};">ELO ${p2.elo || 1000}</span></div>`;
         content += `<div class="scorecard-row"><span class="score-left">$${p1.money.toLocaleString()}</span><span class="score-center">BANK</span><span class="score-right">$${p2.money.toLocaleString()}</span></div>`;
+        content += `<div class="scorecard-row"><span class="score-left" style="color: #00ff88;">$${(p1.totalEarnings || 0).toLocaleString()}</span><span class="score-center">EARNINGS</span><span class="score-right" style="color: #00ff88;">$${(p2.totalEarnings || 0).toLocaleString()}</span></div>`;
+        content += `<div class="scorecard-row"><span class="score-left">Gym Lv.${p1.gymLevel || 1}</span><span class="score-center">GYM</span><span class="score-right">Gym Lv.${p2.gymLevel || 1}</span></div>`;
         content += '</div>';
         
         content += '<div class="divider"></div>';
         content += '<p class="subtitle" style="text-align: center;">SEASON ' + GameState.season + ' - WEEK ' + GameState.week + '/12</p>';
         
         document.getElementById('standings-content').innerHTML = content;
+        
+        // Populate weight class rankings
+        const rankingsEl = document.getElementById('weight-class-rankings');
+        if (rankingsEl) {
+            let rankingsHTML = '';
+            
+            Object.keys(GameState.weightClassRankings).forEach(weightClass => {
+                const fighters = GameState.weightClassRankings[weightClass];
+                if (fighters.length > 0) {
+                    rankingsHTML += `<div style="margin: 10px 0; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 4px;">`;
+                    rankingsHTML += `<p style="font-size: 9px; color: #ffdd00; margin-bottom: 6px;">⚖️ ${weightClass.toUpperCase()}</p>`;
+                    
+                    fighters.slice(0, 5).forEach((f, idx) => {
+                        const tier = RankingSystem.getRankTier(f.elo);
+                        const ownerColor = f.owner === 0 ? '#e94560' : '#4da6ff';
+                        rankingsHTML += `
+                            <div style="display: flex; justify-content: space-between; font-size: 7px; padding: 3px 0; border-bottom: 1px solid #333;">
+                                <span style="color: ${ownerColor};">#${idx + 1} ${f.name}</span>
+                                <span style="color: ${tier.color};">${f.record.wins}-${f.record.losses} | ELO ${f.elo}</span>
+                            </div>
+                        `;
+                    });
+                    
+                    rankingsHTML += `</div>`;
+                }
+            });
+            
+            if (rankingsHTML === '') {
+                rankingsHTML = '<p style="font-size: 8px; color: #888; text-align: center;">No fighters ranked yet.</p>';
+            }
+            
+            rankingsEl.innerHTML = rankingsHTML;
+        }
+        
         showScreen('standings-screen');
     }
 
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
         console.log('Brotherhood Boxing loaded!');
+        // Initialize rankings
+        RankingSystem.updateRankings();
     });
     </script>
 </body>
