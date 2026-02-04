@@ -1555,6 +1555,8 @@
         if (!fighter) return;
         
         GameState.selectedTrainingFighter = fighter;
+        // Also store the fighter's id so the selection can be validated later
+        GameState.selectedTrainingFighterId = fighter.id;
         
         // Update selection UI
         document.querySelectorAll('#training-fighter-select .training-option').forEach((opt, i) => {
