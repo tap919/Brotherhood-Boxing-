@@ -939,6 +939,22 @@
     };
 
     // ============================================
+    // TRAINING SYSTEM CONSTANTS
+    // ============================================
+    const TrainingConstants = {
+        BASE_TRAINING_COST: 5000,
+        INCREMENTAL_COST: 500,
+        MAX_TRAINING_COST: 15000,
+        MAX_TRAINING_SESSIONS: 50,
+        
+        calculateTrainingCost: function(fighter) {
+            const sessions = fighter.trainingSessions || 0;
+            const rawCost = this.BASE_TRAINING_COST + (sessions * this.INCREMENTAL_COST);
+            return Math.min(rawCost, this.MAX_TRAINING_COST);
+        }
+    };
+
+    // ============================================
     // MONEY PER FIGHT SYSTEM - Purse Calculations
     // ============================================
     const PurseSystem = {
@@ -947,9 +963,10 @@
         calculateFightPurse: function(fighter, opponent, isChampionshipFight = false) {
             let basePurse = this.BASE_PURSE;
             
-            // ELO-based purse multiplier
+            // ELO-based purse multiplier - ensure minimum of 1.0 so low-ELO fighters earn at least base purse
             const avgElo = ((fighter.elo || 1000) + (opponent.elo || 1000)) / 2;
-            const eloMultiplier = 1 + (avgElo - 1000) / 500;
+            let eloMultiplier = 1 + (avgElo - 1000) / 500;
+            eloMultiplier = Math.max(1.0, eloMultiplier);
             
             // Fight type bonuses
             let fightBonus = 1.0;
@@ -967,9 +984,9 @@
         },
         
         calculateExpenses: function(player, fighter) {
-            const gymFee = 500 * player.gymLevel;
+            const gymFee = 500 * (player.gymLevel || 1);
             const cornerCrew = 1000;
-            const trainingCamp = fighter.trainingSessions ? fighter.trainingSessions * 200 : 0;
+            const trainingCamp = (fighter.trainingSessions || 0) * 200;
             
             return {
                 gymFee,
@@ -1587,10 +1604,7 @@
     }
     
     function updateTrainingCostDisplay(fighter) {
-        const BASE_TRAINING_COST = 5000;
-        const INCREMENTAL_COST = 500;
-        const sessions = fighter.trainingSessions || 0;
-        const cost = BASE_TRAINING_COST + (sessions * INCREMENTAL_COST);
+        const cost = TrainingConstants.calculateTrainingCost(fighter);
         
         const costDisplay = document.getElementById('training-cost-display');
         if (costDisplay) costDisplay.textContent = `$${cost.toLocaleString()}`;
@@ -1612,19 +1626,13 @@
         }
         
         // Check training limit
-        const MAX_TRAINING_SESSIONS = 50;
-        if ((fighter.trainingSessions || 0) >= MAX_TRAINING_SESSIONS) {
+        if ((fighter.trainingSessions || 0) >= TrainingConstants.MAX_TRAINING_SESSIONS) {
             alert(`${fighter.name} has reached their training limit!`);
             return;
         }
         
-        // Calculate cost
-        const BASE_TRAINING_COST = 5000;
-        const INCREMENTAL_COST = 500;
-        const MAX_TRAINING_COST = 15000; // Cap the per-session training cost to keep late-game training affordable
-        const sessions = fighter.trainingSessions || 0;
-        const rawTrainingCost = BASE_TRAINING_COST + (sessions * INCREMENTAL_COST);
-        const trainingCost = Math.min(rawTrainingCost, MAX_TRAINING_COST);
+        // Calculate cost using centralized function
+        const trainingCost = TrainingConstants.calculateTrainingCost(fighter);
         
         if (player.money < trainingCost) {
             alert(`Not enough money! Need $${trainingCost.toLocaleString()}`);
@@ -2883,14 +2891,56 @@
         let winnerPurse = 0, loserPurse = 0;
         
         if (winner === -1) {
-            // Draw - split purse
+            // Draw - split purse and handle expenses/ELO
             document.getElementById('result-winner').textContent = 'IT\'S A DRAW!';
             document.getElementById('result-method').textContent = 'SPLIT DECISION';
             const drawPurse = Math.round(purse.basePurse / 2);
-            GameState.players[0].money += drawPurse;
-            GameState.players[1].money += drawPurse;
+            
+            // Calculate expenses for both fighters
+            const p1Expenses = PurseSystem.calculateExpenses(GameState.players[0], state.fighters[0]);
+            const p2Expenses = PurseSystem.calculateExpenses(GameState.players[1], state.fighters[1]);
+            
+            const p1Net = drawPurse - p1Expenses.total;
+            const p2Net = drawPurse - p2Expenses.total;
+            
+            GameState.players[0].money += p1Net;
+            GameState.players[1].money += p2Net;
+            GameState.players[0].totalEarnings = (GameState.players[0].totalEarnings || 0) + p1Net;
+            GameState.players[1].totalEarnings = (GameState.players[1].totalEarnings || 0) + p2Net;
+            
             winnerPurse = drawPurse;
             loserPurse = drawPurse;
+            
+            // Update draw records
+            GameState.players[0].draws = (GameState.players[0].draws || 0) + 1;
+            GameState.players[1].draws = (GameState.players[1].draws || 0) + 1;
+            
+            // Update fighter draw records
+            const fighter1 = GameState.players[0].fighters.find(f => f.id === state.fighters[0].id);
+            const fighter2 = GameState.players[1].fighters.find(f => f.id === state.fighters[1].id);
+            
+            if (fighter1) {
+                fighter1.record = fighter1.record || { wins: 0, losses: 0, draws: 0 };
+                fighter1.record.draws = (fighter1.record.draws || 0) + 1;
+            }
+            if (fighter2) {
+                fighter2.record = fighter2.record || { wins: 0, losses: 0, draws: 0 };
+                fighter2.record.draws = (fighter2.record.draws || 0) + 1;
+            }
+            
+            // ELO update for draw: both fighters score 0.5
+            const Ra = f1.elo || 1000;
+            const Rb = f2.elo || 1000;
+            const Qa = Math.pow(10, Ra / 400);
+            const Qb = Math.pow(10, Rb / 400);
+            const Ea = Qa / (Qa + Qb);
+            const Eb = Qb / (Qa + Qb);
+            const K = 16;
+            const newRa = Math.round(Ra + K * (0.5 - Ea));
+            const newRb = Math.round(Rb + K * (0.5 - Eb));
+            
+            if (fighter1) fighter1.elo = newRa;
+            if (fighter2) fighter2.elo = newRb;
         } else {
             winnerName = state.fighters[winner].name;
             loserName = state.fighters[winner === 0 ? 1 : 0].name;
@@ -2902,16 +2952,22 @@
             GameState.players[winner].wins++;
             GameState.players[winner === 0 ? 1 : 0].losses++;
             
-            // Update fighter records
+            // Update fighter records with defensive initialization
             const winningFighter = GameState.players[winner].fighters.find(f => f.id === state.fighters[winner].id);
             const losingFighter = GameState.players[winner === 0 ? 1 : 0].fighters.find(f => f.id === state.fighters[winner === 0 ? 1 : 0].id);
             
             if (winningFighter) {
-                winningFighter.record = winningFighter.record || { wins: 0, losses: 0 };
+                if (!winningFighter.record || typeof winningFighter.record !== 'object') {
+                    winningFighter.record = { wins: 0, losses: 0, draws: 0 };
+                }
+                if (typeof winningFighter.record.wins !== 'number') winningFighter.record.wins = 0;
                 winningFighter.record.wins++;
             }
             if (losingFighter) {
-                losingFighter.record = losingFighter.record || { wins: 0, losses: 0 };
+                if (!losingFighter.record || typeof losingFighter.record !== 'object') {
+                    losingFighter.record = { wins: 0, losses: 0, draws: 0 };
+                }
+                if (typeof losingFighter.record.losses !== 'number') losingFighter.record.losses = 0;
                 losingFighter.record.losses++;
             }
             
@@ -2981,17 +3037,19 @@
         const f1Accuracy = f1.punchesThrown > 0 ? Math.round((f1.punchesLanded / f1.punchesThrown) * 100) : 0;
         const f2Accuracy = f2.punchesThrown > 0 ? Math.round((f2.punchesLanded / f2.punchesThrown) * 100) : 0;
         
-        // Get updated ELO
+        // Get updated ELO - use baseline ELO for change calculation; if fighter not found, treat change as 0
         const f1Fighter = GameState.players[0].fighters.find(f => f.id === f1.id);
         const f2Fighter = GameState.players[1].fighters.find(f => f.id === f2.id);
         const f1NewElo = f1Fighter ? f1Fighter.elo : (f1.elo || 1000);
         const f2NewElo = f2Fighter ? f2Fighter.elo : (f2.elo || 1000);
+        const f1BaseElo = f1Fighter ? (f1.elo || 1000) : f1NewElo;
+        const f2BaseElo = f2Fighter ? (f2.elo || 1000) : f2NewElo;
         
         // Enhanced stats display with ELO changes
         document.getElementById('result-stats').innerHTML = `
             <div class="panel">
                 <p class="subtitle" style="text-align: center; margin-bottom: 10px;">${f1.name}</p>
-                <div class="stat-row"><span>ELO:</span><span style="color: ${f1NewElo > (f1.elo || 1000) ? '#00ff88' : '#e94560'};">${f1NewElo} (${f1NewElo > (f1.elo || 1000) ? '+' : ''}${f1NewElo - (f1.elo || 1000)})</span></div>
+                <div class="stat-row"><span>ELO:</span><span style="color: ${f1NewElo > f1BaseElo ? '#00ff88' : f1NewElo < f1BaseElo ? '#e94560' : '#888'};">${f1NewElo} (${f1NewElo > f1BaseElo ? '+' : ''}${f1NewElo - f1BaseElo})</span></div>
                 <div class="stat-row"><span>Total Punches:</span><span>${f1.punchesLanded}/${f1.punchesThrown} (${f1Accuracy}%)</span></div>
                 <div class="stat-row"><span>Power Punches:</span><span>${f1.powerPunchesLanded || 0}</span></div>
                 <div class="stat-row"><span>Body Shots:</span><span>${f1.bodyPunchesLanded || 0}</span></div>
@@ -3002,7 +3060,7 @@
             </div>
             <div class="panel blue">
                 <p class="subtitle" style="color: #4da6ff; text-align: center; margin-bottom: 10px;">${f2.name}</p>
-                <div class="stat-row"><span>ELO:</span><span style="color: ${f2NewElo > (f2.elo || 1000) ? '#00ff88' : '#e94560'};">${f2NewElo} (${f2NewElo > (f2.elo || 1000) ? '+' : ''}${f2NewElo - (f2.elo || 1000)})</span></div>
+                <div class="stat-row"><span>ELO:</span><span style="color: ${f2NewElo > f2BaseElo ? '#00ff88' : f2NewElo < f2BaseElo ? '#e94560' : '#888'};">${f2NewElo} (${f2NewElo > f2BaseElo ? '+' : ''}${f2NewElo - f2BaseElo})</span></div>
                 <div class="stat-row"><span>Total Punches:</span><span>${f2.punchesLanded}/${f2.punchesThrown} (${f2Accuracy}%)</span></div>
                 <div class="stat-row"><span>Power Punches:</span><span>${f2.powerPunchesLanded || 0}</span></div>
                 <div class="stat-row"><span>Body Shots:</span><span>${f2.bodyPunchesLanded || 0}</span></div>
