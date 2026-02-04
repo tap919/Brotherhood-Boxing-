@@ -337,7 +337,7 @@ class FighterRenderer {
     
     // Hit-stop effect constants
     static MIN_HIT_STOP_FRAMES = 2;
-    static HIT_STOP_ADDITIONAL_FRAMES = 3; // Random 0-2 added to MIN (results in 2-4 total frames)
+    static HIT_STOP_ADDITIONAL_FRAMES = 3; // Upper bound (exclusive) for random extra frames: Math.floor(Math.random() * 3) => 0-2, total 2-4 frames
     static HIT_STOP_DAMAGE_DIVISOR = 8;
     
     constructor(scene, x, y, config = {}) {
