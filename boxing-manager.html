@@ -238,6 +238,18 @@
         .pixel-boxer .boxer-body { animation: fighterBreathe 2s ease-in-out infinite; }
         .pixel-boxer .boxer-glove { animation: gloveReady 0.8s ease-in-out infinite alternate; }
         
+        /* Pause idle animations while boxer is actively fighting/engaged */
+        .pixel-boxer.fighting,
+        .pixel-boxer.engaged {
+            animation-play-state: paused;
+        }
+        .pixel-boxer.fighting .boxer-body,
+        .pixel-boxer.engaged .boxer-body,
+        .pixel-boxer.fighting .boxer-glove,
+        .pixel-boxer.engaged .boxer-glove {
+            animation-play-state: paused;
+        }
+        
         /* Damage visualization */
         .boxer-head.cut::after {
             content: '';
