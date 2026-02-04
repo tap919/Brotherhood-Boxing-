@@ -321,9 +321,25 @@ bindRange(defenseRangeEl, defenseValueEl);
 
 /**
  * FighterRenderer Class - Exportable module for procedural pixel sprite rendering
- * Renders 64x128px boxing fighters with orthodox stance
+ * Renders 64x96px boxing fighters with orthodox stance (SEGA character level)
+ * Features: 7-level damage system, frame interpolation, hit-stop effects
  */
 class FighterRenderer {
+    // Animation constants
+    static TARGET_FPS = 60;
+    static TARGET_FRAME_TIME = 1000 / FighterRenderer.TARGET_FPS; // 16.6ms
+    static FRAME_INTERPOLATION_SPEED = 0.15;
+    
+    // Damage system constants
+    static MAX_DAMAGE = 100;
+    static DAMAGE_LEVELS = 7;
+    static DAMAGE_PER_LEVEL = FighterRenderer.MAX_DAMAGE / FighterRenderer.DAMAGE_LEVELS; // Damage threshold per level
+    
+    // Hit-stop effect constants
+    static MIN_HIT_STOP_FRAMES = 2;
+    static HIT_STOP_ADDITIONAL_FRAMES = 3; // Upper bound (exclusive) for random extra frames: Math.floor(Math.random() * 3) => 0-2, total 2-4 frames
+    static HIT_STOP_DAMAGE_DIVISOR = 8;
+    
     constructor(scene, x, y, config = {}) {
         this.scene = scene;
         this.x = x;
@@ -345,16 +361,32 @@ class FighterRenderer {
         this.swelling = 0;
         this.damageFlash = 0;
         
-        // Animation state
+        // 7-level damage system (0=fresh, 6=critical)
+        this.damageLevel = 0;
+        this.totalDamage = 0;
+        
+        // Frame interpolation for smooth transitions
+        this.prevState = 'idle';
+        this.stateTransition = 0;
+        this.transitionSpeed = FighterRenderer.FRAME_INTERPOLATION_SPEED;
+        
+        // Hit-stop effect
+        this.hitStopFrames = 0;
+        
+        // Animation state with interpolation targets
         this.armOffset = { left: 0, right: 0 };
         this.bodyOffset = { x: 0, y: 0 };
         this.headOffset = { x: 0, y: 0 };
+        this.targetArmOffset = { left: 0, right: 0 };
+        this.targetBodyOffset = { x: 0, y: 0 };
+        this.targetHeadOffset = { x: 0, y: 0 };
         
         this.render();
     }
     
     /**
      * Render the fighter using procedural pixel art (fillRect style)
+     * 64x96px SEGA character level with 7-level damage system
      */
     render() {
         const g = this.graphics;
@@ -367,111 +399,206 @@ class FighterRenderer {
         // Apply damage flash
         const flashMod = this.damageFlash > 0 ? 0xffffff : 0;
         
-        // Scale factor
+        // Scale factor (adjusted for 64x96px sprite)
         const s = c.scale;
         
-        // === LEGS (bottom layer) ===
+        // Get damage visual effects (7-level system)
+        const damageEffects = this.getDamageEffects();
+        
+        // === LEGS (bottom layer) - proportionally adjusted for 96px height ===
         // Left leg
-        g.fillStyle(this.applyFlash(c.skinColor, flashMod));
-        g.fillRect(-12 * s * flip, 40 * s, 10 * s, 30 * s);
+        g.fillStyle(this.applyFlash(this.applyDamageColor(c.skinColor, damageEffects), flashMod));
+        g.fillRect(-12 * s * flip, 30 * s, 10 * s, 22 * s);
         // Right leg
-        g.fillRect(2 * s * flip, 40 * s, 10 * s, 30 * s);
+        g.fillRect(2 * s * flip, 30 * s, 10 * s, 22 * s);
         
         // Shoes
         g.fillStyle(this.applyFlash(0x1a1a1a, flashMod));
-        g.fillRect(-14 * s * flip, 68 * s, 14 * s, 8 * s);
-        g.fillRect(0 * s * flip, 68 * s, 14 * s, 8 * s);
+        g.fillRect(-14 * s * flip, 50 * s, 14 * s, 6 * s);
+        g.fillRect(0 * s * flip, 50 * s, 14 * s, 6 * s);
         
         // === TRUNKS (shorts) ===
         g.fillStyle(this.applyFlash(c.trunkColor, flashMod));
-        g.fillRect(-16 * s * flip, 32 * s, 32 * s, 14 * s);
+        g.fillRect(-16 * s * flip, 24 * s, 32 * s, 10 * s);
         // Waistband
         g.fillStyle(this.applyFlash(this.darkenColor(c.trunkColor), flashMod));
-        g.fillRect(-16 * s * flip, 30 * s, 32 * s, 4 * s);
+        g.fillRect(-16 * s * flip, 22 * s, 32 * s, 3 * s);
         
         // === TORSO ===
-        g.fillStyle(this.applyFlash(c.skinColor, flashMod));
-        g.fillRect(-14 * s * flip, 0, 28 * s, 34 * s);
+        g.fillStyle(this.applyFlash(this.applyDamageColor(c.skinColor, damageEffects), flashMod));
+        g.fillRect(-14 * s * flip, 0, 28 * s, 26 * s);
         // Chest definition
-        g.fillStyle(this.applyFlash(this.darkenColor(c.skinColor, 0.1), flashMod));
-        g.fillRect(-10 * s * flip, 4 * s, 8 * s, 10 * s);
-        g.fillRect(2 * s * flip, 4 * s, 8 * s, 10 * s);
+        g.fillStyle(this.applyFlash(this.darkenColor(this.applyDamageColor(c.skinColor, damageEffects), 0.1), flashMod));
+        g.fillRect(-10 * s * flip, 3 * s, 8 * s, 8 * s);
+        g.fillRect(2 * s * flip, 3 * s, 8 * s, 8 * s);
         
         // === ARMS ===
         // Left arm (guard position or punch)
         const leftArmX = -20 * s * flip + this.armOffset.left * flip;
-        const leftArmY = 4 * s;
-        g.fillStyle(this.applyFlash(c.skinColor, flashMod));
-        g.fillRect(leftArmX, leftArmY, 10 * s, 24 * s);
+        const leftArmY = 3 * s;
+        g.fillStyle(this.applyFlash(this.applyDamageColor(c.skinColor, damageEffects), flashMod));
+        g.fillRect(leftArmX, leftArmY, 10 * s, 18 * s);
         
         // Left glove
         g.fillStyle(this.applyFlash(c.gloveColor, flashMod));
-        g.fillRect(leftArmX - 2 * s, leftArmY - 4 * s + this.armOffset.left * 0.3, 14 * s, 14 * s);
+        g.fillRect(leftArmX - 2 * s, leftArmY - 3 * s + this.armOffset.left * 0.3, 14 * s, 14 * s);
         
         // Right arm
         const rightArmX = 10 * s * flip + this.armOffset.right * flip;
-        const rightArmY = 4 * s;
-        g.fillStyle(this.applyFlash(c.skinColor, flashMod));
-        g.fillRect(rightArmX, rightArmY, 10 * s, 24 * s);
+        const rightArmY = 3 * s;
+        g.fillStyle(this.applyFlash(this.applyDamageColor(c.skinColor, damageEffects), flashMod));
+        g.fillRect(rightArmX, rightArmY, 10 * s, 18 * s);
         
         // Right glove
         g.fillStyle(this.applyFlash(c.gloveColor, flashMod));
-        g.fillRect(rightArmX - 2 * s, rightArmY - 4 * s + this.armOffset.right * 0.3, 14 * s, 14 * s);
+        g.fillRect(rightArmX - 2 * s, rightArmY - 3 * s + this.armOffset.right * 0.3, 14 * s, 14 * s);
         
         // === HEAD ===
         const headX = -12 * s * flip + this.headOffset.x;
-        const headY = -36 * s + this.headOffset.y;
+        const headY = -28 * s + this.headOffset.y;
         
         // Head shape
-        g.fillStyle(this.applyFlash(c.skinColor, flashMod));
-        g.fillRect(headX, headY, 24 * s, 28 * s);
+        g.fillStyle(this.applyFlash(this.applyDamageColor(c.skinColor, damageEffects), flashMod));
+        g.fillRect(headX, headY, 24 * s, 22 * s);
         
         // Hair
         g.fillStyle(this.applyFlash(c.hairColor, flashMod));
-        g.fillRect(headX, headY - 4 * s, 24 * s, 8 * s);
+        g.fillRect(headX, headY - 3 * s, 24 * s, 6 * s);
         
-        // Eyes (purple when swollen from damage)
-        const eyeDisplayColor = this.swelling > 50 ? 0x660066 : 0x1a1a1a;
+        // Eyes - vary with damage level
+        const eyeDisplayColor = this.getEyeColorByDamage();
         g.fillStyle(this.applyFlash(eyeDisplayColor, flashMod));
         if (c.facing === 'right') {
-            g.fillRect(headX + 4 * s, headY + 10 * s, 6 * s, 4 * s);
-            g.fillRect(headX + 14 * s, headY + 10 * s, 6 * s, 4 * s);
+            g.fillRect(headX + 4 * s, headY + 8 * s, 5 * s, 3 * s);
+            g.fillRect(headX + 13 * s, headY + 8 * s, 5 * s, 3 * s);
         } else {
-            // Slightly adjust eye positions when facing left to mirror/shift them
-            g.fillRect(headX + 2 * s, headY + 10 * s, 6 * s, 4 * s);
-            g.fillRect(headX + 12 * s, headY + 10 * s, 6 * s, 4 * s);
+            g.fillRect(headX + 2 * s, headY + 8 * s, 5 * s, 3 * s);
+            g.fillRect(headX + 11 * s, headY + 8 * s, 5 * s, 3 * s);
         }
         
         // Nose
-        g.fillStyle(this.applyFlash(this.darkenColor(c.skinColor, 0.15), flashMod));
-        g.fillRect(headX + 10 * s, headY + 14 * s, 4 * s, 6 * s);
+        g.fillStyle(this.applyFlash(this.darkenColor(this.applyDamageColor(c.skinColor, damageEffects), 0.15), flashMod));
+        g.fillRect(headX + 9 * s, headY + 11 * s, 4 * s, 5 * s);
         
-        // Mouth
-        g.fillStyle(this.applyFlash(0x8b4513, flashMod));
-        g.fillRect(headX + 8 * s, headY + 22 * s, 8 * s, 2 * s);
+        // Mouth - changes with damage
+        const mouthColor = damageEffects.bleeding ? 0xff0000 : 0x8b4513;
+        g.fillStyle(this.applyFlash(mouthColor, flashMod));
+        g.fillRect(headX + 7 * s, headY + 17 * s, 8 * s, 2 * s);
         
-        // Swelling effect (if damaged)
-        if (this.swelling > 20) {
+        // Draw damage-specific visual effects
+        this.renderDamageEffects(g, headX, headY, s, damageEffects);
+    }
+    
+    /**
+     * Get 7-level damage effects
+     * Level 0: Fresh - no visible damage
+     * Level 1: Light - minor swelling
+     * Level 2: Moderate - visible bruising
+     * Level 3: Heavy - significant swelling, cut
+     * Level 4: Severe - heavy bruising, bleeding
+     * Level 5: Critical - heavily damaged, discoloration
+     * Level 6: Near KO - extreme damage, barely standing
+     */
+    getDamageEffects() {
+        return {
+            level: this.damageLevel,
+            swelling: this.damageLevel * 15,
+            bruising: this.damageLevel >= 2,
+            cut: this.damageLevel >= 3,
+            bleeding: this.damageLevel >= 4,
+            discoloration: this.damageLevel >= 5,
+            severe: this.damageLevel >= 6
+        };
+    }
+    
+    /**
+     * Apply damage color tint based on damage level
+     */
+    applyDamageColor(baseColor, effects) {
+        if (effects.level === 0) return baseColor;
+        
+        const r = (baseColor >> 16) & 0xff;
+        const g = (baseColor >> 8) & 0xff;
+        const b = baseColor & 0xff;
+        
+        // Progressive darkening and reddening with damage
+        const darkenFactor = 1 - (effects.level * 0.08);
+        const redBoost = effects.level * 8;
+        
+        const newR = Math.min(255, Math.floor(r * darkenFactor + redBoost));
+        const newG = Math.floor(g * darkenFactor);
+        const newB = Math.floor(b * darkenFactor);
+        
+        return (newR << 16) | (newG << 8) | newB;
+    }
+    
+    /**
+     * Get eye color based on damage level
+     */
+    getEyeColorByDamage() {
+        if (this.damageLevel >= 5) return 0x660066; // Purple/swollen
+        if (this.damageLevel >= 3) return 0x4a4a4a; // Darkened
+        return 0x1a1a1a; // Normal
+    }
+    
+    /**
+     * Render damage-specific visual effects (bruises, cuts, blood)
+     */
+    renderDamageEffects(g, headX, headY, s, effects) {
+        // Swelling/bruising
+        if (effects.bruising) {
             g.fillStyle(0x9932cc);
-            g.setAlpha(Math.min(this.swelling / 100, 0.6));
-            const swellSize = Math.min(this.swelling / 10, 8) * s;
-            g.fillRect(headX + 2 * s, headY + 8 * s, swellSize, swellSize);
+            g.setAlpha(0.4 + effects.level * 0.05);
+            const swellSize = effects.swelling * 0.5 * s;
+            g.fillRect(headX + 2 * s, headY + 6 * s, swellSize, swellSize);
+            g.setAlpha(1);
+        }
+        
+        // Cuts
+        if (effects.cut) {
+            g.fillStyle(0x8b0000);
+            g.fillRect(headX + 3 * s, headY + 5 * s, 8 * s, 1 * s);
+        }
+        
+        // Bleeding
+        if (effects.bleeding) {
+            g.fillStyle(0xff0000);
+            g.setAlpha(0.6);
+            g.fillRect(headX + 4 * s, headY + 6 * s, 2 * s, 8 * s);
+            g.setAlpha(1);
+        }
+        
+        // Severe discoloration
+        if (effects.discoloration) {
+            g.fillStyle(0x4a0e4e);
+            g.setAlpha(0.3);
+            g.fillRect(headX, headY, 24 * s, 22 * s);
             g.setAlpha(1);
         }
     }
     
     /**
-     * Update animation frame
+     * Update animation frame with hit-stop and frame interpolation
      */
     update(delta) {
+        // Hit-stop effect (pause animation on heavy hits)
+        if (this.hitStopFrames > 0) {
+            this.hitStopFrames--;
+            this.render(); // Still render but don't advance animation
+            return;
+        }
+        
         this.frameTimer += delta;
         
-        // 10-15 FPS animation (66-100ms per frame)
-        if (this.frameTimer > 80) {
+        // 60 FPS animation using TARGET_FRAME_TIME constant
+        if (this.frameTimer > FighterRenderer.TARGET_FRAME_TIME) {
             this.frameTimer = 0;
             this.frame = (this.frame + 1) % 12;
             this.updateAnimationState();
         }
+        
+        // Frame interpolation for smooth transitions
+        this.applyFrameInterpolation();
         
         // Decay damage flash
         if (this.damageFlash > 0) {
@@ -482,92 +609,136 @@ class FighterRenderer {
     }
     
     /**
-     * Update animation based on current state
+     * Apply frame interpolation for smooth stance transitions
+     */
+    applyFrameInterpolation() {
+        // Interpolate arm positions
+        this.armOffset.left += (this.targetArmOffset.left - this.armOffset.left) * this.transitionSpeed;
+        this.armOffset.right += (this.targetArmOffset.right - this.armOffset.right) * this.transitionSpeed;
+        
+        // Interpolate body positions
+        this.bodyOffset.x += (this.targetBodyOffset.x - this.bodyOffset.x) * this.transitionSpeed;
+        this.bodyOffset.y += (this.targetBodyOffset.y - this.bodyOffset.y) * this.transitionSpeed;
+        
+        // Interpolate head positions
+        this.headOffset.x += (this.targetHeadOffset.x - this.headOffset.x) * this.transitionSpeed;
+        this.headOffset.y += (this.targetHeadOffset.y - this.headOffset.y) * this.transitionSpeed;
+    }
+    
+    /**
+     * Update animation based on current state with keyframe structure:
+     * Windup (2-4f) → Action (2-4f) → Impact (1-2f) → Recovery (1-2f)
      */
     updateAnimationState() {
         const breathOffset = Math.sin(this.frame * 0.5) * 2;
         
         switch (this.state) {
             case 'idle':
-                this.armOffset.left = breathOffset;
-                this.armOffset.right = -breathOffset;
-                this.bodyOffset.y = Math.sin(this.frame * 0.3) * 1;
-                this.headOffset.x = 0;
-                this.headOffset.y = 0;
+                this.targetArmOffset.left = breathOffset;
+                this.targetArmOffset.right = -breathOffset;
+                this.targetBodyOffset.y = Math.sin(this.frame * 0.3) * 1;
+                this.targetHeadOffset.x = 0;
+                this.targetHeadOffset.y = 0;
                 break;
                 
             case 'jab':
-                // 8 frame jab animation
+                // 8 frame jab: Windup(2f) → Action(3f) → Impact(1f) → Recovery(2f)
                 const jabProgress = (this.frame % 8) / 8;
-                if (jabProgress < 0.3) {
-                    this.armOffset.left = jabProgress * 100; // Wind up
-                } else if (jabProgress < 0.5) {
-                    this.armOffset.left = 30 + (jabProgress - 0.3) * 200; // Extend
+                if (jabProgress < 0.25) {
+                    // Windup (2 frames)
+                    this.targetArmOffset.left = jabProgress * 80;
+                    this.targetBodyOffset.x = -2;
+                } else if (jabProgress < 0.625) {
+                    // Action (3 frames)
+                    this.targetArmOffset.left = 20 + (jabProgress - 0.25) * 160;
+                    this.targetBodyOffset.x = 3;
+                } else if (jabProgress < 0.75) {
+                    // Impact (1 frame)
+                    this.targetArmOffset.left = 80;
+                    this.targetBodyOffset.x = 5;
                 } else {
-                    this.armOffset.left = 70 - (jabProgress - 0.5) * 140; // Retract
+                    // Recovery (2 frames)
+                    this.targetArmOffset.left = 80 - (jabProgress - 0.75) * 320;
+                    this.targetBodyOffset.x = 5 - (jabProgress - 0.75) * 20;
                 }
-                this.armOffset.right = -5;
+                this.targetArmOffset.right = -5;
                 break;
                 
             case 'hook':
-                // 10 frame hook animation
+                // 10 frame hook: Windup(3f) → Action(4f) → Impact(1f) → Recovery(2f)
                 const hookProgress = (this.frame % 10) / 10;
-                if (hookProgress < 0.2) {
-                    this.armOffset.right = -20; // Wind back
-                    this.bodyOffset.x = -5;
-                } else if (hookProgress < 0.5) {
-                    this.armOffset.right = 60; // Swing
-                    this.bodyOffset.x = 10;
+                if (hookProgress < 0.3) {
+                    // Windup (3 frames)
+                    this.targetArmOffset.right = -25;
+                    this.targetBodyOffset.x = -8;
+                } else if (hookProgress < 0.7) {
+                    // Action (4 frames)
+                    this.targetArmOffset.right = -25 + (hookProgress - 0.3) * 212.5;
+                    this.targetBodyOffset.x = -8 + (hookProgress - 0.3) * 45;
+                } else if (hookProgress < 0.8) {
+                    // Impact (1 frame)
+                    this.targetArmOffset.right = 60;
+                    this.targetBodyOffset.x = 10;
                 } else {
-                    this.armOffset.right = 60 - (hookProgress - 0.5) * 120;
-                    this.bodyOffset.x = 10 - (hookProgress - 0.5) * 30;
+                    // Recovery (2 frames)
+                    this.targetArmOffset.right = 60 - (hookProgress - 0.8) * 300;
+                    this.targetBodyOffset.x = 10 - (hookProgress - 0.8) * 50;
                 }
                 break;
                 
             case 'uppercut':
-                // 12 frame uppercut
+                // 12 frame uppercut: Windup(3f) → Action(4f) → Impact(2f) → Recovery(3f)
                 const upperProgress = (this.frame % 12) / 12;
                 if (upperProgress < 0.25) {
-                    this.bodyOffset.y = 10; // Crouch
-                    this.armOffset.right = -10;
-                } else if (upperProgress < 0.5) {
-                    this.bodyOffset.y = -15; // Rise
-                    this.armOffset.right = 50;
-                    this.headOffset.y = -5;
+                    // Windup (3 frames)
+                    this.targetBodyOffset.y = 12;
+                    this.targetArmOffset.right = -15;
+                } else if (upperProgress < 0.583) {
+                    // Action (4 frames)
+                    this.targetBodyOffset.y = 12 - (upperProgress - 0.25) * 81;
+                    this.targetArmOffset.right = -15 + (upperProgress - 0.25) * 195;
+                    this.targetHeadOffset.y = -8;
+                } else if (upperProgress < 0.75) {
+                    // Impact (2 frames)
+                    this.targetBodyOffset.y = -15;
+                    this.targetArmOffset.right = 50;
+                    this.targetHeadOffset.y = -10;
                 } else {
-                    this.bodyOffset.y = -15 + (upperProgress - 0.5) * 50;
-                    this.armOffset.right = 50 - (upperProgress - 0.5) * 120;
+                    // Recovery (3 frames)
+                    this.targetBodyOffset.y = -15 + (upperProgress - 0.75) * 60;
+                    this.targetArmOffset.right = 50 - (upperProgress - 0.75) * 200;
+                    this.targetHeadOffset.y = -10 + (upperProgress - 0.75) * 40;
                 }
                 break;
                 
             case 'block':
                 // Static block pose with slight movement
-                this.armOffset.left = -15 + breathOffset * 0.5;
-                this.armOffset.right = -15 - breathOffset * 0.5;
-                this.bodyOffset.y = 5;
+                this.targetArmOffset.left = -15 + breathOffset * 0.5;
+                this.targetArmOffset.right = -15 - breathOffset * 0.5;
+                this.targetBodyOffset.y = 5;
                 break;
                 
             case 'knockdown':
                 // 12 frame knockdown
                 const kdProgress = Math.min(this.frame / 12, 1);
-                this.bodyOffset.x = kdProgress * 30 * (this.config.facing === 'right' ? -1 : 1);
-                this.bodyOffset.y = kdProgress * 60;
-                this.headOffset.x = kdProgress * 10;
-                this.armOffset.left = kdProgress * 30;
-                this.armOffset.right = kdProgress * 40;
+                this.targetBodyOffset.x = kdProgress * 30 * (this.config.facing === 'right' ? -1 : 1);
+                this.targetBodyOffset.y = kdProgress * 60;
+                this.targetHeadOffset.x = kdProgress * 10;
+                this.targetArmOffset.left = kdProgress * 30;
+                this.targetArmOffset.right = kdProgress * 40;
                 break;
                 
             case 'damaged':
                 // Stagger animation
                 const dmgOscillate = Math.sin(this.frame * 2) * 5;
-                this.headOffset.x = dmgOscillate;
-                this.bodyOffset.x = dmgOscillate * 0.5;
+                this.targetHeadOffset.x = dmgOscillate;
+                this.targetBodyOffset.x = dmgOscillate * 0.5;
                 break;
         }
     }
     
     /**
-     * Set animation state
+     * Set animation state with smooth transition
      */
     setState(newState) {
         if (this.state !== newState) {
@@ -577,11 +748,41 @@ class FighterRenderer {
     }
     
     /**
-     * Apply damage
+     * Apply damage with 7-level system and visual effects
      */
-    takeDamage(amount) {
+    takeDamage(amount, isHeavy = false) {
         this.damageFlash = 1;
         this.swelling = Math.min(100, this.swelling + amount * 0.5);
+        this.totalDamage += amount;
+        
+        // Update damage level (7 levels: 0-6) using DAMAGE_PER_LEVEL constant
+        this.damageLevel = Math.min(
+            FighterRenderer.DAMAGE_LEVELS - 1, 
+            Math.floor(this.totalDamage / FighterRenderer.DAMAGE_PER_LEVEL)
+        );
+        
+        // Apply hit-stop effect on heavy punches (2-4 frames)
+        if (isHeavy) {
+            const stopFrames = FighterRenderer.MIN_HIT_STOP_FRAMES + 
+                              Math.floor(Math.random() * FighterRenderer.HIT_STOP_ADDITIONAL_FRAMES);
+            this.hitStopFrames = stopFrames;
+        }
+    }
+    
+    /**
+     * Trigger hit-stop effect for impactful moments
+     * @param {number} damage - Optional damage amount to scale hit-stop duration
+     */
+    triggerHitStop(frames = null, damage = 0) {
+        if (frames !== null) {
+            // Direct frame count specified
+            this.hitStopFrames = Math.max(this.hitStopFrames, frames);
+        } else if (damage > 0) {
+            // Calculate based on damage
+            const calculatedFrames = FighterRenderer.MIN_HIT_STOP_FRAMES + 
+                                    Math.floor(damage / FighterRenderer.HIT_STOP_DAMAGE_DIVISOR);
+            this.hitStopFrames = Math.max(this.hitStopFrames, calculatedFrames);
+        }
     }
     
     /**
@@ -849,6 +1050,17 @@ class Fighter {
  * FightScene - Main Phaser Scene for boxing simulation
  */
 class FightScene extends Phaser.Scene {
+    // Screen shake constants (SEGA character level spec)
+    static SHAKE_INTENSITY_DIVISOR = 70;
+    static MAX_SHAKE_INTENSITY = 0.018;
+    static SHAKE_DURATION_MULTIPLIER = 10;
+    static BASE_SHAKE_DURATION = 100;
+    static MAX_SHAKE_DURATION = 400;
+    static CRITICAL_INTENSITY_MULTIPLIER = 1.8;
+    static CRITICAL_DURATION_MULTIPLIER = 1.4;
+    static HEAVY_PUNCH_INTENSITY_MULTIPLIER = 1.5;
+    static HEAVY_PUNCH_THRESHOLD = 12;
+    
     constructor() {
         super({ key: 'FightScene' });
     }
@@ -1776,8 +1988,19 @@ class FightScene extends Phaser.Scene {
         
         const result = defender.takeDamage(damage, action.target);
         
-        // Visual feedback
-        defenderRenderer.takeDamage(damage);
+        // Determine if this is a heavy punch for hit-stop effect
+        const isHeavyPunch = damage > FightScene.HEAVY_PUNCH_THRESHOLD || 
+                            action.action === 'hook' || 
+                            action.action === 'uppercut';
+        
+        // Visual feedback with 7-level damage system and hit-stop on heavy punches
+        defenderRenderer.takeDamage(damage, isHeavyPunch);
+        
+        // Apply hit-stop to attacker on heavy punches (SEGA character level feature)
+        if (isHeavyPunch && !isBlocked) {
+            // Use damage-based calculation for consistent hit-stop
+            attackerRenderer.triggerHitStop(null, damage);
+        }
         
         // Update combo counter (per spec)
         const comboKey = attackerNum === 1 ? 'fighter1' : 'fighter2';
@@ -2051,18 +2274,29 @@ class FightScene extends Phaser.Scene {
     }
     
     /**
-     * Trigger screen shake based on damage (enhanced per spec)
-     * Per spec: magnitude 4-12 pixels, duration 8-20 frames, perlin noise pattern
+     * Trigger screen shake based on damage (enhanced per SEGA character level spec)
+     * Per spec: magnitude 4-12 pixels, duration 8-20 frames, synchronized with hit-stop
      */
     triggerScreenShake(damage, isCritical = false) {
         // Base intensity scales with damage (per spec: 4-12 pixels)
-        let intensity = Math.min(damage / 80, 0.015);
-        let duration = Math.min(damage * 8 + 80, 300);
+        let intensity = Math.min(
+            damage / FightScene.SHAKE_INTENSITY_DIVISOR, 
+            FightScene.MAX_SHAKE_INTENSITY
+        );
+        let duration = Math.min(
+            damage * FightScene.SHAKE_DURATION_MULTIPLIER + FightScene.BASE_SHAKE_DURATION, 
+            FightScene.MAX_SHAKE_DURATION
+        );
         
-        // Critical hits get extra shake
+        // Critical hits get extra shake (heavy punches per spec)
         if (isCritical) {
-            intensity *= 1.5;
-            duration *= 1.3;
+            intensity *= FightScene.CRITICAL_INTENSITY_MULTIPLIER;
+            duration *= FightScene.CRITICAL_DURATION_MULTIPLIER;
+        }
+        
+        // Enhanced shake for heavy punches (2-4 frame hit-stop coordination)
+        else if (damage > FightScene.HEAVY_PUNCH_THRESHOLD) {
+            intensity *= FightScene.HEAVY_PUNCH_INTENSITY_MULTIPLIER;
         }
         
         this.cameras.main.shake(duration, intensity);
