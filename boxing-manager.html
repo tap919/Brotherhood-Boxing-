@@ -253,13 +253,14 @@
             border-radius: 6px 4px 4px 6px; 
             background: linear-gradient(90deg, #daa520 60%, #9932CC 100%);
         }
+        .boxer-body.fatigued { animation: fighterBreathe 1s ease-in-out infinite !important; }
         
         /* Rankings badge styles */
         .rank-badge { 
             display: inline-block; 
             padding: 2px 6px; 
             border-radius: 3px; 
-            font-size: 6px; 
+            font-size: 8px; 
             font-weight: bold;
             margin-top: 4px;
         }
@@ -300,7 +301,7 @@
             margin: 10px 0;
         }
         .ai-coach-panel .coach-icon { font-size: 20px; margin-right: 8px; }
-        .ai-recommendation { font-size: 7px; color: #ffdd00; line-height: 1.6; }
+        .ai-recommendation { font-size: 9px; color: #ffdd00; line-height: 1.6; }
         .fighter-hud {
             position: absolute;
             width: 120px;
@@ -1961,12 +1962,8 @@
         }
         
         if (bodyEl) {
-            // Fatigue visualization
-            if (fighter.stamina < 30) {
-                bodyEl.style.animation = 'fighterBreathe 1s ease-in-out infinite';
-            } else {
-                bodyEl.style.animation = '';
-            }
+            // Fatigue visualization using CSS classes
+            bodyEl.classList.toggle('fatigued', fighter.stamina < 30);
         }
         
         // Hurt state visualization
@@ -2864,15 +2861,20 @@
             if (winningFighter) winningFighter.elo = newElos.winner;
             if (losingFighter) losingFighter.elo = newElos.loser;
             
-            // Update manager ELO (average of fighters)
-            GameState.players[winner].elo = Math.round(
-                GameState.players[winner].fighters.reduce((sum, f) => sum + (f.elo || 1000), 0) / 
-                GameState.players[winner].fighters.length
-            );
-            GameState.players[winner === 0 ? 1 : 0].elo = Math.round(
-                GameState.players[winner === 0 ? 1 : 0].fighters.reduce((sum, f) => sum + (f.elo || 1000), 0) / 
-                GameState.players[winner === 0 ? 1 : 0].fighters.length
-            );
+            // Update manager Elo (average of fighters) - guard against division by zero
+            const winnerFighters = GameState.players[winner].fighters;
+            const loserFighters = GameState.players[winner === 0 ? 1 : 0].fighters;
+            
+            if (winnerFighters.length > 0) {
+                GameState.players[winner].elo = Math.round(
+                    winnerFighters.reduce((sum, f) => sum + (f.elo || 1000), 0) / winnerFighters.length
+                );
+            }
+            if (loserFighters.length > 0) {
+                GameState.players[winner === 0 ? 1 : 0].elo = Math.round(
+                    loserFighters.reduce((sum, f) => sum + (f.elo || 1000), 0) / loserFighters.length
+                );
+            }
         }
         
         // Build enhanced scorecard
