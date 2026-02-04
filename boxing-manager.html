@@ -1603,7 +1603,10 @@
         // Calculate cost
         const BASE_TRAINING_COST = 5000;
         const INCREMENTAL_COST = 500;
-        const trainingCost = BASE_TRAINING_COST + ((fighter.trainingSessions || 0) * INCREMENTAL_COST);
+        const MAX_TRAINING_COST = 15000; // Cap the per-session training cost to keep late-game training affordable
+        const sessions = fighter.trainingSessions || 0;
+        const rawTrainingCost = BASE_TRAINING_COST + (sessions * INCREMENTAL_COST);
+        const trainingCost = Math.min(rawTrainingCost, MAX_TRAINING_COST);
         
         if (player.money < trainingCost) {
             alert(`Not enough money! Need $${trainingCost.toLocaleString()}`);
