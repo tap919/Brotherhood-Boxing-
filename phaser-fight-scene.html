@@ -2297,7 +2297,7 @@ class FightScene extends Phaser.Scene {
         }
         
         // Enhanced shake for heavy punches (2-4 frame hit-stop coordination)
-        if (damage > FightScene.HEAVY_PUNCH_THRESHOLD) {
+        else if (damage > FightScene.HEAVY_PUNCH_THRESHOLD) {
             intensity *= FightScene.HEAVY_PUNCH_INTENSITY_MULTIPLIER;
         }
         
