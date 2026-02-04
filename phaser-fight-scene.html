@@ -1996,11 +1996,10 @@ class FightScene extends Phaser.Scene {
         // Visual feedback with 7-level damage system and hit-stop on heavy punches
         defenderRenderer.takeDamage(damage, isHeavyPunch);
         
-        // Apply hit-stop to both fighters on heavy punches (SEGA character level feature)
+        // Apply hit-stop to attacker on heavy punches (SEGA character level feature)
         if (isHeavyPunch && !isBlocked) {
             // Use damage-based calculation for consistent hit-stop
             attackerRenderer.triggerHitStop(null, damage);
-            defenderRenderer.triggerHitStop(null, damage);
         }
         
         // Update combo counter (per spec)
