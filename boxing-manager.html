@@ -884,11 +884,15 @@
             const expectedWinner = 1 / (1 + Math.pow(10, (loserElo - winnerElo) / 400));
             const expectedLoser = 1 / (1 + Math.pow(10, (winnerElo - loserElo) / 400));
             
-            let kFactor = this.K_FACTOR;
-            if (isKO) kFactor *= 1.2; // Bonus for KO wins
+            // Use separate K-factors so that KO bonus only applies to the winner
+            let winnerKFactor = this.K_FACTOR;
+            let loserKFactor = this.K_FACTOR;
+            if (isKO) {
+                winnerKFactor *= 1.2; // Bonus for KO wins applies only to winner
+            }
             
-            const winnerNewElo = Math.round(winnerElo + kFactor * (1 - expectedWinner));
-            const loserNewElo = Math.round(loserElo + kFactor * (0 - expectedLoser));
+            const winnerNewElo = Math.round(winnerElo + winnerKFactor * (1 - expectedWinner));
+            const loserNewElo = Math.round(loserElo + loserKFactor * (0 - expectedLoser));
             
             return {
                 winner: Math.max(100, winnerNewElo),
