@@ -1010,8 +1010,64 @@
         },
         
         predictFightOutcome: function(fighter1, fighter2) {
-            const f1Score = fighter1.power * 1.2 + fighter1.speed * 1.1 + fighter1.stamina + fighter1.defense * 0.9 + fighter1.chin * 0.8 + fighter1.heart * 0.7;
-            const f2Score = fighter2.power * 1.2 + fighter2.speed * 1.1 + fighter2.stamina + fighter2.defense * 0.9 + fighter2.chin * 0.8 + fighter2.heart * 0.7;
+            // Adjust stat weights based on fighter style while preserving original base weights
+            function getStyleWeights(style) {
+                const weights = {
+                    power: 1.2,
+                    speed: 1.1,
+                    stamina: 1.0,
+                    defense: 0.9,
+                    chin: 0.8,
+                    heart: 0.7
+                };
+
+                if (!style || typeof style !== 'string') {
+                    return weights;
+                }
+
+                switch (style.toLowerCase()) {
+                    case 'slugger':
+                        // Sluggers rely more on power and toughness
+                        weights.power += 0.3;
+                        weights.chin += 0.1;
+                        break;
+                    case 'outboxer':
+                        // Outboxers emphasize speed and defense
+                        weights.speed += 0.2;
+                        weights.defense += 0.2;
+                        break;
+                    case 'swarmer':
+                        // Swarmers typically have great stamina and heart
+                        weights.stamina += 0.2;
+                        weights.heart += 0.2;
+                        break;
+                    case 'boxer-puncher':
+                        // Balanced offensive style: slight boosts to power and speed
+                        weights.power += 0.15;
+                        weights.speed += 0.15;
+                        break;
+                    default:
+                        // Unknown style: use base weights
+                        break;
+                }
+
+                return weights;
+            }
+
+            function calculateScore(fighter) {
+                const w = getStyleWeights(fighter.style);
+                return (
+                    fighter.power * w.power +
+                    fighter.speed * w.speed +
+                    fighter.stamina * w.stamina +
+                    fighter.defense * w.defense +
+                    fighter.chin * w.chin +
+                    fighter.heart * w.heart
+                );
+            }
+
+            const f1Score = calculateScore(fighter1);
+            const f2Score = calculateScore(fighter2);
             
             const total = f1Score + f2Score;
             const f1Chance = Math.round((f1Score / total) * 100);
