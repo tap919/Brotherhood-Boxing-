@@ -1632,7 +1632,7 @@
         // Apply training with gym level bonus
         const gymBonus = 1 + ((player.gymLevel || 1) - 1) * 0.1;
         const baseBoost = rand(2, 4);
-        const boost = Math.round(baseBoost * gymBonus);
+        const boost = Math.ceil(baseBoost * gymBonus);
         
         fighter[stat] = Math.min(99, fighter[stat] + boost);
         fighter.trainingSessions = (fighter.trainingSessions || 0) + 1;
