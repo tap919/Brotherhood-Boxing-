@@ -742,7 +742,6 @@ class FighterRenderer {
      */
     setState(newState) {
         if (this.state !== newState) {
-            this.prevState = this.state;
             this.state = newState;
             this.frame = 0;
         }
